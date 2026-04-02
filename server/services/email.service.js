@@ -48,13 +48,18 @@ async function sendMail({ to, subject, text, html }) {
     return false;
   }
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-    to,
-    subject,
-    text,
-    html
-  });
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+      to,
+      subject,
+      text,
+      html
+    });
+  } catch (error) {
+    console.error('[email] Error enviando correo:', error.message);
+    return false;
+  }
 
   return true;
 }
@@ -63,7 +68,7 @@ export async function sendInternalSaleNotification(order) {
   const to = process.env.SALES_NOTIFICATION_EMAIL || process.env.EMAIL_TO;
   if (!to) {
     console.warn('[email] SALES_NOTIFICATION_EMAIL no configurado. Se omite aviso interno.');
-    return;
+    return false;
   }
 
   const subject = `Nueva venta ARIKARA BEATS · ${order.id}`;
@@ -112,7 +117,7 @@ export async function sendCustomerOrderConfirmation(order) {
   const to = order.customer?.email;
   if (!to) {
     console.warn(`[email] Pedido ${order.id} sin email de cliente. Se omite confirmación.`);
-    return;
+    return false;
   }
 
   const subject = `Tu compra en ARIKARA BEATS ha sido recibida · ${order.id}`;

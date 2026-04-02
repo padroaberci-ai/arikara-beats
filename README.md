@@ -37,6 +37,7 @@ Variables importantes:
 
 - `PORT`
 - `APP_BASE_URL`
+- `CORS_ALLOWED_ORIGINS`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_WEBHOOK_SECRET`
@@ -54,6 +55,24 @@ Compatibilidad temporal:
 
 - si vuestro `.env` antiguo todavía usa `APP_URL`, el backend lo sigue aceptando como fallback de `APP_BASE_URL`
 - si todavía usáis `EMAIL_TO`, también se acepta como fallback de `SALES_NOTIFICATION_EMAIL`
+
+## Frontend y backend en producción
+
+El frontend está pensado para desplegarse en Netlify y el backend en Render.
+
+Configuración actual del frontend:
+
+- en local usa rutas relativas (`localhost`)
+- en producción usa como base de API:
+  - `https://arikara-beats-api.onrender.com`
+
+Configuración actual del backend:
+
+- permite CORS desde:
+  - `https://arikarabeats.com`
+  - `https://www.arikarabeats.com`
+  - `https://arikarabeats.netlify.app`
+  - localhost en desarrollo
 
 ### Gmail SMTP
 

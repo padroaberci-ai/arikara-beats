@@ -4,10 +4,16 @@
   const LAST_ORDER_KEY = 'arikara_last_order_v1';
   const PLAYER_STATE_KEY = 'arikara_player_state_v1';
   const PLAYER_SESSION_KEY = 'arikara_player_session_v1';
+  const API_BASE = (() => {
+    const hostname = window.location.hostname;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    return window.ARIKARA_API_BASE || (isLocal ? '' : 'https://arikara-beats-api.onrender.com');
+  })();
 
   const qs = (sel, scope=document) => scope.querySelector(sel);
   const qsa = (sel, scope=document) => Array.from(scope.querySelectorAll(sel));
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const apiUrl = (path) => `${API_BASE}${path}`;
 
   const fmtEUR = (n) => Number(n || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
 
@@ -741,7 +747,7 @@
         return;
       }
       try{
-        const res = await fetch('/api/checkout', {
+        const res = await fetch(apiUrl('/api/checkout'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items: cart })
@@ -810,7 +816,7 @@
     const loadSummary = async (attempt = 0) => {
       if(!orderId) return;
       try{
-        const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/summary?session_id=${encodeURIComponent(sessionId)}`);
+        const res = await fetch(apiUrl(`/api/orders/${encodeURIComponent(orderId)}/summary?session_id=${encodeURIComponent(sessionId)}`));
         const data = await res.json();
         if(!res.ok) throw new Error(data?.error || 'No se pudo cargar el pedido');
         renderSummary(data.order);

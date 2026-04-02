@@ -20,6 +20,7 @@ const hasAdminAccess = (req) => {
 };
 
 const nowIso = () => new Date().toISOString();
+const orderTotalToCents = (order) => Math.round(Number(order.total || 0) * 100);
 
 const extractCustomFields = (fields = []) =>
   fields.reduce((acc, field) => {
@@ -85,7 +86,13 @@ router.get('/:orderId/summary', async (req, res) => {
     try {
       const session = await getCheckoutSession(sessionId);
       const customFields = extractCustomFields(session.custom_fields);
-      const sessionLooksPaid = session.status === 'complete' && session.payment_status === 'paid';
+      const expectedCurrency = String(order.currency || 'EUR').toLowerCase();
+      const sessionLooksPaid =
+        session.status === 'complete' &&
+        session.payment_status === 'paid' &&
+        session.client_reference_id === order.id &&
+        String(session.currency || '').toLowerCase() === expectedCurrency &&
+        Number(session.amount_total || 0) === orderTotalToCents(order);
 
       order = {
         ...order,
@@ -110,6 +117,9 @@ router.get('/:orderId/summary', async (req, res) => {
         paymentObserved = true;
         degradedMode = !hasStripeWebhookSecret();
         order.status = 'paid_pending_delivery';
+        console.log(`[orders] Pedido ${order.id} confirmado en modo fallback mediante success return`);
+      } else {
+        console.warn(`[orders] La sesión ${sessionId} no coincide aún con una confirmación válida para ${order.id}`);
       }
 
       const sentInternal = paymentObserved && !order.notifications?.internalSentAt
