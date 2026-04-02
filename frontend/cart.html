@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ARIKARA BEATS - Carrito</title>
+  <meta name="description" content="Carrito y checkout seguro con Stripe." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="./style.css" />
+  <script src="./data.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+
+<body data-page="cart">
+  <header class="header">
+    <div class="container header__inner">
+      <div class="header-left"></div>
+      <a class="logo" href="./index.html" aria-label="ARIKARA BEATS">
+        <img class="logo-image" src="./assets/logo-white.png" alt="ARIKARA BEATS" />
+        <span class="sr-only">ARIKARA BEATS</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a class="nav-link" href="./index.html">Beats</a>
+        <a class="nav-link" href="./licencias.html">Licencias</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="section">
+      <div class="container">
+        <div class="eyebrow">Carrito</div>
+        <h1>Tu selección de beats</h1>
+        <p class="lead">Revisa tu pedido y finaliza el pago con Stripe.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container cart-layout">
+        <div id="cartList" style="display:grid; gap: 16px;"></div>
+
+        <aside class="card" style="padding: 24px; border-radius: 30px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-weight:700;">Total</div>
+            <div id="cartTotal" style="font-weight:800; font-size: var(--fs-4);">-</div>
+          </div>
+          <div style="margin-top: 16px; display:grid; gap: 10px;">
+            <button id="checkoutBtn" class="btn btn--primary">Pagar con Stripe</button>
+            <button id="clearBtn" class="btn btn--ghost">Vaciar carrito</button>
+          </div>
+          <p style="margin-top: 12px; font-size: var(--fs-1);">Al pagar aceptas los términos de licencia. El material se enviará manualmente por email tras confirmar la compra.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div id="cartEmpty" class="hidden" style="text-align:center; padding: 40px 0; color: var(--muted);">
+          Tu carrito está vacío.
+          <div style="margin-top: 12px;">
+            <a class="btn btn--primary" href="./index.html">Volver al catálogo</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="banner">
+          <div>Si compras dos licencias, la segunda tiene 25% de descuento.</div>
+          <a class="btn btn--ghost btn--sm" href="./licencias.html">Ver condiciones</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <div style="font-weight:700;">ARIKARA BEATS</div>
+        <p>Checkout seguro con Stripe y entrega inmediata por email.</p>
+        <div>(c) <span data-year></span> ARIKARA BEATS</div>
+      </div>
+      <div>
+        <div style="font-weight:700;">Soporte</div>
+        <div>arikarabeats@gmail.com</div>
+        <div>@arikarastudios</div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="player">
+    <div class="container player__inner">
+      <div class="player-left">
+        <div class="player-cover card" id="playerCover">
+          <img id="playerCoverImg" src="./assets/placeholder.svg" alt="" />
+          <button class="cover-play cover-play--player" id="playerCoverPlay" type="button" aria-label="Play/Pause">
+            <span class="cover-play__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+        </div>
+        <div class="player-info">
+          <div class="player-title-row">
+            <div class="player-title" id="playerTitle">Nada reproduciendo</div>
+            <span class="wave player-wave" aria-hidden="true"><span></span><span></span><span></span></span>
+          </div>
+          <div class="player-subtitle" id="playerSubtitle"></div>
+          <div class="player-meta" id="playerMeta">Haz click en Play en cualquier beat</div>
+        </div>
+      </div>
+      <div class="player-center">
+        <div class="player-progress">
+          <div class="player-time" id="playerTime">0:00</div>
+          <input id="playerSeek" class="player-seek" type="range" min="0" max="100" value="0" />
+          <div class="player-time" id="playerDuration">0:00</div>
+        </div>
+      </div>
+      <div class="player-controls">
+        <button class="icon-btn" id="playerPrev" type="button" aria-label="Anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="6.5" y1="5" x2="6.5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <polyline points="18 5 10 12 18 19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="playerBack" type="button" aria-label="Retroceder 10 segundos">
+          <span class="skip-label">-10</span>
+        </button>
+        <button class="icon-btn icon-btn--accent icon-btn--main" id="playerToggle" type="button" aria-label="Play/Pause">
+          <svg id="playerToggleIcon" viewBox="0 0 24 24" aria-hidden="true">
+            <polygon points="8,5 19,12 8,19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="playerForward" type="button" aria-label="Avanzar 10 segundos">
+          <span class="skip-label">+10</span>
+        </button>
+        <button class="icon-btn" id="playerNext" type="button" aria-label="Siguiente">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="17.5" y1="5" x2="17.5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <polyline points="6 5 14 12 6 19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="player-volume">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 10v4h4l5 4V6L7 10H3z"/><path fill="currentColor" d="M16 7a5 5 0 0 1 0 10v-2a3 3 0 0 0 0-6z"/></svg>
+          <input id="playerVolume" type="range" min="0" max="1" step="0.01" value="0.8" />
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

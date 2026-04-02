@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ARIKARA BEATS - Instrumentales para artistas</title>
+  <meta name="description" content="Instrumentales para artistas con licencias claras. Busca por BPM y género." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="./style.css" />
+  <script src="./data.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+
+<body data-page="catalog">
+  <header class="header">
+    <div class="container header__inner">
+      <div class="header-left"></div>
+      <a class="logo" href="./index.html" aria-label="ARIKARA BEATS">
+        <img class="logo-image" src="./assets/logo-white.png" alt="ARIKARA BEATS" />
+        <span class="sr-only">ARIKARA BEATS</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a class="nav-link" href="./index.html">Beats</a>
+        <a class="nav-link" href="./licencias.html">Licencias</a>
+        <a class="btn btn--ghost btn--sm" href="./cart.html">Carrito <span id="cartBadge" class="badge badge--accent hidden" style="margin-left:6px;">0</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="section">
+      <div class="container hero">
+        <div>
+          <div class="eyebrow">Instrumentales para artistas</div>
+          <h1><span class="text-accent">ARIKARA BEATS</span><br>Beats personalizados.<br>Licencias a medida.</h1>
+          <div class="hero-slogan">WE ARE <span class="text-accent">NOMADS</span></div>
+          <p class="lead">Beats originales, licencias claras y entrega inmediata. Todo en un solo lugar.</p>
+          <div class="hero-cta">
+            <a class="btn btn--primary" href="#catalogo">Explorar catálogo</a>
+            <a class="btn btn--ghost" href="./licencias.html">Ver licencias</a>
+          </div>
+        </div>
+        <div class="hero-card hero-highlight" id="heroHighlight">
+          <div class="hero-highlight__image">
+            <img id="heroHighlightImg" src="./assets/placeholder.svg" alt="" />
+          </div>
+          <div class="hero-highlight__overlay"></div>
+          <div class="hero-highlight__content">
+            <div class="hero-highlight__badge">Novedad</div>
+            <div class="hero-highlight__title" id="heroHighlightTitle">Último lanzamiento</div>
+            <div class="hero-highlight__meta" id="heroHighlightMeta">-</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="catalogo" class="section">
+      <div class="container">
+        <div class="eyebrow">Catálogo</div>
+        <h2>Encuentra tu beat perfecto</h2>
+        <p class="lead">Reproducción rápida y licencias claras en un solo lugar.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="filters">
+          <input id="searchInput" class="input" type="search" placeholder="Buscar por título o tag" autocomplete="off" />
+          <input id="bpmMin" class="input" type="number" inputmode="numeric" placeholder="BPM mínimo" />
+          <input id="bpmMax" class="input" type="number" inputmode="numeric" placeholder="BPM máximo" />
+          <select id="genreSelect" class="input"><option value="">Género</option></select>
+          <select id="sortSelect" class="input">
+            <option value="recent">Orden: Recientes</option>
+            <option value="price">Orden: Precio</option>
+            <option value="bpm">Orden: BPM</option>
+            <option value="az">Orden: A-Z</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div id="catalogList" class="catalog"></div>
+        <div id="emptyState" class="hidden" style="text-align:center; padding: 40px 0; color: var(--muted);">No se han encontrado beats con esos filtros.</div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="banner">
+          <div>Si compras dos licencias, la segunda tiene 25% de descuento.</div>
+          <a class="btn btn--ghost btn--sm" href="./licencias.html">Ver licencias</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="eyebrow">Servicios premium</div>
+        <h2>Producción, mezcla y mastering bajo consulta</h2>
+        <p class="lead">Servicios profesionales de mezcla, mastering y producción para artistas que quieren un resultado final sólido.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div id="servicesGridHome" class="license-grid"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="banner">
+          <div>Segunda canción a mitad de precio, 50% de descuento.</div>
+          <a class="btn btn--ghost btn--sm" href="mailto:arikarabeats@gmail.com">Consultar servicios</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="eyebrow">Canal</div>
+        <h2>Canal ARIKARA BEATS en YouTube</h2>
+        <p class="lead">Suscríbete al canal para ver los últimos lanzamientos.</p>
+        <div class="video-card">
+          <div class="video-frame">
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/tKpW2l0DGiM?si=2Tw-UxvRh7OdVKiB" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+          </div>
+          <div class="video-content">
+            <h3>Suscríbete al canal</h3>
+            <p>Últimos lanzamientos, vídeos completos y novedades cada semana.</p>
+            <a class="btn btn--primary btn--pill" href="https://www.youtube.com/@arikarabeats" target="_blank" rel="noopener noreferrer">Ver canal en YouTube</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <div style="font-weight:700;">ARIKARA BEATS</div>
+        <p>Beats premium, licencias transparentes y entrega inmediata.</p>
+        <div>(c) <span data-year></span> ARIKARA BEATS</div>
+      </div>
+      <div>
+        <div style="font-weight:700;">Contacto</div>
+        <div>arikarabeats@gmail.com</div>
+        <div>@arikarastudios</div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="player">
+    <div class="container player__inner">
+      <div class="player-left">
+        <div class="player-cover card" id="playerCover">
+          <img id="playerCoverImg" src="./assets/placeholder.svg" alt="" />
+          <button class="cover-play cover-play--player" id="playerCoverPlay" type="button" aria-label="Play/Pause">
+            <span class="cover-play__icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+        </div>
+        <div class="player-info">
+          <div class="player-title-row">
+            <div class="player-title" id="playerTitle">Nada reproduciendo</div>
+            <span class="wave player-wave" aria-hidden="true"><span></span><span></span><span></span></span>
+          </div>
+          <div class="player-subtitle" id="playerSubtitle"></div>
+          <div class="player-meta" id="playerMeta">Haz click en Play en cualquier beat</div>
+        </div>
+      </div>
+      <div class="player-center">
+        <div class="player-progress">
+          <div class="player-time" id="playerTime">0:00</div>
+          <input id="playerSeek" class="player-seek" type="range" min="0" max="100" value="0" />
+          <div class="player-time" id="playerDuration">0:00</div>
+        </div>
+      </div>
+      <div class="player-controls">
+        <button class="icon-btn" id="playerPrev" type="button" aria-label="Anterior">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="6.5" y1="5" x2="6.5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <polyline points="18 5 10 12 18 19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="playerBack" type="button" aria-label="Retroceder 10 segundos">
+          <span class="skip-label">-10</span>
+        </button>
+        <button class="icon-btn icon-btn--accent icon-btn--main" id="playerToggle" type="button" aria-label="Play/Pause">
+          <svg id="playerToggleIcon" viewBox="0 0 24 24" aria-hidden="true">
+            <polygon points="8,5 19,12 8,19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="playerForward" type="button" aria-label="Avanzar 10 segundos">
+          <span class="skip-label">+10</span>
+        </button>
+        <button class="icon-btn" id="playerNext" type="button" aria-label="Siguiente">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="17.5" y1="5" x2="17.5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <polyline points="6 5 14 12 6 19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="player-volume">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 10v4h4l5 4V6L7 10H3z"/><path fill="currentColor" d="M16 7a5 5 0 0 1 0 10v-2a3 3 0 0 0 0-6z"/></svg>
+          <input id="playerVolume" type="range" min="0" max="1" step="0.01" value="0.8" />
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

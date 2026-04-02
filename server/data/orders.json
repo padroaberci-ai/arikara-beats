@@ -1,0 +1,155 @@
+[
+  {
+    "id": "ARK-000001",
+    "createdAt": "2026-04-02T12:57:10.014Z",
+    "updatedAt": "2026-04-02T12:57:10.014Z",
+    "status": "pending_checkout",
+    "currency": "EUR",
+    "subtotal": 29.99,
+    "total": 29.99,
+    "customer": {
+      "name": "",
+      "email": "",
+      "artistName": "",
+      "instagram": "",
+      "notes": ""
+    },
+    "stripe": {
+      "checkoutSessionId": "",
+      "paymentIntentId": "",
+      "eventIds": []
+    },
+    "items": [
+      {
+        "beatId": "ab-001",
+        "beatSlug": "costa-del-sol",
+        "beatTitleSnapshot": "Delaossa Type Beat - \"Costa Del Sol\"",
+        "licenseType": "basic",
+        "licenseNameSnapshot": "Basic",
+        "unitPriceSnapshot": 29.99,
+        "quantity": 1,
+        "fulfillmentStatus": "pending"
+      }
+    ]
+  },
+  {
+    "id": "ARK-000002",
+    "createdAt": "2026-04-02T14:40:41.290Z",
+    "updatedAt": "2026-04-02T14:40:41.290Z",
+    "status": "pending_checkout",
+    "currency": "EUR",
+    "subtotal": 29.99,
+    "total": 29.99,
+    "customer": {
+      "name": "",
+      "email": "",
+      "artistName": "",
+      "instagram": "",
+      "notes": ""
+    },
+    "stripe": {
+      "checkoutSessionId": "",
+      "paymentIntentId": "",
+      "eventIds": [],
+      "paymentStatus": "",
+      "sessionStatus": "",
+      "confirmationMode": ""
+    },
+    "notifications": {
+      "internalSentAt": "",
+      "customerSentAt": ""
+    },
+    "items": [
+      {
+        "beatId": "ab-001",
+        "beatSlug": "costa-del-sol",
+        "beatTitleSnapshot": "Delaossa Type Beat - \"Costa Del Sol\"",
+        "licenseType": "basic",
+        "licenseNameSnapshot": "Basic",
+        "unitPriceSnapshot": 29.99,
+        "quantity": 1,
+        "fulfillmentStatus": "pending"
+      }
+    ]
+  },
+  {
+    "id": "ARK-000003",
+    "createdAt": "2026-04-02T14:42:50.199Z",
+    "updatedAt": "2026-04-02T14:42:50.199Z",
+    "status": "pending_checkout",
+    "currency": "EUR",
+    "subtotal": 29.99,
+    "total": 29.99,
+    "customer": {
+      "name": "",
+      "email": "",
+      "artistName": "",
+      "instagram": "",
+      "notes": ""
+    },
+    "stripe": {
+      "checkoutSessionId": "",
+      "paymentIntentId": "",
+      "eventIds": [],
+      "paymentStatus": "",
+      "sessionStatus": "",
+      "confirmationMode": ""
+    },
+    "notifications": {
+      "internalSentAt": "",
+      "customerSentAt": ""
+    },
+    "items": [
+      {
+        "beatId": "ab-001",
+        "beatSlug": "costa-del-sol",
+        "beatTitleSnapshot": "Delaossa Type Beat - \"Costa Del Sol\"",
+        "licenseType": "basic",
+        "licenseNameSnapshot": "Basic",
+        "unitPriceSnapshot": 29.99,
+        "quantity": 1,
+        "fulfillmentStatus": "pending"
+      }
+    ]
+  },
+  {
+    "id": "ARK-000004",
+    "createdAt": "2026-04-02T14:45:05.317Z",
+    "updatedAt": "2026-04-02T14:45:06.648Z",
+    "status": "pending_checkout",
+    "currency": "EUR",
+    "subtotal": 29.99,
+    "total": 29.99,
+    "customer": {
+      "name": "",
+      "email": "",
+      "artistName": "",
+      "instagram": "",
+      "notes": ""
+    },
+    "stripe": {
+      "checkoutSessionId": "cs_live_a1sfI6Vsuj638FxZiwAeEM2OAOHCODuCCA42qUKK2voonARtETtLJVZ2Xy",
+      "paymentIntentId": "",
+      "eventIds": [],
+      "paymentStatus": "",
+      "sessionStatus": "open",
+      "confirmationMode": "success_return_fallback"
+    },
+    "notifications": {
+      "internalSentAt": "",
+      "customerSentAt": ""
+    },
+    "items": [
+      {
+        "beatId": "ab-001",
+        "beatSlug": "costa-del-sol",
+        "beatTitleSnapshot": "Delaossa Type Beat - \"Costa Del Sol\"",
+        "licenseType": "basic",
+        "licenseNameSnapshot": "Basic",
+        "unitPriceSnapshot": 29.99,
+        "quantity": 1,
+        "fulfillmentStatus": "pending"
+      }
+    ]
+  }
+]
