@@ -14,6 +14,20 @@
   const qsa = (sel, scope=document) => Array.from(scope.querySelectorAll(sel));
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const apiUrl = (path) => `${API_BASE}${path}`;
+  const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const withRetry = async (task, retries = 0, baseDelay = 1200) => {
+    let lastError;
+    for(let attempt = 0; attempt <= retries; attempt += 1){
+      try{
+        return await task();
+      }catch(err){
+        lastError = err;
+        if(attempt === retries) break;
+        await wait(baseDelay * (attempt + 1));
+      }
+    }
+    throw lastError;
+  };
 
   const fmtEUR = (n) => Number(n || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
 
@@ -747,11 +761,11 @@
         return;
       }
       try{
-        const res = await fetch(apiUrl('/api/checkout'), {
+        const res = await withRetry(() => fetch(apiUrl('/api/checkout'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items: cart })
-        });
+        }), 2, 1500);
         const data = await res.json();
         if(data && data.url){
           saveLastOrderId(data.orderId);
@@ -768,7 +782,7 @@
 
   if(page === 'success'){
     const params = new URLSearchParams(window.location.search);
-    const orderId = params.get('order_id') || localStorage.getItem(LAST_ORDER_KEY) || '';
+    let orderId = localStorage.getItem(LAST_ORDER_KEY) || '';
     const sessionId = params.get('session_id') || '';
 
     const titleEl = qs('#successTitle');
@@ -814,22 +828,59 @@
     };
 
     const loadSummary = async (attempt = 0) => {
-      if(!orderId) return;
+      if(!sessionId && !orderId){
+        if(leadEl){
+          leadEl.textContent = 'No hemos podido recuperar la referencia del pago. Si ya se ha realizado el cargo, contacta con el equipo para verificarlo.';
+        }
+        return;
+      }
       try{
-        const res = await fetch(apiUrl(`/api/orders/${encodeURIComponent(orderId)}/summary?session_id=${encodeURIComponent(sessionId)}`));
-        const data = await res.json();
-        if(!res.ok) throw new Error(data?.error || 'No se pudo cargar el pedido');
-        renderSummary(data.order);
-        if(data.order?.status === 'paid_pending_delivery'){
+        let confirmedOrder = null;
+        if(sessionId){
+          const confirmRes = await withRetry(() => fetch(apiUrl('/api/orders/confirm'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId, sessionId })
+          }), 4, 1400);
+          const confirmData = await confirmRes.json();
+          if(confirmData?.order?.id){
+            orderId = confirmData.order.id;
+            saveLastOrderId(orderId);
+          }
+          if(confirmRes.ok && confirmData?.order){
+            confirmedOrder = confirmData.order;
+          }
+        }
+
+        if(!orderId){
+          throw new Error('No se pudo resolver el pedido desde la sesión de Stripe');
+        }
+
+        const summaryRes = await withRetry(
+          () => fetch(apiUrl(`/api/orders/${encodeURIComponent(orderId)}/summary?session_id=${encodeURIComponent(sessionId)}`)),
+          4,
+          1400
+        );
+        const summaryData = await summaryRes.json();
+        if(!summaryRes.ok) throw new Error(summaryData?.error || 'No se pudo cargar el pedido');
+
+        const finalOrder = confirmedOrder || summaryData.order;
+        renderSummary(finalOrder);
+        if(finalOrder?.status === 'paid_pending_delivery'){
           Cart.clear();
         }
-        if(data.order?.status === 'pending_checkout' && data.order?.webhookReady && attempt < 5){
-          setTimeout(() => loadSummary(attempt + 1), 1200);
+        if(finalOrder?.status === 'pending_checkout' && attempt < 4){
+          await wait(1400 * (attempt + 1));
+          return loadSummary(attempt + 1);
         }
       }catch(err){
         console.error(err);
+        if(attempt < 4){
+          await wait(1600 * (attempt + 1));
+          return loadSummary(attempt + 1);
+        }
         if(leadEl){
-          leadEl.textContent = 'Tu pago ha sido recibido. Si el resumen tarda unos segundos en aparecer, no te preocupes: el equipo revisará el pedido manualmente.';
+          leadEl.textContent = 'Estamos terminando de confirmar tu compra con Stripe. Si este mensaje persiste, vuelve a cargar la página en unos segundos o contacta con el equipo.';
         }
       }
     };

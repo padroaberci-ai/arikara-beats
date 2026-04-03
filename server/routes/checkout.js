@@ -92,6 +92,12 @@ router.post('/', async (req, res) => {
       }
     }));
 
+    console.log(
+      `[checkout] order=${order.id} session=${session.id} status=${session.status || 'unknown'} amount=${Math.round(
+        subtotal * 100
+      )} currency=${currency}`
+    );
+
     return res.json({ url: session.url, orderId: order.id });
   } catch (err) {
     console.error('[checkout]', err.message);

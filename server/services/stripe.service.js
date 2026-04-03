@@ -25,6 +25,8 @@ export async function createCheckoutSession({ order }) {
   const client = getStripe();
   const baseUrl = process.env.APP_BASE_URL || process.env.APP_URL || 'http://localhost:3000';
   const currency = (process.env.STRIPE_CURRENCY || order.currency || 'eur').toLowerCase();
+  const beatIds = (order.items || []).map((item) => item.beatId).filter(Boolean).join(',');
+  const licenses = (order.items || []).map((item) => item.licenseType).filter(Boolean).join(',');
 
   const lineItems = (order.items || []).map((item) => ({
     quantity: item.quantity || 1,
@@ -37,6 +39,7 @@ export async function createCheckoutSession({ order }) {
           orderId: order.id,
           beatId: item.beatId,
           beatSlug: item.beatSlug,
+          license: item.licenseType,
           licenseType: item.licenseType
         }
       }
@@ -49,12 +52,15 @@ export async function createCheckoutSession({ order }) {
     line_items: lineItems,
     billing_address_collection: 'auto',
     customer_creation: 'always',
+    allow_promotion_codes: true,
     client_reference_id: order.id,
-    success_url: `${baseUrl}/success.html?order_id=${order.id}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${baseUrl}/cart.html?cancelled=1&order_id=${order.id}`,
+    success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${baseUrl}/cancel.html`,
     metadata: {
       source: 'arikarabeats-web',
-      orderId: order.id
+      orderId: order.id,
+      beatId: beatIds,
+      license: licenses
     },
     custom_fields: [
       {

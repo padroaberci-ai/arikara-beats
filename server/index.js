@@ -3,8 +3,6 @@
 */
 
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 import checkoutRoute from './routes/checkout.js';
@@ -12,9 +10,6 @@ import ordersRoute from './routes/orders.js';
 import stripeWebhook from './webhooks/stripe.js';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const defaultAllowedOrigins = [
@@ -55,46 +50,21 @@ app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), strip
 /* Body parsing */
 app.use(express.json({ limit: '1mb' }));
 
-/* Static frontend */
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
-
 /* API */
 app.use('/api/checkout', checkoutRoute);
 app.use('/api/orders', ordersRoute);
 
-/* Entry points */
+/* Healthcheck */
 app.get('/', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
-});
-
-app.get('/beat', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'beat.html'));
-});
-
-app.get('/licencias', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'licencias.html'));
-});
-
-app.get('/carrito', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'cart.html'));
-});
-
-app.get('/success', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'success.html'));
-});
-
-/* Legacy routes */
-app.get('/product', (_req, res) => {
-  res.redirect('/beat');
-});
-
-app.get('/cart', (_req, res) => {
-  res.redirect('/carrito');
+  res.json({
+    ok: true,
+    service: 'ARIKARA BEATS API'
+  });
 });
 
 /* Fallback */
 app.use((_req, res) => {
-  res.status(404).send('Not Found');
+  res.status(404).json({ error: 'Not Found' });
 });
 
 const PORT = process.env.PORT || 3000;
