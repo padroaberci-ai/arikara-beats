@@ -41,6 +41,15 @@ function createTransporter() {
   });
 }
 
+function getInternalNotificationEmail() {
+  return (
+    process.env.ORDER_NOTIFICATION_EMAIL ||
+    process.env.SALES_NOTIFICATION_EMAIL ||
+    process.env.EMAIL_TO ||
+    ''
+  ).trim();
+}
+
 async function sendMail({ to, subject, text, html }) {
   const transporter = createTransporter();
   if (!transporter) {
@@ -49,15 +58,18 @@ async function sendMail({ to, subject, text, html }) {
   }
 
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: process.env.EMAIL_FROM || process.env.SMTP_USER,
       to,
       subject,
       text,
       html
     });
+    console.log(
+      `[email] Enviado correctamente → to=${to} subject="${subject}" accepted=${(info.accepted || []).join(',') || '-'} rejected=${(info.rejected || []).join(',') || '-'}`
+    );
   } catch (error) {
-    console.error('[email] Error enviando correo:', error.message);
+    console.error(`[email] Error enviando correo → to=${to} subject="${subject}":`, error.message);
     return false;
   }
 
@@ -65,13 +77,15 @@ async function sendMail({ to, subject, text, html }) {
 }
 
 export async function sendInternalSaleNotification(order) {
-  const to = process.env.SALES_NOTIFICATION_EMAIL || process.env.EMAIL_TO;
+  const to = getInternalNotificationEmail();
   if (!to) {
-    console.warn('[email] SALES_NOTIFICATION_EMAIL no configurado. Se omite aviso interno.');
+    console.warn('[email] ORDER_NOTIFICATION_EMAIL/SALES_NOTIFICATION_EMAIL no configurado. Se omite aviso interno.');
     return false;
   }
 
-  const subject = `Nueva venta ARIKARA BEATS · ${order.id}`;
+  console.log(`[email] Preparando aviso interno del pedido ${order.id} para ${to}`);
+
+  const subject = `[NUEVO PEDIDO] ${order.id}`;
   const text = [
     'Nueva venta recibida',
     '',
@@ -119,6 +133,8 @@ export async function sendCustomerOrderConfirmation(order) {
     console.warn(`[email] Pedido ${order.id} sin email de cliente. Se omite confirmación.`);
     return false;
   }
+
+  console.log(`[email] Preparando confirmación al cliente del pedido ${order.id} para ${to}`);
 
   const subject = `Tu compra en ARIKARA BEATS ha sido recibida · ${order.id}`;
   const text = [
