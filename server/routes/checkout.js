@@ -20,7 +20,9 @@ router.post('/', async (req, res) => {
     const normalized = new Map();
 
     for (const rawItem of items) {
-      const reference = String(rawItem?.beatId || rawItem?.slug || '').trim();
+      const beatIdReference = String(rawItem?.beatId || '').trim();
+      const slugReference = String(rawItem?.slug || '').trim();
+      const reference = beatIdReference || slugReference;
       const licenseType = String(rawItem?.license || '').trim().toLowerCase();
 
       if (!reference || !licenseType) {
@@ -31,7 +33,9 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ error: 'La licencia Exclusive se gestiona por contacto directo.' });
       }
 
-      const beat = await getBeatByReference(reference);
+      const beat =
+        (beatIdReference ? await getBeatByReference(beatIdReference) : null) ||
+        (slugReference ? await getBeatByReference(slugReference) : null);
       if (!beat) {
         return res.status(400).json({ error: 'Uno de los beats del carrito ya no existe.' });
       }

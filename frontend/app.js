@@ -31,10 +31,59 @@
 
   const fmtEUR = (n) => Number(n || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
 
-  const loadCart = () => {
-    try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }catch{ return []; }
+  const sanitizeCartItems = (rawCart) => {
+    if(!Array.isArray(rawCart)) return [];
+
+    const beatsById = new Map(state.beats.map((beat) => [String(beat.id || ''), beat]));
+    const beatsBySlug = new Map(state.beats.map((beat) => [String(beat.slug || ''), beat]));
+    const validLicenses = new Set(
+      (state.licenses || [])
+        .filter((license) => license && license.id !== 'exclusive' && !license.disabled)
+        .map((license) => String(license.id || '').toLowerCase())
+    );
+    const normalized = new Map();
+
+    rawCart.forEach((entry) => {
+      if(!entry || typeof entry !== 'object') return;
+
+      const rawBeatId = String(entry.beatId || '').trim();
+      const rawSlug = String(entry.slug || '').trim();
+      const beat = beatsById.get(rawBeatId) || beatsBySlug.get(rawSlug);
+      if(!beat || beat.status !== 'available') return;
+
+      const license = String(entry.license || '').trim().toLowerCase();
+      if(!validLicenses.has(license)) return;
+
+      const price = Number(beat.prices?.[license]);
+      if(!Number.isFinite(price) || price <= 0) return;
+
+      normalized.set(beat.id, {
+        beatId: beat.id,
+        slug: beat.slug,
+        title: beat.title,
+        license,
+        price,
+        qty: 1
+      });
+    });
+
+    return Array.from(normalized.values());
   };
-  const saveCart = (cart) => localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+
+  const loadCart = () => {
+    try{
+      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      const sanitized = sanitizeCartItems(raw);
+      if(JSON.stringify(raw) !== JSON.stringify(sanitized)){
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitized));
+      }
+      return sanitized;
+    }catch{
+      try{ localStorage.removeItem(STORAGE_KEY); }catch{}
+      return [];
+    }
+  };
+  const saveCart = (cart) => localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeCartItems(cart)));
   const saveLastOrderId = (orderId) => {
     try {
       if (orderId) localStorage.setItem(LAST_ORDER_KEY, orderId);
@@ -770,6 +819,11 @@
         if(data && data.url){
           saveLastOrderId(data.orderId);
           window.location.href = data.url;
+          return;
+        }
+        if(data?.error === 'Uno de los beats del carrito ya no existe.' || data?.error === 'Carrito inválido'){
+          Cart.get();
+          document.dispatchEvent(new Event('cart:update'));
           return;
         }
         alert(data?.error || 'No se pudo iniciar el pago.');
