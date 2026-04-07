@@ -9,6 +9,19 @@ const extractCustomFields = (fields = []) =>
     return acc;
   }, {});
 
+const getSessionCustomerEmail = (session, fallback = '') =>
+  session.customer_details?.email ||
+  session.customer_email ||
+  (typeof session.customer === 'object' ? session.customer?.email || '' : '') ||
+  fallback ||
+  '';
+
+const getSessionCustomerName = (session, fallback = '') =>
+  session.customer_details?.name ||
+  (typeof session.customer === 'object' ? session.customer?.name || '' : '') ||
+  fallback ||
+  '';
+
 export default async function stripeWebhook(req, res) {
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -46,8 +59,8 @@ export default async function stripeWebhook(req, res) {
         status: 'paid_pending_delivery',
         customer: {
           ...currentOrder.customer,
-          name: session.customer_details?.name || currentOrder.customer?.name || '',
-          email: session.customer_details?.email || session.customer_email || currentOrder.customer?.email || '',
+          name: getSessionCustomerName(session, currentOrder.customer?.name || ''),
+          email: getSessionCustomerEmail(session, currentOrder.customer?.email || ''),
           artistName: customFields.artist_name || currentOrder.customer?.artistName || '',
           instagram: customFields.instagram || currentOrder.customer?.instagram || '',
           notes: customFields.notes || currentOrder.customer?.notes || ''

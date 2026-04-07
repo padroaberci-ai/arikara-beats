@@ -837,8 +837,9 @@
   if(page === 'success'){
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session_id') || '';
-    const storedOrderId = localStorage.getItem(LAST_ORDER_KEY) || '';
-    let orderId = sessionId ? '' : storedOrderId;
+    const orderIdFromUrl = params.get('order_id') || '';
+    const storedOrderId = orderIdFromUrl || localStorage.getItem(LAST_ORDER_KEY) || '';
+    let orderId = sessionId ? orderIdFromUrl : storedOrderId;
     const MAX_SUCCESS_RETRIES = 8;
 
     const titleEl = qs('#successTitle');

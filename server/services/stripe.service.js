@@ -18,7 +18,9 @@ export function getStripe() {
 
 export async function getCheckoutSession(sessionId) {
   const client = getStripe();
-  return client.checkout.sessions.retrieve(sessionId);
+  return client.checkout.sessions.retrieve(sessionId, {
+    expand: ['customer']
+  });
 }
 
 export async function createCheckoutSession({ order }) {
@@ -54,7 +56,7 @@ export async function createCheckoutSession({ order }) {
     customer_creation: 'always',
     allow_promotion_codes: true,
     client_reference_id: order.id,
-    success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${baseUrl}/success.html?session_id={CHECKOUT_SESSION_ID}&order_id=${encodeURIComponent(order.id)}`,
     cancel_url: `${baseUrl}/cancel.html`,
     metadata: {
       source: 'arikarabeats-web',

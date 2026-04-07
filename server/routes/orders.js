@@ -28,6 +28,17 @@ const hasAdminAccess = (req) => {
 const nowIso = () => new Date().toISOString();
 const orderTotalToCents = (order) => Math.round(Number(order.total || 0) * 100);
 const orderSubtotalToCents = (order) => Math.round(Number(order.subtotal || order.total || 0) * 100);
+const getSessionCustomerEmail = (session, fallback = '') =>
+  session.customer_details?.email ||
+  session.customer_email ||
+  (typeof session.customer === 'object' ? session.customer?.email || '' : '') ||
+  fallback ||
+  '';
+const getSessionCustomerName = (session, fallback = '') =>
+  session.customer_details?.name ||
+  (typeof session.customer === 'object' ? session.customer?.name || '' : '') ||
+  fallback ||
+  '';
 
 const extractCustomFields = (fields = []) =>
   fields.reduce((acc, field) => {
@@ -48,22 +59,37 @@ async function confirmOrderFromStripeSession({ orderId, sessionId }) {
   }
 
   const session = await getCheckoutSession(sessionId);
-  const derivedOrderId = orderId || session.client_reference_id || session.metadata?.orderId || '';
-  let order = derivedOrderId
-    ? await getOrderById(derivedOrderId)
-    : await findOrderByCheckoutSessionId(sessionId);
+  const sessionOrderId = String(session.client_reference_id || session.metadata?.orderId || '').trim();
+  let order = await findOrderByCheckoutSessionId(sessionId);
+  if (!order && sessionOrderId) {
+    order = await getOrderById(sessionOrderId);
+  }
+  if (!order && orderId) {
+    order = await getOrderById(orderId);
+  }
 
   if (!order) {
     console.warn(`[orders/confirm] session=${sessionId} sin pedido asociado`);
     return { ok: false, status: 404, error: 'Pedido no encontrado para la sesión recibida' };
   }
 
-  if (orderId && order.id !== orderId) {
-    return { ok: false, status: 409, error: 'La sesión no corresponde con el pedido solicitado' };
+  if (orderId && sessionOrderId && orderId !== sessionOrderId) {
+    console.warn(
+      `[orders/confirm] orderId recibido (${orderId}) no coincide con session.client_reference_id (${sessionOrderId}); se prioriza Stripe`
+    );
+  }
+
+  if (sessionOrderId && order.id !== sessionOrderId) {
+    const strictMatch = await getOrderById(sessionOrderId);
+    if (strictMatch) {
+      order = strictMatch;
+    }
   }
 
   if (order.stripe?.checkoutSessionId && order.stripe.checkoutSessionId !== sessionId) {
-    return { ok: false, status: 409, error: 'session_id no coincide con el pedido' };
+    console.warn(
+      `[orders/confirm] pedido ${order.id} tenía checkoutSessionId=${order.stripe.checkoutSessionId}; reconciliando con ${sessionId}`
+    );
   }
 
   const expectedCurrency = String(order.currency || 'EUR').toLowerCase();
@@ -89,8 +115,8 @@ async function confirmOrderFromStripeSession({ orderId, sessionId }) {
     ...order,
     customer: {
       ...order.customer,
-      name: session.customer_details?.name || order.customer?.name || '',
-      email: session.customer_details?.email || session.customer_email || order.customer?.email || '',
+      name: getSessionCustomerName(session, order.customer?.name || ''),
+      email: getSessionCustomerEmail(session, order.customer?.email || ''),
       artistName: customFields.artist_name || order.customer?.artistName || '',
       instagram: customFields.instagram || order.customer?.instagram || '',
       notes: customFields.notes || order.customer?.notes || ''
@@ -121,25 +147,41 @@ async function confirmOrderFromStripeSession({ orderId, sessionId }) {
     };
   }
 
-  const sentInternal = !order.notifications?.internalSentAt
-    ? await sendInternalSaleNotification(baseOrder)
-    : false;
-  const sentCustomer = !order.notifications?.customerSentAt
-    ? await sendCustomerOrderConfirmation(baseOrder)
-    : false;
-
   const updatedOrder = await updateOrder(order.id, (currentOrder) => ({
     ...currentOrder,
     ...baseOrder,
     status: 'paid_pending_delivery',
-    total: sessionTotal / 100,
+    total: sessionTotal / 100
+  }));
+
+  if (!updatedOrder) {
+    return { ok: false, status: 500, error: 'No se pudo actualizar el pedido tras confirmar el pago' };
+  }
+
+  console.log(
+    `[orders/confirm] pedido ${updatedOrder.id} confirmado en fallback; estado=${updatedOrder.status} total=${updatedOrder.total} customer=${updatedOrder.customer?.email || '-'}`
+  );
+
+  const sentInternal = !updatedOrder.notifications?.internalSentAt
+    ? await sendInternalSaleNotification(updatedOrder)
+    : false;
+  const sentCustomer = !updatedOrder.notifications?.customerSentAt
+    ? await sendCustomerOrderConfirmation(updatedOrder)
+    : false;
+
+  if (!sentInternal && !sentCustomer) {
+    return { ok: true, status: 200, order: updatedOrder };
+  }
+
+  const notifiedOrder = await updateOrder(updatedOrder.id, (currentOrder) => ({
+    ...currentOrder,
     notifications: {
       internalSentAt: sentInternal ? nowIso() : currentOrder.notifications?.internalSentAt || '',
       customerSentAt: sentCustomer ? nowIso() : currentOrder.notifications?.customerSentAt || ''
     }
   }));
 
-  return { ok: true, status: 200, order: updatedOrder };
+  return { ok: true, status: 200, order: notifiedOrder || updatedOrder };
 }
 
 router.get('/', async (req, res) => {
@@ -186,11 +228,29 @@ router.get('/:orderId/summary', async (req, res) => {
     return res.status(403).json({ error: 'No autorizado para ver este resumen' });
   }
 
+  let resolvedOrder = order;
+  if (
+    sessionId &&
+    sessionId === order.stripe?.checkoutSessionId &&
+    hasStripeSecretKey() &&
+    !hasStripeWebhookSecret() &&
+    order.status === 'pending_checkout'
+  ) {
+    try {
+      const result = await confirmOrderFromStripeSession({ orderId: order.id, sessionId });
+      if (result.order) {
+        resolvedOrder = result.order;
+      }
+    } catch (error) {
+      console.warn('[orders/summary] No se pudo reconciliar la sesión de Stripe:', error.message);
+    }
+  }
+
   return res.json({
     order: {
-      ...toPublicOrderSummary(order),
-      paymentObserved: order.status === 'paid_pending_delivery',
-      degradedMode: order.stripe?.confirmationMode === 'success_return_fallback',
+      ...toPublicOrderSummary(resolvedOrder),
+      paymentObserved: resolvedOrder.status === 'paid_pending_delivery',
+      degradedMode: resolvedOrder.stripe?.confirmationMode === 'success_return_fallback',
       webhookReady: hasStripeWebhookSecret()
     }
   });

@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const formatEUR = (amount, currency = 'EUR') => {
   try {
     return new Intl.NumberFormat('es-ES', {
@@ -51,29 +53,37 @@ function getInternalNotificationEmail() {
 }
 
 async function sendMail({ to, subject, text, html }) {
-  const transporter = createTransporter();
-  if (!transporter) {
-    console.warn('[email] SMTP no configurado. Se omite el envío de correo.');
-    return false;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const transporter = createTransporter();
+    if (!transporter) {
+      console.warn('[email] SMTP no configurado. Se omite el envío de correo.');
+      return false;
+    }
+
+    try {
+      const info = await transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+        to,
+        subject,
+        text,
+        html
+      });
+      console.log(
+        `[email] Enviado correctamente → to=${to} subject="${subject}" accepted=${(info.accepted || []).join(',') || '-'} rejected=${(info.rejected || []).join(',') || '-'}`
+      );
+      return true;
+    } catch (error) {
+      console.error(
+        `[email] Error enviando correo (intento ${attempt}/2) → to=${to} subject="${subject}":`,
+        error.message
+      );
+      if (attempt < 2) {
+        await wait(600);
+      }
+    }
   }
 
-  try {
-    const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-      to,
-      subject,
-      text,
-      html
-    });
-    console.log(
-      `[email] Enviado correctamente → to=${to} subject="${subject}" accepted=${(info.accepted || []).join(',') || '-'} rejected=${(info.rejected || []).join(',') || '-'}`
-    );
-  } catch (error) {
-    console.error(`[email] Error enviando correo → to=${to} subject="${subject}":`, error.message);
-    return false;
-  }
-
-  return true;
+  return false;
 }
 
 export async function sendInternalSaleNotification(order) {
