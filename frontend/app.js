@@ -836,8 +836,10 @@
 
   if(page === 'success'){
     const params = new URLSearchParams(window.location.search);
-    let orderId = localStorage.getItem(LAST_ORDER_KEY) || '';
     const sessionId = params.get('session_id') || '';
+    const storedOrderId = localStorage.getItem(LAST_ORDER_KEY) || '';
+    let orderId = sessionId ? '' : storedOrderId;
+    const MAX_SUCCESS_RETRIES = 8;
 
     const titleEl = qs('#successTitle');
     const leadEl = qs('#successLead');
@@ -881,6 +883,16 @@
       }
     };
 
+    const chooseBestOrder = (primary, secondary) => {
+      if(!primary) return secondary || null;
+      if(!secondary) return primary;
+      if(primary.status === 'paid_pending_delivery' && secondary.status !== 'paid_pending_delivery') return primary;
+      if(secondary.status === 'paid_pending_delivery' && primary.status !== 'paid_pending_delivery') return secondary;
+      const primaryScore = Number(Boolean(primary.customer?.email)) + Number((primary.items || []).length > 0);
+      const secondaryScore = Number(Boolean(secondary.customer?.email)) + Number((secondary.items || []).length > 0);
+      return secondaryScore > primaryScore ? secondary : primary;
+    };
+
     const loadSummary = async (attempt = 0) => {
       if(!sessionId && !orderId){
         if(leadEl){
@@ -900,6 +912,10 @@
           if(confirmData?.order?.id){
             orderId = confirmData.order.id;
             saveLastOrderId(orderId);
+            renderSummary(confirmData.order);
+          }
+          if(confirmRes.status >= 500){
+            throw new Error(confirmData?.error || 'No se pudo confirmar el pedido');
           }
           if(confirmRes.ok && confirmData?.order){
             confirmedOrder = confirmData.order;
@@ -916,20 +932,33 @@
           1400
         );
         const summaryData = await summaryRes.json();
-        if(!summaryRes.ok) throw new Error(summaryData?.error || 'No se pudo cargar el pedido');
+        if(!summaryRes.ok){
+          if(confirmedOrder){
+            renderSummary(confirmedOrder);
+            if(confirmedOrder?.status === 'paid_pending_delivery'){
+              Cart.clear();
+              return;
+            }
+          }
+          throw new Error(summaryData?.error || 'No se pudo cargar el pedido');
+        }
 
-        const finalOrder = confirmedOrder || summaryData.order;
+        const finalOrder = chooseBestOrder(confirmedOrder, summaryData.order);
+        if(!finalOrder){
+          throw new Error('No se recibieron datos del pedido');
+        }
         renderSummary(finalOrder);
         if(finalOrder?.status === 'paid_pending_delivery'){
           Cart.clear();
+          return;
         }
-        if(finalOrder?.status === 'pending_checkout' && attempt < 4){
+        if(finalOrder?.status === 'pending_checkout' && attempt < MAX_SUCCESS_RETRIES){
           await wait(1400 * (attempt + 1));
           return loadSummary(attempt + 1);
         }
       }catch(err){
         console.error(err);
-        if(attempt < 4){
+        if(attempt < MAX_SUCCESS_RETRIES){
           await wait(1600 * (attempt + 1));
           return loadSummary(attempt + 1);
         }
