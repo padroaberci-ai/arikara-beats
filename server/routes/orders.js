@@ -419,9 +419,10 @@ router.get('/:orderId/summary', async (req, res) => {
 });
 
 router.post('/confirm', async (req, res) => {
+  const orderId = String(req.body?.orderId || req.body?.order_id || '').trim();
+  const sessionId = String(req.body?.sessionId || req.body?.session_id || '').trim();
+
   try {
-    const orderId = String(req.body?.orderId || req.body?.order_id || '').trim();
-    const sessionId = String(req.body?.sessionId || req.body?.session_id || '').trim();
     const result = await confirmOrderFromStripeSession({ orderId, sessionId });
 
     if (!result.ok) {
@@ -446,6 +447,22 @@ router.post('/confirm', async (req, res) => {
     });
   } catch (error) {
     console.error('[orders/confirm] Error inesperado:', error.message);
+    const fallbackOrder =
+      (sessionId ? await findOrderByCheckoutSessionId(sessionId) : null) ||
+      (orderId ? await getOrderById(orderId) : null);
+
+    if (fallbackOrder) {
+      return res.json({
+        order: {
+          ...toPublicOrderSummary(fallbackOrder),
+          paymentObserved: fallbackOrder.status === 'paid_pending_delivery',
+          degradedMode: true,
+          webhookReady: false
+        },
+        warning: 'El pedido se devolvió desde almacenamiento local tras un error durante la confirmación'
+      });
+    }
+
     return res.status(500).json({ error: 'No se pudo confirmar el pedido con Stripe' });
   }
 });

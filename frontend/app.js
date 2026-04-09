@@ -915,11 +915,12 @@
             saveLastOrderId(orderId);
             renderSummary(confirmData.order);
           }
-          if(confirmRes.status >= 500){
-            throw new Error(confirmData?.error || 'No se pudo confirmar el pedido');
-          }
           if(confirmRes.ok && confirmData?.order){
             confirmedOrder = confirmData.order;
+          }else if(confirmData?.order){
+            confirmedOrder = confirmData.order;
+          }else if(confirmRes.status >= 500){
+            console.warn('Confirmación fallback no disponible todavía:', confirmData?.error || confirmRes.status);
           }
         }
 
