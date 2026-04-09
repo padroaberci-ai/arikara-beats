@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getStripe, hasStripeSecretKey } from './stripe.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,13 +34,41 @@ async function writeOrdersUnsafe(orders) {
   await fs.rename(tempFile, ORDERS_FILE);
 }
 
-function nextOrderId(orders) {
-  const last = orders.reduce((max, order) => {
-    const match = String(order.id || '').match(/^ARK-(\d{6})$/);
-    if (!match) return max;
-    return Math.max(max, Number(match[1]));
-  }, 0);
+function extractOrderSequence(orderId) {
+  const match = String(orderId || '').match(/^ARK-(\d{6})$/);
+  return match ? Number(match[1]) : 0;
+}
 
+function getHighestLocalOrderNumber(orders) {
+  return orders.reduce((max, order) => Math.max(max, extractOrderSequence(order.id)), 0);
+}
+
+async function getHighestStripeOrderNumber() {
+  if (!hasStripeSecretKey()) {
+    return 0;
+  }
+
+  try {
+    const stripe = getStripe();
+    const sessions = await stripe.checkout.sessions.list({ limit: 100 });
+
+    return sessions.data.reduce((max, session) => {
+      return Math.max(
+        max,
+        extractOrderSequence(session.client_reference_id),
+        extractOrderSequence(session.metadata?.orderId)
+      );
+    }, 0);
+  } catch (error) {
+    console.warn(`[storage] No se pudo consultar Stripe para calcular el siguiente pedido: ${error.message}`);
+    return 0;
+  }
+}
+
+async function nextOrderId(orders) {
+  const localLast = getHighestLocalOrderNumber(orders);
+  const stripeLast = await getHighestStripeOrderNumber();
+  const last = Math.max(localLast, stripeLast);
   return `ARK-${String(last + 1).padStart(6, '0')}`;
 }
 
@@ -52,7 +81,7 @@ export async function createOrder(payload) {
   const orders = await readOrdersUnsafe();
   const timestamp = nowIso();
   const order = {
-    id: nextOrderId(orders),
+    id: await nextOrderId(orders),
     createdAt: timestamp,
     updatedAt: timestamp,
     status: 'pending_checkout',
