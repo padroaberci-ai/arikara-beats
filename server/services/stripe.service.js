@@ -23,6 +23,14 @@ export async function getCheckoutSession(sessionId) {
   });
 }
 
+export async function getCheckoutSessionLineItems(sessionId) {
+  const client = getStripe();
+  return client.checkout.sessions.listLineItems(sessionId, {
+    limit: 100,
+    expand: ['data.price.product']
+  });
+}
+
 export async function createCheckoutSession({ order }) {
   const client = getStripe();
   const baseUrl = process.env.APP_BASE_URL || process.env.APP_URL || 'http://localhost:3000';

@@ -1,13 +1,20 @@
 import express from 'express';
+import { getBeatByReference, getLicenseById } from '../services/catalog.service.js';
 import { sendCustomerOrderConfirmation, sendInternalSaleNotification } from '../services/email.service.js';
 import {
+  createOrder,
   findOrderByCheckoutSessionId,
   getOrderById,
   listOrders,
   toPublicOrderSummary,
   updateOrder
 } from '../services/storage.service.js';
-import { getCheckoutSession, hasStripeSecretKey, hasStripeWebhookSecret } from '../services/stripe.service.js';
+import {
+  getCheckoutSession,
+  getCheckoutSessionLineItems,
+  hasStripeSecretKey,
+  hasStripeWebhookSecret
+} from '../services/stripe.service.js';
 
 const router = express.Router();
 
@@ -47,6 +54,143 @@ const extractCustomFields = (fields = []) =>
     return acc;
   }, {});
 
+const fallbackLicenseName = (licenseType) => {
+  const normalized = String(licenseType || '').trim().toLowerCase();
+  if (normalized === 'basic') return 'Basic';
+  if (normalized === 'premium') return 'Premium';
+  if (normalized === 'exclusive') return 'Exclusive';
+  return normalized || 'Licencia';
+};
+
+const splitLineItemDescription = (description = '') => {
+  const raw = String(description || '');
+  const separator = ' — ';
+  if (!raw.includes(separator)) {
+    return {
+      beatTitleSnapshot: raw.trim(),
+      licenseNameSnapshot: ''
+    };
+  }
+
+  const [beatTitleSnapshot, ...rest] = raw.split(separator);
+  return {
+    beatTitleSnapshot: beatTitleSnapshot.trim(),
+    licenseNameSnapshot: rest.join(separator).trim()
+  };
+};
+
+async function recoverOrderFromStripeSession({ orderId, session }) {
+  const recoveredOrderId = String(session.client_reference_id || session.metadata?.orderId || orderId || '').trim();
+  if (!recoveredOrderId) {
+    return null;
+  }
+
+  const existingOrder =
+    (await findOrderByCheckoutSessionId(session.id)) ||
+    (await getOrderById(recoveredOrderId));
+  if (existingOrder) {
+    return existingOrder;
+  }
+
+  const customFields = extractCustomFields(session.custom_fields);
+  const recoveredItems = [];
+  try {
+    const lineItems = await getCheckoutSessionLineItems(session.id);
+
+    for (const lineItem of lineItems.data || []) {
+      const quantity = Math.max(1, Number(lineItem.quantity || 1));
+      const rawProduct = lineItem.price?.product;
+      const productMetadata = typeof rawProduct === 'object' ? rawProduct?.metadata || {} : {};
+      const licenseType = String(productMetadata.licenseType || productMetadata.license || '').trim().toLowerCase();
+      const beatReference = String(productMetadata.beatId || productMetadata.beatSlug || '').trim();
+      const beat = beatReference ? await getBeatByReference(beatReference) : null;
+      const license = licenseType ? await getLicenseById(licenseType) : null;
+      const descriptionParts = splitLineItemDescription(lineItem.description);
+      const rawUnitAmount = Number(lineItem.amount_subtotal ?? lineItem.amount_total ?? 0);
+
+      recoveredItems.push({
+        beatId: beat?.id || String(productMetadata.beatId || '').trim(),
+        beatSlug: beat?.slug || String(productMetadata.beatSlug || '').trim(),
+        beatTitleSnapshot: beat?.title || descriptionParts.beatTitleSnapshot || 'Beat',
+        licenseType: license?.id || licenseType || 'basic',
+        licenseNameSnapshot:
+          license?.name || descriptionParts.licenseNameSnapshot || fallbackLicenseName(licenseType),
+        unitPriceSnapshot: rawUnitAmount / quantity / 100,
+        quantity,
+        fulfillmentStatus: 'pending'
+      });
+    }
+  } catch (error) {
+    console.warn(`[orders/recover] No se pudieron leer line_items de Stripe para ${session.id}: ${error.message}`);
+  }
+
+  if (recoveredItems.length === 0) {
+    const beatReferences = String(session.metadata?.beatId || '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const licenseTypes = String(session.metadata?.license || '')
+      .split(',')
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+    const fallbackQuantity = Math.max(beatReferences.length, licenseTypes.length, 1);
+    const fallbackUnitAmount = Number(session.amount_subtotal ?? session.amount_total ?? 0) / fallbackQuantity / 100;
+
+    for (let index = 0; index < fallbackQuantity; index += 1) {
+      const beatReference = beatReferences[index] || beatReferences[0] || '';
+      const licenseType = licenseTypes[index] || licenseTypes[0] || 'basic';
+      const beat = beatReference ? await getBeatByReference(beatReference) : null;
+      const license = await getLicenseById(licenseType);
+
+      recoveredItems.push({
+        beatId: beat?.id || beatReference,
+        beatSlug: beat?.slug || '',
+        beatTitleSnapshot: beat?.title || beatReference || 'Beat',
+        licenseType: license?.id || licenseType,
+        licenseNameSnapshot: license?.name || fallbackLicenseName(licenseType),
+        unitPriceSnapshot: fallbackUnitAmount,
+        quantity: 1,
+        fulfillmentStatus: 'pending'
+      });
+    }
+  }
+
+  const recoveredOrder = await createOrder({
+    id: recoveredOrderId,
+    createdAt: session.created ? new Date(session.created * 1000).toISOString() : nowIso(),
+    status: 'pending_checkout',
+    currency: String(session.currency || 'eur').toUpperCase(),
+    subtotal: Number(session.amount_subtotal ?? session.amount_total ?? 0) / 100,
+    total: Number(session.amount_total || 0) / 100,
+    customer: {
+      name: getSessionCustomerName(session, ''),
+      email: getSessionCustomerEmail(session, ''),
+      artistName: customFields.artist_name || '',
+      instagram: customFields.instagram || '',
+      notes: customFields.notes || ''
+    },
+    stripe: {
+      checkoutSessionId: session.id || '',
+      paymentIntentId: session.payment_intent || '',
+      eventIds: [],
+      paymentStatus: session.payment_status || '',
+      sessionStatus: session.status || '',
+      confirmationMode: 'success_return_fallback'
+    },
+    notifications: {
+      internalSentAt: '',
+      customerSentAt: ''
+    },
+    items: recoveredItems
+  });
+
+  console.warn(
+    `[orders/recover] pedido ${recoveredOrder.id} recreado desde Stripe session ${session.id} con ${recoveredItems.length} item(s)`
+  );
+
+  return recoveredOrder;
+}
+
 async function confirmOrderFromStripeSession({ orderId, sessionId }) {
   if (!sessionId) {
     return { ok: false, status: 400, error: 'session_id requerido' };
@@ -66,6 +210,9 @@ async function confirmOrderFromStripeSession({ orderId, sessionId }) {
   }
   if (!order && orderId) {
     order = await getOrderById(orderId);
+  }
+  if (!order) {
+    order = await recoverOrderFromStripeSession({ orderId, session });
   }
 
   if (!order) {
@@ -217,13 +364,28 @@ router.get('/:orderId', async (req, res) => {
 });
 
 router.get('/:orderId/summary', async (req, res) => {
-  const order = await getOrderById(req.params.orderId);
+  const sessionId = String(req.query.session_id || '');
+  let order = await getOrderById(req.params.orderId);
+  if (
+    !order &&
+    sessionId &&
+    hasStripeSecretKey() &&
+    !hasStripeWebhookSecret()
+  ) {
+    try {
+      const result = await confirmOrderFromStripeSession({ orderId: req.params.orderId, sessionId });
+      if (result.order) {
+        order = result.order;
+      }
+    } catch (error) {
+      console.warn('[orders/summary] No se pudo recuperar el pedido desde Stripe:', error.message);
+    }
+  }
   if (!order) {
     return res.status(404).json({ error: 'Pedido no encontrado' });
   }
 
   const isAdmin = hasAdminAccess(req);
-  const sessionId = String(req.query.session_id || '');
   if (!isAdmin && (!sessionId || sessionId !== order.stripe?.checkoutSessionId)) {
     return res.status(403).json({ error: 'No autorizado para ver este resumen' });
   }
@@ -258,8 +420,8 @@ router.get('/:orderId/summary', async (req, res) => {
 
 router.post('/confirm', async (req, res) => {
   try {
-    const orderId = String(req.body?.orderId || '').trim();
-    const sessionId = String(req.body?.sessionId || '').trim();
+    const orderId = String(req.body?.orderId || req.body?.order_id || '').trim();
+    const sessionId = String(req.body?.sessionId || req.body?.session_id || '').trim();
     const result = await confirmOrderFromStripeSession({ orderId, sessionId });
 
     if (!result.ok) {
