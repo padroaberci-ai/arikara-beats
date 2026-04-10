@@ -2,11 +2,11 @@ import express from 'express';
 import { getBeatByReference, getLicenseById } from '../services/catalog.service.js';
 import { sendCustomerOrderConfirmation, sendInternalSaleNotification } from '../services/email.service.js';
 import {
-  createOrder,
   findOrderByCheckoutSessionId,
   getOrderById,
   listOrders,
   toPublicOrderSummary,
+  upsertOrder,
   updateOrder
 } from '../services/storage.service.js';
 import {
@@ -155,7 +155,7 @@ async function recoverOrderFromStripeSession({ orderId, session }) {
     }
   }
 
-  const recoveredOrder = await createOrder({
+  const recoveredOrder = await upsertOrder({
     id: recoveredOrderId,
     createdAt: session.created ? new Date(session.created * 1000).toISOString() : nowIso(),
     status: 'pending_checkout',
@@ -379,6 +379,9 @@ router.get('/:orderId/summary', async (req, res) => {
       }
     } catch (error) {
       console.warn('[orders/summary] No se pudo recuperar el pedido desde Stripe:', error.message);
+      order =
+        (await findOrderByCheckoutSessionId(sessionId)) ||
+        (await getOrderById(req.params.orderId));
     }
   }
   if (!order) {
@@ -405,6 +408,10 @@ router.get('/:orderId/summary', async (req, res) => {
       }
     } catch (error) {
       console.warn('[orders/summary] No se pudo reconciliar la sesión de Stripe:', error.message);
+      resolvedOrder =
+        (await findOrderByCheckoutSessionId(sessionId)) ||
+        (await getOrderById(order.id)) ||
+        resolvedOrder;
     }
   }
 
@@ -447,9 +454,18 @@ router.post('/confirm', async (req, res) => {
     });
   } catch (error) {
     console.error('[orders/confirm] Error inesperado:', error.message);
-    const fallbackOrder =
+    let fallbackOrder =
       (sessionId ? await findOrderByCheckoutSessionId(sessionId) : null) ||
       (orderId ? await getOrderById(orderId) : null);
+
+    if (!fallbackOrder && sessionId && hasStripeSecretKey() && !hasStripeWebhookSecret()) {
+      try {
+        const session = await getCheckoutSession(sessionId);
+        fallbackOrder = await recoverOrderFromStripeSession({ orderId, session });
+      } catch (recoveryError) {
+        console.warn('[orders/confirm] No se pudo rescatar el pedido tras error:', recoveryError.message);
+      }
+    }
 
     if (fallbackOrder) {
       return res.json({

@@ -10,6 +10,13 @@ const ORDERS_FILE = path.join(DATA_DIR, 'orders.json');
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const nowIso = () => new Date().toISOString();
+let ordersQueue = Promise.resolve();
+
+async function withOrdersLock(task) {
+  const run = ordersQueue.then(task, task);
+  ordersQueue = run.catch(() => {});
+  return run;
+}
 
 async function ensureOrdersFile() {
   await fs.mkdir(DATA_DIR, { recursive: true });
@@ -29,7 +36,7 @@ async function readOrdersUnsafe() {
 
 async function writeOrdersUnsafe(orders) {
   await ensureOrdersFile();
-  const tempFile = `${ORDERS_FILE}.tmp`;
+  const tempFile = `${ORDERS_FILE}.${process.pid}.${Date.now()}.tmp`;
   await fs.writeFile(tempFile, `${JSON.stringify(orders, null, 2)}\n`, 'utf8');
   await fs.rename(tempFile, ORDERS_FILE);
 }
@@ -73,81 +80,148 @@ async function nextOrderId(orders) {
 }
 
 export async function readOrders() {
-  const orders = await readOrdersUnsafe();
-  return clone(orders);
+  return withOrdersLock(async () => {
+    const orders = await readOrdersUnsafe();
+    return clone(orders);
+  });
 }
 
 export async function createOrder(payload) {
-  const orders = await readOrdersUnsafe();
-  const timestamp = nowIso();
-  const order = {
-    id: await nextOrderId(orders),
-    createdAt: timestamp,
-    updatedAt: timestamp,
-    status: 'pending_checkout',
-    currency: 'EUR',
-    subtotal: 0,
-    total: 0,
-    customer: {
-      name: '',
-      email: '',
-      artistName: '',
-      instagram: '',
-      notes: ''
-    },
-    stripe: {
-      checkoutSessionId: '',
-      paymentIntentId: '',
-      eventIds: [],
-      paymentStatus: '',
-      sessionStatus: '',
-      confirmationMode: ''
-    },
-    notifications: {
-      internalSentAt: '',
-      customerSentAt: ''
-    },
-    items: [],
-    ...payload
-  };
+  return withOrdersLock(async () => {
+    const orders = await readOrdersUnsafe();
+    const timestamp = nowIso();
+    const order = {
+      id: await nextOrderId(orders),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      status: 'pending_checkout',
+      currency: 'EUR',
+      subtotal: 0,
+      total: 0,
+      customer: {
+        name: '',
+        email: '',
+        artistName: '',
+        instagram: '',
+        notes: ''
+      },
+      stripe: {
+        checkoutSessionId: '',
+        paymentIntentId: '',
+        eventIds: [],
+        paymentStatus: '',
+        sessionStatus: '',
+        confirmationMode: ''
+      },
+      notifications: {
+        internalSentAt: '',
+        customerSentAt: ''
+      },
+      items: [],
+      ...payload
+    };
 
-  orders.push(order);
-  await writeOrdersUnsafe(orders);
-  return clone(order);
+    orders.push(order);
+    await writeOrdersUnsafe(orders);
+    return clone(order);
+  });
+}
+
+export async function upsertOrder(payload) {
+  return withOrdersLock(async () => {
+    const orders = await readOrdersUnsafe();
+    const timestamp = nowIso();
+    const nextOrder = {
+      status: 'pending_checkout',
+      currency: 'EUR',
+      subtotal: 0,
+      total: 0,
+      customer: {
+        name: '',
+        email: '',
+        artistName: '',
+        instagram: '',
+        notes: ''
+      },
+      stripe: {
+        checkoutSessionId: '',
+        paymentIntentId: '',
+        eventIds: [],
+        paymentStatus: '',
+        sessionStatus: '',
+        confirmationMode: ''
+      },
+      notifications: {
+        internalSentAt: '',
+        customerSentAt: ''
+      },
+      items: [],
+      ...payload
+    };
+
+    const index = orders.findIndex((entry) => entry.id === nextOrder.id);
+    if (index >= 0) {
+      orders[index] = {
+        ...orders[index],
+        ...nextOrder,
+        updatedAt: timestamp
+      };
+      await writeOrdersUnsafe(orders);
+      return clone(orders[index]);
+    }
+
+    const createdOrder = {
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      ...nextOrder
+    };
+
+    orders.push(createdOrder);
+    await writeOrdersUnsafe(orders);
+    return clone(createdOrder);
+  });
 }
 
 export async function getOrderById(orderId) {
-  const orders = await readOrdersUnsafe();
-  const order = orders.find((entry) => entry.id === orderId);
-  return order ? clone(order) : null;
+  return withOrdersLock(async () => {
+    const orders = await readOrdersUnsafe();
+    const order = orders.find((entry) => entry.id === orderId);
+    return order ? clone(order) : null;
+  });
 }
 
 export async function findOrderByCheckoutSessionId(sessionId) {
-  const orders = await readOrdersUnsafe();
-  const order = orders.find((entry) => entry.stripe?.checkoutSessionId === sessionId);
-  return order ? clone(order) : null;
+  return withOrdersLock(async () => {
+    const orders = await readOrdersUnsafe();
+    const order = orders.find((entry) => entry.stripe?.checkoutSessionId === sessionId);
+    return order ? clone(order) : null;
+  });
 }
 
 export async function updateOrder(orderId, updater) {
-  const orders = await readOrdersUnsafe();
-  const index = orders.findIndex((entry) => entry.id === orderId);
-  if (index === -1) return null;
+  return withOrdersLock(async () => {
+    const orders = await readOrdersUnsafe();
+    const index = orders.findIndex((entry) => entry.id === orderId);
+    if (index === -1) return null;
 
-  const current = clone(orders[index]);
-  const next = await updater(current);
-  if (!next) return clone(orders[index]);
+    const current = clone(orders[index]);
+    const next = await updater(current);
+    if (!next) return clone(orders[index]);
 
-  next.updatedAt = nowIso();
-  orders[index] = next;
-  await writeOrdersUnsafe(orders);
-  return clone(next);
+    next.updatedAt = nowIso();
+    orders[index] = next;
+    await writeOrdersUnsafe(orders);
+    return clone(next);
+  });
 }
 
 export async function listOrders() {
-  const orders = await readOrdersUnsafe();
-  return clone(
-    orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-  );
+  return withOrdersLock(async () => {
+    const orders = await readOrdersUnsafe();
+    return clone(
+      orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    );
+  });
 }
 
 export function toPublicOrderSummary(order) {
