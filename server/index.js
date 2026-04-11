@@ -76,7 +76,7 @@ app.listen(PORT, () => {
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
     console.warn('[ARIKARA] Webhook Stripe en modo espera: falta STRIPE_WEBHOOK_SECRET');
   }
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('[ARIKARA] Emails automáticos desactivados: SMTP incompleto');
+  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
+    console.warn('[ARIKARA] transport=resend disabled: falta RESEND_API_KEY o EMAIL_FROM');
   }
 });

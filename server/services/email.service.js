@@ -1,10 +1,6 @@
-import nodemailer from 'nodemailer';
-
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const getSmtpTimeout = (name, fallback) => {
-  const value = Number(process.env[name] || fallback);
-  return Number.isFinite(value) && value > 0 ? value : fallback;
-};
+const RESEND_API_URL = 'https://api.resend.com/emails';
+const RESEND_TIMEOUT_MS = 8000;
 
 const formatEUR = (amount, currency = 'EUR') => {
   try {
@@ -27,34 +23,6 @@ const renderItems = (items = []) =>
     )
     .join('');
 
-function createTransporter() {
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!user || !pass) return null;
-  const timeoutOptions = {
-    connectionTimeout: getSmtpTimeout('SMTP_CONNECTION_TIMEOUT_MS', 6000),
-    greetingTimeout: getSmtpTimeout('SMTP_GREETING_TIMEOUT_MS', 6000),
-    socketTimeout: getSmtpTimeout('SMTP_SOCKET_TIMEOUT_MS', 12000),
-    dnsTimeout: getSmtpTimeout('SMTP_DNS_TIMEOUT_MS', 6000)
-  };
-
-  if (process.env.SMTP_HOST) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT || 587),
-      secure: String(process.env.SMTP_SECURE || 'false') === 'true',
-      auth: { user, pass },
-      ...timeoutOptions
-    });
-  }
-
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user, pass },
-    ...timeoutOptions
-  });
-}
-
 function getInternalNotificationEmail() {
   return (
     process.env.ORDER_NOTIFICATION_EMAIL ||
@@ -64,34 +32,82 @@ function getInternalNotificationEmail() {
   ).trim();
 }
 
+function getResendConfig() {
+  const apiKey = String(process.env.RESEND_API_KEY || '').trim();
+  const from = String(process.env.EMAIL_FROM || '').trim();
+
+  if (!apiKey || !from) {
+    return null;
+  }
+
+  return { apiKey, from };
+}
+
 async function sendMail({ to, subject, text, html }) {
+  const config = getResendConfig();
+  if (!config) {
+    console.warn('[email] transport=resend disabled: falta RESEND_API_KEY o EMAIL_FROM. Se omite el envío de correo.');
+    return false;
+  }
+
+  if (typeof fetch !== 'function') {
+    console.error('[email] transport=resend unavailable: fetch no está disponible en este runtime.');
+    return false;
+  }
+
+  const payload = {
+    from: config.from,
+    to: [to],
+    subject,
+    text,
+    html
+  };
+
   for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const transporter = createTransporter();
-    if (!transporter) {
-      console.warn('[email] SMTP no configurado. Se omite el envío de correo.');
-      return false;
-    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), RESEND_TIMEOUT_MS);
 
     try {
-      const info = await transporter.sendMail({
-        from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-        to,
-        subject,
-        text,
-        html
+      const response = await fetch(RESEND_API_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
       });
-      console.log(
-        `[email] Enviado correctamente → to=${to} subject="${subject}" accepted=${(info.accepted || []).join(',') || '-'} rejected=${(info.rejected || []).join(',') || '-'}`
-      );
-      return true;
-    } catch (error) {
-      console.error(
-        `[email] Error enviando correo (intento ${attempt}/2) → to=${to} subject="${subject}":`,
-        error.message
-      );
-      if (attempt < 2) {
-        await wait(600);
+
+      clearTimeout(timer);
+
+      let body = {};
+      try {
+        body = await response.json();
+      } catch {
+        body = {};
       }
+
+      if (!response.ok) {
+        console.error(
+          `[email] transport=resend error (intento ${attempt}/2) → to=${to} subject="${subject}" status=${response.status}:`,
+          body?.message || body?.error || response.statusText || 'Error desconocido'
+        );
+      } else {
+        console.log(
+          `[email] transport=resend sent → to=${to} subject="${subject}" id=${body?.id || '-'}`
+        );
+        return true;
+      }
+    } catch (error) {
+      clearTimeout(timer);
+      console.error(
+        `[email] transport=resend error (intento ${attempt}/2) → to=${to} subject="${subject}":`,
+        error.name === 'AbortError' ? 'Request timeout' : error.message
+      );
+    }
+
+    if (attempt < 2) {
+      await wait(600);
     }
   }
 
@@ -105,7 +121,7 @@ export async function sendInternalSaleNotification(order) {
     return false;
   }
 
-  console.log(`[email] Preparando aviso interno del pedido ${order.id} para ${to}`);
+  console.log(`[email] transport=resend internal queued → order=${order.id} to=${to}`);
 
   const subject = `[NUEVO PEDIDO] ${order.id}`;
   const text = [
@@ -156,7 +172,7 @@ export async function sendCustomerOrderConfirmation(order) {
     return false;
   }
 
-  console.log(`[email] Preparando confirmación al cliente del pedido ${order.id} para ${to}`);
+  console.log(`[email] transport=resend customer queued → order=${order.id} to=${to}`);
 
   const subject = `Tu compra en ARIKARA BEATS ha sido recibida · ${order.id}`;
   const text = [
