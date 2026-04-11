@@ -15,6 +15,11 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const apiUrl = (path) => `${API_BASE}${path}`;
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  const fetchWithTimeout = (resource, options = {}, timeoutMs = 12000) => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(resource, { ...options, signal: controller.signal }).finally(() => window.clearTimeout(timer));
+  };
   const withRetry = async (task, retries = 0, baseDelay = 1200) => {
     let lastError;
     for(let attempt = 0; attempt <= retries; attempt += 1){
@@ -904,11 +909,11 @@
       try{
         let confirmedOrder = null;
         if(sessionId){
-          const confirmRes = await withRetry(() => fetch(apiUrl('/api/orders/confirm'), {
+          const confirmRes = await withRetry(() => fetchWithTimeout(apiUrl('/api/orders/confirm'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId, sessionId })
-          }), 4, 1400);
+          }, 9000), 4, 1400);
           const confirmData = await confirmRes.json();
           if(confirmData?.order?.id){
             orderId = confirmData.order.id;
@@ -929,7 +934,11 @@
         }
 
         const summaryRes = await withRetry(
-          () => fetch(apiUrl(`/api/orders/${encodeURIComponent(orderId)}/summary?session_id=${encodeURIComponent(sessionId)}`)),
+          () => fetchWithTimeout(
+            apiUrl(`/api/orders/${encodeURIComponent(orderId)}/summary?session_id=${encodeURIComponent(sessionId)}`),
+            {},
+            9000
+          ),
           4,
           1400
         );

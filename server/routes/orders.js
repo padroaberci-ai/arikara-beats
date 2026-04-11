@@ -35,6 +35,7 @@ const hasAdminAccess = (req) => {
 const nowIso = () => new Date().toISOString();
 const orderTotalToCents = (order) => Math.round(Number(order.total || 0) * 100);
 const orderSubtotalToCents = (order) => Math.round(Number(order.subtotal || order.total || 0) * 100);
+const notificationWorkers = new Set();
 const getSessionCustomerEmail = (session, fallback = '') =>
   session.customer_details?.email ||
   session.customer_email ||
@@ -191,6 +192,74 @@ async function recoverOrderFromStripeSession({ orderId, session }) {
   return recoveredOrder;
 }
 
+function scheduleOrderNotifications(orderId) {
+  if (!orderId) return;
+  setTimeout(() => {
+    void processOrderNotifications(orderId);
+  }, 0);
+}
+
+async function processOrderNotifications(orderId) {
+  if (!orderId || notificationWorkers.has(orderId)) {
+    return;
+  }
+
+  notificationWorkers.add(orderId);
+
+  try {
+    const order = await getOrderById(orderId);
+    if (!order) {
+      return;
+    }
+
+    const shouldSendInternal =
+      Boolean(order.notifications?.internalSendingAt) && !order.notifications?.internalSentAt;
+    const shouldSendCustomer =
+      Boolean(order.notifications?.customerSendingAt) && !order.notifications?.customerSentAt;
+
+    if (!shouldSendInternal && !shouldSendCustomer) {
+      return;
+    }
+
+    const [internalResult, customerResult] = await Promise.allSettled([
+      shouldSendInternal ? sendInternalSaleNotification(order) : Promise.resolve(false),
+      shouldSendCustomer ? sendCustomerOrderConfirmation(order) : Promise.resolve(false)
+    ]);
+
+    const internalSent =
+      shouldSendInternal && internalResult.status === 'fulfilled' && internalResult.value === true;
+    const customerSent =
+      shouldSendCustomer && customerResult.status === 'fulfilled' && customerResult.value === true;
+
+    if (shouldSendInternal && internalResult.status === 'rejected') {
+      console.error(
+        `[orders/notifications] Error inesperado enviando aviso interno del pedido ${orderId}:`,
+        internalResult.reason?.message || internalResult.reason || 'Error desconocido'
+      );
+    }
+
+    if (shouldSendCustomer && customerResult.status === 'rejected') {
+      console.error(
+        `[orders/notifications] Error inesperado enviando confirmación al cliente del pedido ${orderId}:`,
+        customerResult.reason?.message || customerResult.reason || 'Error desconocido'
+      );
+    }
+
+    await updateOrder(orderId, (currentOrder) => ({
+      ...currentOrder,
+      notifications: {
+        ...currentOrder.notifications,
+        internalSentAt: internalSent ? currentOrder.notifications?.internalSentAt || nowIso() : currentOrder.notifications?.internalSentAt || '',
+        customerSentAt: customerSent ? currentOrder.notifications?.customerSentAt || nowIso() : currentOrder.notifications?.customerSentAt || '',
+        internalSendingAt: shouldSendInternal ? '' : currentOrder.notifications?.internalSendingAt || '',
+        customerSendingAt: shouldSendCustomer ? '' : currentOrder.notifications?.customerSendingAt || ''
+      }
+    }));
+  } finally {
+    notificationWorkers.delete(orderId);
+  }
+}
+
 async function confirmOrderFromStripeSession({ orderId, sessionId }) {
   if (!sessionId) {
     return { ok: false, status: 400, error: 'session_id requerido' };
@@ -298,7 +367,20 @@ async function confirmOrderFromStripeSession({ orderId, sessionId }) {
     ...currentOrder,
     ...baseOrder,
     status: 'paid_pending_delivery',
-    total: sessionTotal / 100
+    total: sessionTotal / 100,
+    notifications: {
+      ...currentOrder.notifications,
+      internalSentAt: currentOrder.notifications?.internalSentAt || '',
+      customerSentAt: currentOrder.notifications?.customerSentAt || '',
+      internalSendingAt:
+        !currentOrder.notifications?.internalSentAt && !currentOrder.notifications?.internalSendingAt
+          ? nowIso()
+          : currentOrder.notifications?.internalSendingAt || '',
+      customerSendingAt:
+        !currentOrder.notifications?.customerSentAt && !currentOrder.notifications?.customerSendingAt
+          ? nowIso()
+          : currentOrder.notifications?.customerSendingAt || ''
+    }
   }));
 
   if (!updatedOrder) {
@@ -308,27 +390,9 @@ async function confirmOrderFromStripeSession({ orderId, sessionId }) {
   console.log(
     `[orders/confirm] pedido ${updatedOrder.id} confirmado en fallback; estado=${updatedOrder.status} total=${updatedOrder.total} customer=${updatedOrder.customer?.email || '-'}`
   );
+  scheduleOrderNotifications(updatedOrder.id);
 
-  const sentInternal = !updatedOrder.notifications?.internalSentAt
-    ? await sendInternalSaleNotification(updatedOrder)
-    : false;
-  const sentCustomer = !updatedOrder.notifications?.customerSentAt
-    ? await sendCustomerOrderConfirmation(updatedOrder)
-    : false;
-
-  if (!sentInternal && !sentCustomer) {
-    return { ok: true, status: 200, order: updatedOrder };
-  }
-
-  const notifiedOrder = await updateOrder(updatedOrder.id, (currentOrder) => ({
-    ...currentOrder,
-    notifications: {
-      internalSentAt: sentInternal ? nowIso() : currentOrder.notifications?.internalSentAt || '',
-      customerSentAt: sentCustomer ? nowIso() : currentOrder.notifications?.customerSentAt || ''
-    }
-  }));
-
-  return { ok: true, status: 200, order: notifiedOrder || updatedOrder };
+  return { ok: true, status: 200, order: updatedOrder };
 }
 
 router.get('/', async (req, res) => {

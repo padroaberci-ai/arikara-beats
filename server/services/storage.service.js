@@ -115,7 +115,9 @@ export async function createOrder(payload) {
       },
       notifications: {
         internalSentAt: '',
-        customerSentAt: ''
+        customerSentAt: '',
+        internalSendingAt: '',
+        customerSendingAt: ''
       },
       items: [],
       ...payload
@@ -153,7 +155,9 @@ export async function upsertOrder(payload) {
       },
       notifications: {
         internalSentAt: '',
-        customerSentAt: ''
+        customerSentAt: '',
+        internalSendingAt: '',
+        customerSendingAt: ''
       },
       items: [],
       ...payload

@@ -1,6 +1,10 @@
 import nodemailer from 'nodemailer';
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const getSmtpTimeout = (name, fallback) => {
+  const value = Number(process.env[name] || fallback);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+};
 
 const formatEUR = (amount, currency = 'EUR') => {
   try {
@@ -27,19 +31,27 @@ function createTransporter() {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
   if (!user || !pass) return null;
+  const timeoutOptions = {
+    connectionTimeout: getSmtpTimeout('SMTP_CONNECTION_TIMEOUT_MS', 6000),
+    greetingTimeout: getSmtpTimeout('SMTP_GREETING_TIMEOUT_MS', 6000),
+    socketTimeout: getSmtpTimeout('SMTP_SOCKET_TIMEOUT_MS', 12000),
+    dnsTimeout: getSmtpTimeout('SMTP_DNS_TIMEOUT_MS', 6000)
+  };
 
   if (process.env.SMTP_HOST) {
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT || 587),
       secure: String(process.env.SMTP_SECURE || 'false') === 'true',
-      auth: { user, pass }
+      auth: { user, pass },
+      ...timeoutOptions
     });
   }
 
   return nodemailer.createTransport({
     service: 'gmail',
-    auth: { user, pass }
+    auth: { user, pass },
+    ...timeoutOptions
   });
 }
 
