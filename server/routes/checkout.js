@@ -1,5 +1,6 @@
 import express from 'express';
 import { getBeatByReference, getLicenseById, isBeatPurchasable, isLicensePurchasable } from '../services/catalog.service.js';
+import { applyCatalogBundleDiscount } from '../services/pricing.service.js';
 import { createOrder, updateOrder } from '../services/storage.service.js';
 import { createCheckoutSession, hasStripeSecretKey } from '../services/stripe.service.js';
 
@@ -65,23 +66,26 @@ router.post('/', async (req, res) => {
         beatTitleSnapshot: beat.title,
         licenseType,
         licenseNameSnapshot: license.name,
+        baseUnitPriceSnapshot: unitPrice,
         unitPriceSnapshot: unitPrice,
+        discountAmountSnapshot: 0,
         quantity: 1,
         fulfillmentStatus: 'pending'
       });
     }
 
-    const orderItems = Array.from(normalized.values());
+    const orderPricing = applyCatalogBundleDiscount(Array.from(normalized.values()));
+    const orderItems = orderPricing.items;
     if (orderItems.length === 0) {
       return res.status(400).json({ error: 'Carrito vacío' });
     }
-
-    const subtotal = orderItems.reduce((sum, item) => sum + item.unitPriceSnapshot * item.quantity, 0);
     const draftOrder = await createOrder({
       status: 'pending_checkout',
       currency,
-      subtotal,
-      total: subtotal,
+      baseSubtotal: orderPricing.baseSubtotal,
+      discountTotal: orderPricing.discountTotal,
+      subtotal: orderPricing.subtotal,
+      total: orderPricing.total,
       items: orderItems
     });
 
@@ -98,7 +102,7 @@ router.post('/', async (req, res) => {
 
     console.log(
       `[checkout] order=${order.id} session=${session.id} status=${session.status || 'unknown'} amount=${Math.round(
-        subtotal * 100
+        orderPricing.total * 100
       )} currency=${currency}`
     );
 

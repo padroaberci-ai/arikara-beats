@@ -1,6 +1,7 @@
 import express from 'express';
 import { getBeatByReference, getLicenseById } from '../services/catalog.service.js';
 import { sendCustomerOrderConfirmation, sendInternalSaleNotification } from '../services/email.service.js';
+import { applyCatalogBundleDiscount, summarizeBundlePricing } from '../services/pricing.service.js';
 import {
   findOrderByCheckoutSessionId,
   getOrderById,
@@ -95,6 +96,7 @@ async function recoverOrderFromStripeSession({ orderId, session }) {
 
   const customFields = extractCustomFields(session.custom_fields);
   const recoveredItems = [];
+  let usedLineItems = false;
   try {
     const lineItems = await getCheckoutSessionLineItems(session.id);
 
@@ -108,6 +110,7 @@ async function recoverOrderFromStripeSession({ orderId, session }) {
       const license = licenseType ? await getLicenseById(licenseType) : null;
       const descriptionParts = splitLineItemDescription(lineItem.description);
       const rawUnitAmount = Number(lineItem.amount_subtotal ?? lineItem.amount_total ?? 0);
+      const baseUnitAmount = Number(productMetadata.baseUnitPrice || beat?.prices?.[licenseType] || rawUnitAmount / quantity / 100);
 
       recoveredItems.push({
         beatId: beat?.id || String(productMetadata.beatId || '').trim(),
@@ -116,11 +119,13 @@ async function recoverOrderFromStripeSession({ orderId, session }) {
         licenseType: license?.id || licenseType || 'basic',
         licenseNameSnapshot:
           license?.name || descriptionParts.licenseNameSnapshot || fallbackLicenseName(licenseType),
+        baseUnitPriceSnapshot: baseUnitAmount,
         unitPriceSnapshot: rawUnitAmount / quantity / 100,
         quantity,
         fulfillmentStatus: 'pending'
       });
     }
+    usedLineItems = recoveredItems.length > 0;
   } catch (error) {
     console.warn(`[orders/recover] No se pudieron leer line_items de Stripe para ${session.id}: ${error.message}`);
   }
@@ -149,6 +154,7 @@ async function recoverOrderFromStripeSession({ orderId, session }) {
         beatTitleSnapshot: beat?.title || beatReference || 'Beat',
         licenseType: license?.id || licenseType,
         licenseNameSnapshot: license?.name || fallbackLicenseName(licenseType),
+        baseUnitPriceSnapshot: beat?.prices?.[licenseType] || fallbackUnitAmount,
         unitPriceSnapshot: fallbackUnitAmount,
         quantity: 1,
         fulfillmentStatus: 'pending'
@@ -156,13 +162,19 @@ async function recoverOrderFromStripeSession({ orderId, session }) {
     }
   }
 
+  const recoveredPricing = usedLineItems
+    ? summarizeBundlePricing(recoveredItems)
+    : applyCatalogBundleDiscount(recoveredItems);
+
   const recoveredOrder = await upsertOrder({
     id: recoveredOrderId,
     createdAt: session.created ? new Date(session.created * 1000).toISOString() : nowIso(),
     status: 'pending_checkout',
     currency: String(session.currency || 'eur').toUpperCase(),
-    subtotal: Number(session.amount_subtotal ?? session.amount_total ?? 0) / 100,
-    total: Number(session.amount_total || 0) / 100,
+    baseSubtotal: Number(session.metadata?.baseSubtotal || recoveredPricing.baseSubtotal || 0),
+    discountTotal: Number(session.metadata?.discountTotal || recoveredPricing.discountTotal || 0),
+    subtotal: recoveredPricing.subtotal,
+    total: Number(session.amount_total || recoveredPricing.total || 0) / 100,
     customer: {
       name: getSessionCustomerName(session, ''),
       email: getSessionCustomerEmail(session, ''),
@@ -182,7 +194,7 @@ async function recoverOrderFromStripeSession({ orderId, session }) {
       internalSentAt: '',
       customerSentAt: ''
     },
-    items: recoveredItems
+    items: recoveredPricing.items
   });
 
   console.warn(

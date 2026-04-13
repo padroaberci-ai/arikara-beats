@@ -42,7 +42,7 @@ export async function createCheckoutSession({ order }) {
     quantity: item.quantity || 1,
     price_data: {
       currency,
-      unit_amount: Math.round(Number(item.unitPriceSnapshot || 0) * 100),
+      unit_amount: Math.round(Number(item.unitPriceSnapshot || item.baseUnitPriceSnapshot || 0) * 100),
       product_data: {
         name: `${item.beatTitleSnapshot} — ${item.licenseNameSnapshot}`,
         metadata: {
@@ -50,7 +50,9 @@ export async function createCheckoutSession({ order }) {
           beatId: item.beatId,
           beatSlug: item.beatSlug,
           license: item.licenseType,
-          licenseType: item.licenseType
+          licenseType: item.licenseType,
+          baseUnitPrice: String(item.baseUnitPriceSnapshot ?? item.unitPriceSnapshot ?? ''),
+          finalUnitPrice: String(item.unitPriceSnapshot ?? '')
         }
       }
     }
@@ -70,7 +72,9 @@ export async function createCheckoutSession({ order }) {
       source: 'arikarabeats-web',
       orderId: order.id,
       beatId: beatIds,
-      license: licenses
+      license: licenses,
+      baseSubtotal: String(order.baseSubtotal ?? order.subtotal ?? order.total ?? ''),
+      discountTotal: String(order.discountTotal ?? 0)
     },
     custom_fields: [
       {

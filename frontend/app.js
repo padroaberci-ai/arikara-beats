@@ -4,6 +4,7 @@
   const LAST_ORDER_KEY = 'arikara_last_order_v1';
   const PLAYER_STATE_KEY = 'arikara_player_state_v1';
   const PLAYER_SESSION_KEY = 'arikara_player_session_v1';
+  const PLAYER_VOLUME_KEY = 'arikara_player_volume_v1';
   const API_BASE = (() => {
     const hostname = window.location.hostname;
     const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
@@ -35,6 +36,47 @@
   };
 
   const fmtEUR = (n) => Number(n || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+  const roundMoney = (value) => Number((Math.round(Number(value || 0) * 100) / 100).toFixed(2));
+  const compareCartDiscountOrder = (a, b, indexA = 0, indexB = 0) => {
+    const priceDiff = Number(b.price || 0) - Number(a.price || 0);
+    if(priceDiff !== 0) return priceDiff;
+    const refA = String(a.slug || a.beatId || a.title || indexA).toLowerCase();
+    const refB = String(b.slug || b.beatId || b.title || indexB).toLowerCase();
+    const refDiff = refA.localeCompare(refB);
+    if(refDiff !== 0) return refDiff;
+    return indexA - indexB;
+  };
+  const getCartPricing = (cart = []) => {
+    const items = cart.map((item, index) => ({
+      ...item,
+      qty: Math.max(1, Number(item.qty || 1)),
+      basePrice: roundMoney(item.price || 0),
+      finalPrice: roundMoney(item.price || 0),
+      discountAmount: 0,
+      _index: index
+    }));
+
+    const ranked = [...items].sort((a, b) => compareCartDiscountOrder(a, b, a._index, b._index));
+    ranked.slice(1).forEach((item) => {
+      item.discountAmount = roundMoney(item.basePrice * 0.25);
+      item.finalPrice = roundMoney(item.basePrice - item.discountAmount);
+    });
+
+    const ordered = ranked
+      .sort((a, b) => a._index - b._index)
+      .map(({ _index, ...item }) => item);
+
+    const subtotal = roundMoney(ordered.reduce((sum, item) => sum + item.basePrice * item.qty, 0));
+    const discount = roundMoney(ordered.reduce((sum, item) => sum + item.discountAmount * item.qty, 0));
+    const total = roundMoney(ordered.reduce((sum, item) => sum + item.finalPrice * item.qty, 0));
+
+    return { items: ordered, subtotal, discount, total };
+  };
+  const customerOrderStatus = (order) => {
+    if(!order) return 'Pedido recibido';
+    if(order.status === 'paid_pending_delivery') return 'Pago confirmado';
+    return 'Pago recibido';
+  };
 
   const sanitizeCartItems = (rawCart) => {
     if(!Array.isArray(rawCart)) return [];
@@ -113,20 +155,25 @@
       saveCart([]);
       document.dispatchEvent(new Event('cart:update'));
     },
-    total: () => loadCart().reduce((sum, i) => sum + Number(i.price || 0), 0)
+    total: () => getCartPricing(loadCart()).total
   };
 
-  const year = new Date().getFullYear();
-  qsa('[data-year]').forEach(el => el.textContent = year);
-
-  const badge = qs('#cartBadge');
+  const syncYear = () => {
+    const year = new Date().getFullYear();
+    qsa('[data-year]').forEach(el => el.textContent = year);
+  };
   const updateBadge = () => {
+    const badge = qs('#cartBadge');
     if(!badge) return;
     const count = loadCart().length;
     badge.textContent = count;
     badge.classList.toggle('hidden', count === 0);
   };
-  updateBadge();
+  const syncShellUi = () => {
+    syncYear();
+    updateBadge();
+  };
+  syncShellUi();
   document.addEventListener('cart:update', updateBadge);
 
   // Player
@@ -158,6 +205,9 @@
 
   let previewButton = null;
   let previewButtonTarget = null;
+  let pageCleanups = [];
+  let pageRequestToken = 0;
+  let navigationInFlight = null;
 
   const PLAY_ICON = '<polygon points="8,5 19,12 8,19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>';
   const PAUSE_ICON = '<line x1="9" y1="5" x2="9" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="5" x2="15" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
@@ -213,6 +263,21 @@
     if(playerRoot) playerRoot.classList.toggle('is-visible', visible);
     document.body.classList.toggle('player-active', visible);
   };
+  const getStoredVolume = () => {
+    try{
+      const stored = Number(localStorage.getItem(PLAYER_VOLUME_KEY));
+      return Number.isFinite(stored) ? Math.min(1, Math.max(0, stored)) : 0.8;
+    }catch{
+      return 0.8;
+    }
+  };
+  const applyVolume = (value) => {
+    const safeVolume = Math.min(1, Math.max(0, Number(value || 0)));
+    audio.volume = safeVolume;
+    audio.muted = safeVolume === 0;
+    if(playerVolume) playerVolume.value = String(safeVolume);
+    try{ localStorage.setItem(PLAYER_VOLUME_KEY, String(safeVolume)); }catch{}
+  };
 
   const syncPlayUI = () => {
     updateToggleIcon();
@@ -232,7 +297,8 @@
       subtitle: playerSubtitle ? playerSubtitle.textContent : '',
       meta: playerMeta ? playerMeta.textContent : '',
       cover: playerCoverImg ? playerCoverImg.src : '',
-      beatIndex: currentBeatIndex
+      beatIndex: currentBeatIndex,
+      volume: audio.volume
     };
     try{ localStorage.setItem(PLAYER_STATE_KEY, JSON.stringify(snapshot)); }catch{}
   };
@@ -317,6 +383,7 @@
     if(playerCoverImg && stored.cover) playerCoverImg.src = stored.cover;
     if(playerCoverPlay) playerCoverPlay.dataset.preview = stored.src;
     audio.src = stored.src;
+    if(Number.isFinite(stored.volume)) applyVolume(stored.volume);
     if(Number.isFinite(stored.time)) pendingSeek = stored.time;
     if(stored.playing){
       pendingResume = true;
@@ -401,8 +468,10 @@
   if(playerBack) playerBack.addEventListener('click', () => { audio.currentTime = Math.max(0, audio.currentTime - 10); });
   if(playerForward) playerForward.addEventListener('click', () => { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10); });
   if(playerVolume) {
-    audio.volume = Number(playerVolume.value || 0.8);
-    playerVolume.addEventListener('input', () => { audio.volume = Number(playerVolume.value); });
+    applyVolume(playerVolume.value || getStoredVolume());
+    ['input', 'change'].forEach((eventName) => {
+      playerVolume.addEventListener(eventName, () => applyVolume(playerVolume.value));
+    });
   }
 
   audio.addEventListener('loadedmetadata', () => {
@@ -425,6 +494,7 @@
   });
   audio.addEventListener('ended', () => playNext(1));
   window.addEventListener('beforeunload', savePlayerState);
+  if(!playerVolume) applyVolume(getStoredVolume());
 
   if(playerSeek){
     playerSeek.addEventListener('input', () => {
@@ -439,11 +509,25 @@
   };
 
   // Page routing
-  const page = document.body.dataset.page;
+  const registerCleanup = (fn) => {
+    if(typeof fn === 'function') pageCleanups.push(fn);
+  };
 
-  if(page === 'catalog'){
+  const cleanupPage = () => {
+    pageCleanups.forEach((fn) => {
+      try{ fn(); }catch(err){ console.error(err); }
+    });
+    pageCleanups = [];
+    previewButton = null;
+    previewButtonTarget = null;
+    updatePreviewButton();
+  };
+
+  const initCatalogPage = () => {
     const list = qs('#catalogList');
     const empty = qs('#emptyState');
+    if(!list || !empty) return;
+
     const heroHighlightImg = qs('#heroHighlightImg');
     const heroHighlightTitle = qs('#heroHighlightTitle');
     const heroHighlightMeta = qs('#heroHighlightMeta');
@@ -458,7 +542,14 @@
       ? state.genres
       : [...new Set(state.beats.map(b => b.genre).filter(Boolean))].sort((a,b) => a.localeCompare(b));
 
-    genres.forEach(g => { const o = document.createElement('option'); o.value = g; o.textContent = g; genreEl.appendChild(o); });
+    if(genreEl && genreEl.options.length <= 1){
+      genres.forEach(g => {
+        const o = document.createElement('option');
+        o.value = g;
+        o.textContent = g;
+        genreEl.appendChild(o);
+      });
+    }
 
     const matchesText = (beat, q) => {
       if(!q) return true;
@@ -476,12 +567,12 @@
     const matchesGenre = (beat, genre) => !genre || String(beat.genre || '').toLowerCase() === String(genre).toLowerCase();
 
     const sortBeats = (beats, sort) => {
-      const list = [...beats];
-      if(sort === 'price') list.sort((a,b) => (a.prices?.basic ?? 0) - (b.prices?.basic ?? 0));
-      else if(sort === 'bpm') list.sort((a,b) => (a.bpm ?? 0) - (b.bpm ?? 0));
-      else if(sort === 'az') list.sort((a,b) => String(a.title).localeCompare(String(b.title)));
-      else list.sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-      return list;
+      const next = [...beats];
+      if(sort === 'price') next.sort((a,b) => (a.prices?.basic ?? 0) - (b.prices?.basic ?? 0));
+      else if(sort === 'bpm') next.sort((a,b) => (a.bpm ?? 0) - (b.bpm ?? 0));
+      else if(sort === 'az') next.sort((a,b) => String(a.title).localeCompare(String(b.title)));
+      else next.sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      return next;
     };
 
     const renderRow = (beat) => {
@@ -523,21 +614,21 @@
     };
 
     const render = () => {
-      const q = search.value;
-      const min = bpmMinEl.value === '' ? NaN : Number(bpmMinEl.value);
-      const max = bpmMaxEl.value === '' ? NaN : Number(bpmMaxEl.value);
-      const genre = genreEl.value;
-      const sort = sortEl.value;
+      const q = search ? search.value : '';
+      const min = !bpmMinEl || bpmMinEl.value === '' ? NaN : Number(bpmMinEl.value);
+      const max = !bpmMaxEl || bpmMaxEl.value === '' ? NaN : Number(bpmMaxEl.value);
+      const genre = genreEl ? genreEl.value : '';
+      const sort = sortEl ? sortEl.value : 'latest';
 
-      const filtered = state.beats.filter(b =>
-        matchesText(b, q) && matchesBpm(b, min, max) && matchesGenre(b, genre)
+      const filtered = state.beats.filter((beat) =>
+        matchesText(beat, q) && matchesBpm(beat, min, max) && matchesGenre(beat, genre)
       );
 
       const sorted = sortBeats(filtered, sort);
       list.innerHTML = sorted.map(renderRow).join('');
       empty.classList.toggle('hidden', sorted.length !== 0);
 
-      qsa('.cover-play[data-index]').forEach(btn => {
+      qsa('.cover-play[data-index]', list).forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           const idx = Number(btn.dataset.index);
@@ -551,7 +642,7 @@
         });
       });
 
-      qsa('[data-add]').forEach(btn => {
+      qsa('[data-add]', list).forEach(btn => {
         btn.addEventListener('click', () => {
           Cart.add({
             beatId: btn.dataset.beatId,
@@ -581,7 +672,7 @@
     }
 
     render();
-    [search, bpmMinEl, bpmMaxEl, genreEl, sortEl].forEach(el => {
+    [search, bpmMinEl, bpmMaxEl, genreEl, sortEl].filter(Boolean).forEach(el => {
       el.addEventListener('input', render);
       el.addEventListener('change', render);
     });
@@ -601,25 +692,33 @@
         `;
       }).join('');
     }
-  }
+  };
 
-  if(page === 'beat'){
+  const initBeatPage = () => {
     const slug = new URLSearchParams(window.location.search).get('beat');
     const beatIndex = state.beats.findIndex(b => b.slug === slug);
     const beat = state.beats[beatIndex];
     if(!beat) return;
     const beatUnavailable = beat.status && beat.status !== 'available';
 
-    qs('#beatTitle').textContent = beat.title;
-    qs('#beatMeta').textContent = beat.bpm + ' BPM - ' + beat.key + ' - ' + beat.genre;
-    qs('#coverImg').src = beat.cover;
-    qs('#coverImg').alt = 'Cover ' + beat.title;
-
-    const tags = [...(beat.tags||[]), ...(beat.moods||[])];
-    qs('#tagRow').innerHTML = tags.map(t => '<span class="tag">' + esc(t) + '</span>').join('');
-
+    const beatTitle = qs('#beatTitle');
+    const beatMeta = qs('#beatMeta');
+    const coverImg = qs('#coverImg');
+    const tagRow = qs('#tagRow');
     const previewBtn = qs('#previewBtn');
     const coverPlayBtn = qs('#beatCoverPlay');
+    const licenseWrap = qs('#licenseOptions');
+    const addBtn = qs('#addToCartBtn');
+    if(!beatTitle || !beatMeta || !coverImg || !tagRow || !licenseWrap || !addBtn) return;
+
+    beatTitle.textContent = beat.title;
+    beatMeta.textContent = beat.bpm + ' BPM - ' + beat.key + ' - ' + beat.genre;
+    coverImg.src = beat.cover;
+    coverImg.alt = 'Cover ' + beat.title;
+
+    const tags = [...(beat.tags||[]), ...(beat.moods||[])];
+    tagRow.innerHTML = tags.map(t => '<span class="tag">' + esc(t) + '</span>').join('');
+
     if(beat.preview){
       if(previewBtn){
         previewButton = previewBtn;
@@ -657,7 +756,6 @@
       previewButtonTarget = null;
     }
 
-    const licenseWrap = qs('#licenseOptions');
     licenseWrap.innerHTML = state.licenses.map(l => {
       const highlight = l.highlight ? ' highlight' : '';
       const active = l.id === 'basic' ? ' active' : '';
@@ -679,7 +777,6 @@
     const contactHref = 'mailto:arikarabeats@gmail.com?subject=Licencia%20Exclusive%20-%20' + encodeURIComponent(beat.title);
 
     let selected = 'basic';
-    const addBtn = qs('#addToCartBtn');
     const updateAdd = () => {
       if(beatUnavailable){
         addBtn.disabled = true;
@@ -688,7 +785,7 @@
       }
       const lic = state.licenses.find(l => l.id === selected);
       if(!lic) return;
-      const priceLabel = lic.priceLabel || fmtEUR(lic.price);
+      const priceLabel = lic.priceLabel || fmtEUR(beat.prices[selected]);
       if(lic.id === 'exclusive'){
         addBtn.textContent = 'Consultar Exclusive';
       }else{
@@ -703,9 +800,6 @@
         card.classList.add('active');
         selected = card.dataset.license;
         updateAdd();
-        if(selected === 'exclusive'){
-          addBtn.textContent = 'Consultar Exclusive';
-        }
       });
     });
 
@@ -724,13 +818,12 @@
         qty: 1
       });
     });
+  };
 
-
-  }
-
-  if(page === 'licenses'){
+  const initLicensesPage = () => {
     const licGrid = qs('#licensesGrid');
     const servGrid = qs('#servicesGrid');
+    if(!licGrid || !servGrid) return;
 
     licGrid.innerHTML = state.licenses.map(l => {
       const highlight = l.highlight ? ' highlight' : '';
@@ -771,44 +864,69 @@
         });
       });
     };
+
     enableCardSelection('#licensesGrid .license-card');
     enableCardSelection('#servicesGrid .license-card');
-  }
+  };
 
-  if(page === 'cart'){
+  const renderCartItem = (item, idx) => {
+    const hasDiscount = Number(item.discountAmount || 0) > 0;
+    const priceMeta = hasDiscount
+      ? `<div class="beat-meta">Antes ${fmtEUR(item.basePrice)} · Ahorro ${fmtEUR(item.discountAmount)}</div>`
+      : `<div class="beat-meta">${fmtEUR(item.basePrice)}</div>`;
+
+    return `
+      <div class="card" style="padding: 18px; border-radius: 22px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+          <div>
+            <div class="beat-title">${esc(item.title)}</div>
+            <div class="beat-meta">${esc(licenseName(item.license))}</div>
+            ${priceMeta}
+          </div>
+          <div style="text-align:right; min-width: 120px;">
+            <div class="beat-title">${fmtEUR(item.finalPrice)}</div>
+            <button class="btn btn--ghost btn--sm" data-remove="${idx}">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  const initCartPage = () => {
     const listEl = qs('#cartList');
     const emptyEl = qs('#cartEmpty');
+    const subtotalEl = qs('#cartSubtotal');
+    const discountEl = qs('#cartDiscount');
     const totalEl = qs('#cartTotal');
+    const clearBtn = qs('#clearBtn');
+    const checkoutBtn = qs('#checkoutBtn');
+    if(!listEl || !emptyEl || !subtotalEl || !discountEl || !totalEl || !clearBtn || !checkoutBtn) return;
 
     const render = () => {
       const cart = Cart.get();
+      const pricing = getCartPricing(cart);
       emptyEl.classList.toggle('hidden', cart.length !== 0);
-      if(cart.length === 0){ listEl.innerHTML = ''; totalEl.textContent = '-'; return; }
+      if(cart.length === 0){
+        listEl.innerHTML = '';
+        subtotalEl.textContent = '-';
+        discountEl.textContent = '-';
+        totalEl.textContent = '-';
+        return;
+      }
 
-      listEl.innerHTML = cart.map((item, idx) => `
-        <div class="card" style="padding: 18px; border-radius: 22px;">
-          <div style="display:flex;justify-content:space-between;gap:12px;">
-            <div>
-              <div class="beat-title">${esc(item.title)}</div>
-              <div class="beat-meta">${esc(licenseName(item.license))}</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="beat-title">${fmtEUR(item.price)}</div>
-              <button class="btn btn--ghost btn--sm" data-remove="${idx}">Eliminar</button>
-            </div>
-          </div>
-        </div>
-      `).join('');
-
-      totalEl.textContent = fmtEUR(Cart.total());
-      qsa('[data-remove]').forEach(btn => btn.addEventListener('click', () => Cart.remove(Number(btn.dataset.remove))));
+      listEl.innerHTML = pricing.items.map((item, idx) => renderCartItem(item, idx)).join('');
+      subtotalEl.textContent = fmtEUR(pricing.subtotal);
+      discountEl.textContent = pricing.discount > 0 ? `- ${fmtEUR(pricing.discount)}` : fmtEUR(0);
+      totalEl.textContent = fmtEUR(pricing.total);
+      qsa('[data-remove]', listEl).forEach(btn => btn.addEventListener('click', () => Cart.remove(Number(btn.dataset.remove))));
     };
 
     render();
     document.addEventListener('cart:update', render);
+    registerCleanup(() => document.removeEventListener('cart:update', render));
 
-    qs('#clearBtn').addEventListener('click', () => Cart.clear());
-    qs('#checkoutBtn').addEventListener('click', async () => {
+    clearBtn.addEventListener('click', () => Cart.clear());
+    checkoutBtn.addEventListener('click', async () => {
       const cart = Cart.get();
       if(cart.length === 0){
         alert('Tu carrito está vacío.');
@@ -837,9 +955,9 @@
         alert('Error conectando con el checkout.');
       }
     });
-  }
+  };
 
-  if(page === 'success'){
+  const initSuccessPage = (token) => {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('session_id') || '';
     const orderIdFromUrl = params.get('order_id') || '';
@@ -855,38 +973,34 @@
     const customerEl = qs('#successCustomer');
     const totalEl = qs('#successTotal');
     const itemsEl = qs('#successItems');
+    if(!titleEl || !leadEl || !statusEl || !orderIdEl || !orderDateEl || !customerEl || !totalEl || !itemsEl) return;
 
+    const isActiveToken = () => token === pageRequestToken;
     const renderSummary = (order) => {
-      if(!order) return;
+      if(!order || !isActiveToken()) return;
       const paid = order.status === 'paid_pending_delivery';
-      if(titleEl) titleEl.textContent = paid ? 'Pago confirmado' : 'Estamos confirmando tu pago';
-      if(leadEl){
-        if(paid && order.degradedMode){
-          leadEl.textContent = 'Stripe ha marcado tu pago como completado y ya hemos registrado el pedido. Como el webhook firmado todavía no está activado, esta confirmación se ha hecho en modo controlado desde el retorno del checkout. El equipo te enviará manualmente el material por email.';
-        }else if(paid){
-          leadEl.textContent = 'Hemos recibido tu compra correctamente. El equipo te enviará manualmente el material y la licencia por email.';
-        }else{
-          leadEl.textContent = 'Tu pago ha sido recibido. Estamos terminando de confirmarlo para preparar el envío manual del material.';
-        }
+      titleEl.textContent = paid ? 'Pago confirmado' : 'Pago recibido';
+      if(paid){
+        leadEl.textContent = 'Nuestro equipo enviará todo el material y la licencia por email una vez revise tu pedido.';
+      }else{
+        leadEl.textContent = 'Hemos recibido tu compra y estamos terminando de preparar el pedido para enviártelo por email.';
       }
-      if(statusEl) statusEl.textContent = order.paymentObserved && order.degradedMode ? 'paid_pending_delivery (modo degradado)' : order.status;
-      if(orderIdEl) orderIdEl.textContent = order.id || '-';
-      if(orderDateEl) orderDateEl.textContent = order.createdAt ? new Date(order.createdAt).toLocaleString('es-ES') : '-';
-      if(customerEl) customerEl.textContent = order.customer?.email || '-';
-      if(totalEl) totalEl.textContent = fmtEUR(order.total || 0);
-      if(itemsEl){
-        itemsEl.innerHTML = (order.items || []).map(item => `
-          <div class="card" style="padding:16px;border-radius:20px;">
-            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-              <div>
-                <div class="beat-title">${esc(item.beatTitleSnapshot)}</div>
-                <div class="beat-meta">${esc(licenseName(item.licenseType))}</div>
-              </div>
-              <div class="beat-title">${fmtEUR(item.unitPriceSnapshot)}</div>
+      statusEl.textContent = customerOrderStatus(order);
+      orderIdEl.textContent = order.id || '-';
+      orderDateEl.textContent = order.createdAt ? new Date(order.createdAt).toLocaleString('es-ES') : '-';
+      customerEl.textContent = order.customer?.email || '-';
+      totalEl.textContent = fmtEUR(order.total || 0);
+      itemsEl.innerHTML = (order.items || []).map(item => `
+        <div class="card" style="padding:16px;border-radius:20px;">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+            <div>
+              <div class="beat-title">${esc(item.beatTitleSnapshot)}</div>
+              <div class="beat-meta">${esc(licenseName(item.licenseType))}</div>
             </div>
+            <div class="beat-title">${fmtEUR(item.unitPriceSnapshot)}</div>
           </div>
-        `).join('');
-      }
+        </div>
+      `).join('');
     };
 
     const chooseBestOrder = (primary, secondary) => {
@@ -900,10 +1014,9 @@
     };
 
     const loadSummary = async (attempt = 0) => {
+      if(!isActiveToken()) return;
       if(!sessionId && !orderId){
-        if(leadEl){
-          leadEl.textContent = 'No hemos podido recuperar la referencia del pago. Si ya se ha realizado el cargo, contacta con el equipo para verificarlo.';
-        }
+        leadEl.textContent = 'No hemos podido recuperar tu pedido todavía. Si ya se ha realizado el cargo, recarga la página o contacta con nuestro equipo.';
         return;
       }
       try{
@@ -914,23 +1027,20 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId, sessionId })
           }, 9000), 4, 1400);
+          if(!isActiveToken()) return;
           const confirmData = await confirmRes.json();
           if(confirmData?.order?.id){
             orderId = confirmData.order.id;
             saveLastOrderId(orderId);
             renderSummary(confirmData.order);
           }
-          if(confirmRes.ok && confirmData?.order){
+          if(confirmData?.order){
             confirmedOrder = confirmData.order;
-          }else if(confirmData?.order){
-            confirmedOrder = confirmData.order;
-          }else if(confirmRes.status >= 500){
-            console.warn('Confirmación fallback no disponible todavía:', confirmData?.error || confirmRes.status);
           }
         }
 
         if(!orderId){
-          throw new Error('No se pudo resolver el pedido desde la sesión de Stripe');
+          throw new Error('No se pudo resolver el pedido desde la sesión de pago');
         }
 
         const summaryRes = await withRetry(
@@ -942,6 +1052,7 @@
           4,
           1400
         );
+        if(!isActiveToken()) return;
         const summaryData = await summaryRes.json();
         if(!summaryRes.ok){
           if(confirmedOrder){
@@ -969,16 +1080,125 @@
         }
       }catch(err){
         console.error(err);
+        if(!isActiveToken()) return;
         if(attempt < MAX_SUCCESS_RETRIES){
           await wait(1600 * (attempt + 1));
           return loadSummary(attempt + 1);
         }
-        if(leadEl){
-          leadEl.textContent = 'Estamos terminando de confirmar tu compra con Stripe. Si este mensaje persiste, vuelve a cargar la página en unos segundos o contacta con el equipo.';
-        }
+        leadEl.textContent = 'Estamos terminando de preparar tu pedido. Si este mensaje persiste, recarga la página dentro de unos segundos o contacta con nuestro equipo.';
       }
     };
 
     loadSummary();
-  }
+  };
+
+  const initPage = () => {
+    cleanupPage();
+    syncShellUi();
+    const token = ++pageRequestToken;
+    const page = document.body.dataset.page;
+
+    if(page === 'catalog') initCatalogPage();
+    if(page === 'beat') initBeatPage();
+    if(page === 'licenses') initLicensesPage();
+    if(page === 'cart') initCartPage();
+    if(page === 'success') initSuccessPage(token);
+  };
+
+  const updateDocumentMeta = (nextDoc) => {
+    if(nextDoc.title) document.title = nextDoc.title;
+    const nextDescription = nextDoc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+    const currentDescription = qs('meta[name="description"]');
+    if(currentDescription && nextDescription){
+      currentDescription.setAttribute('content', nextDescription);
+    }
+  };
+
+  const replacePageShell = (nextDoc) => {
+    const nextHeader = nextDoc.querySelector('.header');
+    const nextMain = nextDoc.querySelector('.main');
+    const nextFooter = nextDoc.querySelector('.footer');
+    const currentHeader = qs('.header');
+    const currentMain = qs('.main');
+    const currentFooter = qs('.footer');
+
+    if(nextHeader && currentHeader) currentHeader.replaceWith(nextHeader);
+    if(nextMain && currentMain) currentMain.replaceWith(nextMain);
+    if(nextFooter && currentFooter) currentFooter.replaceWith(nextFooter);
+    if(nextDoc.body?.dataset?.page) document.body.dataset.page = nextDoc.body.dataset.page;
+  };
+
+  const isInternalPageLink = (href) => {
+    const url = new URL(href, window.location.href);
+    if(url.origin !== window.location.origin) return false;
+    if(url.hash && url.pathname === window.location.pathname && url.search === window.location.search) return false;
+    const pathname = url.pathname || '/';
+    return pathname.endsWith('.html') || pathname === '/' || pathname === '/index.html';
+  };
+
+  const navigateToPage = async (href, { replaceHistory = false } = {}) => {
+    const url = new URL(href, window.location.href);
+    if(!isInternalPageLink(url.href)){
+      window.location.href = url.href;
+      return;
+    }
+
+    if(navigationInFlight) {
+      try{ navigationInFlight.abort(); }catch{}
+    }
+    const controller = new AbortController();
+    navigationInFlight = controller;
+
+    try{
+      const response = await fetch(url.href, {
+        headers: { 'X-Requested-With': 'arikara-shell' },
+        signal: controller.signal
+      });
+      if(!response.ok) throw new Error(`HTTP ${response.status}`);
+      const html = await response.text();
+      if(controller !== navigationInFlight) return;
+
+      const parser = new DOMParser();
+      const nextDoc = parser.parseFromString(html, 'text/html');
+      if(!nextDoc.querySelector('.main')) throw new Error('Documento HTML incompleto');
+
+      replacePageShell(nextDoc);
+      updateDocumentMeta(nextDoc);
+      if(replaceHistory){
+        history.replaceState({}, '', url.href);
+      }else if(url.href !== window.location.href){
+        history.pushState({}, '', url.href);
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+      initPage();
+    }catch(err){
+      if(err.name === 'AbortError') return;
+      console.error('[navigation]', err);
+      window.location.href = url.href;
+    }finally{
+      if(navigationInFlight === controller){
+        navigationInFlight = null;
+      }
+    }
+  };
+
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[href]');
+    if(!link) return;
+    if(event.defaultPrevented || event.button !== 0) return;
+    if(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if(link.target && link.target !== '_self') return;
+    const href = link.getAttribute('href');
+    if(!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) return;
+    if(link.hasAttribute('download')) return;
+    if(!isInternalPageLink(link.href)) return;
+    event.preventDefault();
+    navigateToPage(link.href);
+  });
+
+  window.addEventListener('popstate', () => {
+    navigateToPage(window.location.href, { replaceHistory: true });
+  });
+
+  initPage();
 })();

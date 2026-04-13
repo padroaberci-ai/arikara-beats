@@ -96,6 +96,8 @@ export async function createOrder(payload) {
       updatedAt: timestamp,
       status: 'pending_checkout',
       currency: 'EUR',
+      baseSubtotal: 0,
+      discountTotal: 0,
       subtotal: 0,
       total: 0,
       customer: {
@@ -136,6 +138,8 @@ export async function upsertOrder(payload) {
     const nextOrder = {
       status: 'pending_checkout',
       currency: 'EUR',
+      baseSubtotal: 0,
+      discountTotal: 0,
       subtotal: 0,
       total: 0,
       customer: {
@@ -235,6 +239,9 @@ export function toPublicOrderSummary(order) {
     createdAt: order.createdAt,
     status: order.status,
     currency: order.currency,
+    baseSubtotal: order.baseSubtotal || 0,
+    discountTotal: order.discountTotal || 0,
+    subtotal: order.subtotal || order.total || 0,
     total: order.total,
     customer: {
       name: order.customer?.name || '',
@@ -252,7 +259,9 @@ export function toPublicOrderSummary(order) {
     items: (order.items || []).map((item) => ({
       beatTitleSnapshot: item.beatTitleSnapshot,
       licenseType: item.licenseType,
+      baseUnitPriceSnapshot: item.baseUnitPriceSnapshot ?? item.unitPriceSnapshot,
       unitPriceSnapshot: item.unitPriceSnapshot,
+      discountAmountSnapshot: item.discountAmountSnapshot || 0,
       quantity: item.quantity
     }))
   };
