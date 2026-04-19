@@ -5,6 +5,7 @@
   const PLAYER_STATE_KEY = 'arikara_player_state_v1';
   const PLAYER_SESSION_KEY = 'arikara_player_session_v1';
   const PLAYER_VOLUME_KEY = 'arikara_player_volume_v1';
+  const PLAYER_PREFS_KEY = 'arikara_player_prefs_v1';
   const API_BASE = (() => {
     const hostname = window.location.hostname;
     const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
@@ -197,10 +198,10 @@
   const playerSeek = qs('#playerSeek');
   const playerToggle = qs('#playerToggle');
   const playerToggleIcon = qs('#playerToggleIcon');
+  const playerShuffle = qs('#playerShuffle');
   const playerPrev = qs('#playerPrev');
   const playerNext = qs('#playerNext');
-  const playerBack = qs('#playerBack');
-  const playerForward = qs('#playerForward');
+  const playerLoop = qs('#playerLoop');
   const playerVolume = qs('#playerVolume');
 
   let previewButton = null;
@@ -208,6 +209,8 @@
   let pageCleanups = [];
   let pageRequestToken = 0;
   let navigationInFlight = null;
+  let loopEnabled = false;
+  let shuffleEnabled = false;
 
   const PLAY_ICON = '<polygon points="8,5 19,12 8,19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>';
   const PAUSE_ICON = '<line x1="9" y1="5" x2="9" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="5" x2="15" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
@@ -263,6 +266,14 @@
     if(playerRoot) playerRoot.classList.toggle('is-visible', visible);
     document.body.classList.toggle('player-active', visible);
   };
+  const setRangeProgress = (input, value) => {
+    if(!input) return;
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const safeValue = Math.min(max, Math.max(min, Number(value || 0)));
+    const progress = max > min ? ((safeValue - min) / (max - min)) * 100 : 0;
+    input.style.setProperty('--range-progress', `${progress}%`);
+  };
   const getStoredVolume = () => {
     try{
       const stored = Number(localStorage.getItem(PLAYER_VOLUME_KEY));
@@ -271,18 +282,47 @@
       return 0.8;
     }
   };
+  const getStoredPlayerPrefs = () => {
+    try{
+      return JSON.parse(localStorage.getItem(PLAYER_PREFS_KEY)) || {};
+    }catch{
+      return {};
+    }
+  };
+  const savePlayerPrefs = () => {
+    try{
+      localStorage.setItem(PLAYER_PREFS_KEY, JSON.stringify({
+        loop: loopEnabled,
+        shuffle: shuffleEnabled
+      }));
+    }catch{}
+  };
   const applyVolume = (value) => {
     const safeVolume = Math.min(1, Math.max(0, Number(value || 0)));
     audio.volume = safeVolume;
     audio.muted = safeVolume === 0;
-    if(playerVolume) playerVolume.value = String(safeVolume);
+    if(playerVolume) {
+      playerVolume.value = String(safeVolume);
+      setRangeProgress(playerVolume, safeVolume);
+    }
     try{ localStorage.setItem(PLAYER_VOLUME_KEY, String(safeVolume)); }catch{}
+  };
+  const updateModeButtons = () => {
+    if(playerLoop){
+      playerLoop.classList.toggle('is-active', loopEnabled);
+      playerLoop.setAttribute('aria-pressed', String(loopEnabled));
+    }
+    if(playerShuffle){
+      playerShuffle.classList.toggle('is-active', shuffleEnabled);
+      playerShuffle.setAttribute('aria-pressed', String(shuffleEnabled));
+    }
   };
 
   const syncPlayUI = () => {
     updateToggleIcon();
     updateCoverIcons();
     updatePreviewButton();
+    updateModeButtons();
     if(playerRoot) playerRoot.classList.toggle('is-playing', playing);
   };
   syncPlayUI();
@@ -366,6 +406,10 @@
   syncPlayUI();
 
   const stored = loadPlayerState();
+  const storedPrefs = getStoredPlayerPrefs();
+  loopEnabled = Boolean(storedPrefs.loop);
+  shuffleEnabled = Boolean(storedPrefs.shuffle);
+  updateModeButtons();
   if(stored && stored.src && sessionStorage.getItem(PLAYER_SESSION_KEY) === '1'){
     current = stored.src;
     if(Number.isFinite(stored.beatIndex)) currentBeatIndex = stored.beatIndex;
@@ -409,7 +453,7 @@
       title: beat.title,
       artist: parsed.artist,
       song: parsed.song,
-      meta: `${beat.bpm} BPM - ${beat.key}`,
+      meta: [beat.bpm ? `${beat.bpm} BPM` : '', beat.key || ''].filter(Boolean).join(' · '),
       cover: beat.cover
     }}));
     savePlayerState();
@@ -418,6 +462,12 @@
   const playNext = (dir) => {
     const list = playableIndices();
     if(list.length === 0) return;
+    if(shuffleEnabled && list.length > 1){
+      const pool = list.filter((idx) => idx !== currentBeatIndex);
+      const randomIndex = pool[Math.floor(Math.random() * pool.length)] ?? list[0];
+      playBeatByIndex(randomIndex);
+      return;
+    }
     let pos = list.indexOf(currentBeatIndex);
     if(pos === -1) pos = 0;
     pos = (pos + dir + list.length) % list.length;
@@ -463,10 +513,22 @@
     });
   }
   document.addEventListener('click', resumeOnInteraction);
+  if(playerShuffle){
+    playerShuffle.addEventListener('click', () => {
+      shuffleEnabled = !shuffleEnabled;
+      savePlayerPrefs();
+      updateModeButtons();
+    });
+  }
   if(playerPrev) playerPrev.addEventListener('click', () => playNext(-1));
   if(playerNext) playerNext.addEventListener('click', () => playNext(1));
-  if(playerBack) playerBack.addEventListener('click', () => { audio.currentTime = Math.max(0, audio.currentTime - 10); });
-  if(playerForward) playerForward.addEventListener('click', () => { audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 10); });
+  if(playerLoop){
+    playerLoop.addEventListener('click', () => {
+      loopEnabled = !loopEnabled;
+      savePlayerPrefs();
+      updateModeButtons();
+    });
+  }
   if(playerVolume) {
     applyVolume(playerVolume.value || getStoredVolume());
     ['input', 'change'].forEach((eventName) => {
@@ -476,6 +538,7 @@
 
   audio.addEventListener('loadedmetadata', () => {
     if(playerDuration) playerDuration.textContent = formatTime(audio.duration);
+    if(playerSeek) setRangeProgress(playerSeek, audio.currentTime);
     if(pendingSeek !== null && Number.isFinite(pendingSeek)){
       audio.currentTime = Math.min(pendingSeek, audio.duration || pendingSeek);
       pendingSeek = null;
@@ -483,7 +546,11 @@
   });
   audio.addEventListener('timeupdate', () => {
     if(playerTime) playerTime.textContent = formatTime(audio.currentTime);
-    if(playerSeek && audio.duration){ playerSeek.value = ((audio.currentTime / audio.duration) * 100).toFixed(2); }
+    if(playerSeek && audio.duration){
+      const progress = ((audio.currentTime / audio.duration) * 100).toFixed(2);
+      playerSeek.value = progress;
+      setRangeProgress(playerSeek, progress);
+    }
     if(playing && Number.isFinite(audio.currentTime)){
       const sec = Math.floor(audio.currentTime);
       if(sec !== lastSavedSecond && sec % 2 === 0){
@@ -492,13 +559,22 @@
       }
     }
   });
-  audio.addEventListener('ended', () => playNext(1));
+  audio.addEventListener('ended', () => {
+    if(loopEnabled){
+      audio.currentTime = 0;
+      tryResumePlayback();
+      return;
+    }
+    playNext(1);
+  });
   window.addEventListener('beforeunload', savePlayerState);
   if(!playerVolume) applyVolume(getStoredVolume());
+  if(playerSeek) setRangeProgress(playerSeek, playerSeek.value || 0);
 
   if(playerSeek){
     playerSeek.addEventListener('input', () => {
       if(!audio.duration) return;
+      setRangeProgress(playerSeek, playerSeek.value);
       audio.currentTime = (Number(playerSeek.value) / 100) * audio.duration;
     });
   }
