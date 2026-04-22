@@ -614,9 +614,11 @@
     const genreEl = qs('#genreSelect');
     const sortEl = qs('#sortSelect');
 
-    const genres = (state.genres && state.genres.length)
-      ? state.genres
-      : [...new Set(state.beats.map(b => b.genre).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+    const genres = [...new Set(
+      state.beats
+        .map((beat) => String(beat.genre || '').trim())
+        .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
 
     if(genreEl && genreEl.options.length <= 1){
       genres.forEach(g => {
