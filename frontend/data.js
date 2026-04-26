@@ -28,7 +28,7 @@ window.ARIKARA = {
       cover: "./assets/covers/costa-del-sol.jpg",
       preview: "./assets/audio/costa-del-sol-preview.mp3",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
-      status: "available",
+      status: "sold",
       createdAt: "2026-02-03"
     },
     {
@@ -103,7 +103,7 @@ window.ARIKARA = {
       cover: "./assets/covers/grilletes.jpg",
       preview: "./assets/audio/grilletes-preview.mp3",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
-      status: "available",
+      status: "sold",
       createdAt: "2026-04-03"
     },
     {
