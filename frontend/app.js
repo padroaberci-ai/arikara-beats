@@ -378,11 +378,14 @@
   const updateSheetCartButtons = () => {
     const beat = currentBeat();
     const isAvailable = Boolean(beat) && beat.status === 'available';
-    [playerSheetCart, playerSheetCartCta].forEach((btn) => {
-      if(!btn) return;
-      btn.disabled = !isAvailable;
-      btn.classList.toggle('is-disabled', !isAvailable);
-    });
+    if(playerSheetCart){
+      playerSheetCart.disabled = false;
+      playerSheetCart.classList.remove('is-disabled');
+    }
+    if(playerSheetCartCta){
+      playerSheetCartCta.disabled = !isAvailable;
+      playerSheetCartCta.classList.toggle('is-disabled', !isAvailable);
+    }
     if(playerSheetCartCta){
       playerSheetCartCta.innerHTML = `${CART_ICON}<span>${isAvailable ? 'Añadir Basic al carrito' : 'Beat no disponible'}</span>`;
     }
@@ -771,10 +774,14 @@
       updateModeButtons();
     });
   }
-  [playerSheetCart, playerSheetCartCta].forEach((btn) => {
-    if(!btn) return;
-    btn.addEventListener('click', () => addCurrentBeatToCart());
-  });
+  if(playerSheetCart){
+    playerSheetCart.addEventListener('click', () => {
+      window.location.href = './cart.html';
+    });
+  }
+  if(playerSheetCartCta){
+    playerSheetCartCta.addEventListener('click', () => addCurrentBeatToCart());
+  }
   if(playerVolume) {
     applyVolume(isCompactViewport() ? 1 : (playerVolume.value || getStoredVolume()));
     ['input', 'change'].forEach((eventName) => {
@@ -947,17 +954,10 @@
           <span class="beat-row__mini-action-icon">${COVER_PLAY_SVG}</span>
         </button>
       ` : '';
-      const mobileCart = !isUnavailable ? `
-        <button class="beat-row__mini-action beat-row__mini-action--cart" type="button"
-          data-mobile-cart
-          data-beat-id="${beat.id}"
-          data-slug="${beat.slug}"
-          data-title="${esc(beat.title)}"
-          data-license="basic"
-          data-price="${beat.prices.basic}"
-          aria-label="Añadir Basic al carrito">
-          <span class="beat-row__mini-action-icon">${CART_ICON}</span>
-        </button>
+      const mobileLicense = !isUnavailable ? `
+        <a class="beat-row__mini-link" href="./beat.html?beat=${encodeURIComponent(beat.slug)}" aria-label="Ver licencias de ${esc(beat.title)}">
+          <span>Licencias</span>
+        </a>
       ` : '';
       return `
         <article class="beat-row ${isUnavailable ? 'is-unavailable' : ''}">
@@ -975,7 +975,7 @@
             </button>
             <div class="beat-row__mobile-actions">
               ${mobilePlay}
-              ${mobileCart}
+              ${mobileLicense}
             </div>
           </div>
           <div class="beat-row__mobile-panel" id="beatMobilePanel-${beat.id}" hidden>
@@ -995,12 +995,7 @@
                 <div class="beat-row__mobile-footer">
                   <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
                   <div class="beat-row__mobile-buttons">
-                    ${hasPreview && !isUnavailable ? `
-                      <button class="btn btn--ghost btn--sm" type="button" data-mobile-play="${beatIndex}">
-                        Reproducir
-                      </button>
-                    ` : ''}
-                    <a class="btn btn--primary btn--sm" href="./beat.html?beat=${encodeURIComponent(beat.slug)}">Licencias</a>
+                    <a class="btn btn--primary btn--sm" href="./beat.html?beat=${encodeURIComponent(beat.slug)}">Ver licencias</a>
                     <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
                   </div>
                 </div>
@@ -1117,21 +1112,6 @@
           });
         });
       });
-      qsa('[data-mobile-cart]', list).forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          Cart.add({
-            beatId: btn.dataset.beatId,
-            slug: btn.dataset.slug,
-            title: btn.dataset.title,
-            license: btn.dataset.license,
-            price: Number(btn.dataset.price),
-            qty: 1
-          });
-        });
-      });
-
       updateCoverIcons();
     };
 
