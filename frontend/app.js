@@ -657,21 +657,25 @@
       const isSold = beat.status === 'sold';
       const isUnavailable = beat.status && beat.status !== 'available';
       const statusLabel = isSold ? 'Vendido' : (isUnavailable ? 'No disponible' : 'Disponible');
+      const statusClass = isSold ? 'badge--status-sold' : (isUnavailable ? 'badge--status-unavailable' : 'badge--status-available');
       const hasPreview = Boolean(beat.preview);
       const beatIndex = state.beats.findIndex(b => b.id === beat.id);
       const tags = [...(beat.tags||[]), ...(beat.moods||[])].slice(0,5)
         .map(t => '<span class="tag">' + esc(t) + '</span>').join('');
+      const coverOverlay = (!isUnavailable && hasPreview) ? `
+            <button class="cover-play" type="button" data-index="${beatIndex}" data-preview="${beat.preview}" data-title="${esc(beat.title)}" data-meta="${beat.bpm} BPM - ${esc(beat.key)}" data-cover="${beat.cover}" aria-label="Reproducir preview">
+              <span class="cover-play__icon">${COVER_PLAY_SVG}</span>
+              <span class="wave wave--cover" aria-hidden="true"><span></span><span></span><span></span></span>
+            </button>
+          ` : '';
       return `
         <article class="beat-row ${isUnavailable ? 'is-unavailable' : ''}">
           <div class="beat-cover">
             <img src="${beat.cover}" alt="Cover ${esc(beat.title)}" />
-            <button class="cover-play" type="button" ${hasPreview ? '' : 'disabled'} data-index="${beatIndex}" data-preview="${beat.preview}" data-title="${esc(beat.title)}" data-meta="${beat.bpm} BPM - ${esc(beat.key)}" data-cover="${beat.cover}" aria-label="${hasPreview ? 'Reproducir preview' : 'Preview no disponible'}">
-              <span class="cover-play__icon">${hasPreview ? COVER_PLAY_SVG : COVER_NO_SVG}</span>
-              <span class="wave wave--cover" aria-hidden="true"><span></span><span></span><span></span></span>
-            </button>
+            ${coverOverlay}
           </div>
           <div class="beat-info">
-            <div class="badge">${statusLabel}</div>
+            <div class="badge ${statusClass}">${statusLabel}</div>
             <div class="beat-title">${esc(beat.title)}</div>
             <div class="beat-meta">
               <span>${beat.bpm} BPM</span>
