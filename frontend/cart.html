@@ -43,28 +43,28 @@
 
     <section class="section">
       <div class="container cart-layout">
-        <div id="cartList" style="display:grid; gap: 16px;"></div>
+        <div id="cartList" class="cart-list"></div>
 
-        <aside class="card" style="padding: 24px; border-radius: 30px;">
-          <div style="display:grid; gap: 10px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-              <div style="font-weight:700;">Subtotal original</div>
-              <div id="cartSubtotal" style="font-weight:700;">-</div>
+        <aside class="card cart-summary">
+          <div class="cart-summary__rows">
+            <div class="cart-summary__row">
+              <div class="cart-summary__label">Subtotal original</div>
+              <div id="cartSubtotal" class="cart-summary__value">-</div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-              <div style="font-weight:700;">Descuento pack</div>
-              <div id="cartDiscount" style="font-weight:700; color: var(--accent);">-</div>
+            <div class="cart-summary__row">
+              <div class="cart-summary__label">Descuento pack</div>
+              <div id="cartDiscount" class="cart-summary__value cart-summary__value--accent">-</div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; padding-top: 8px; border-top: 1px solid var(--border);">
-              <div style="font-weight:700;">Total final</div>
-              <div id="cartTotal" style="font-weight:800; font-size: var(--fs-4);">-</div>
+            <div class="cart-summary__row cart-summary__row--total">
+              <div class="cart-summary__label">Total final</div>
+              <div id="cartTotal" class="cart-summary__value cart-summary__value--total">-</div>
             </div>
           </div>
-          <div style="margin-top: 16px; display:grid; gap: 10px;">
+          <div class="cart-summary__actions">
             <button id="checkoutBtn" class="btn btn--primary">Pagar con Stripe</button>
             <button id="clearBtn" class="btn btn--ghost">Vaciar carrito</button>
           </div>
-          <p style="margin-top: 12px; font-size: var(--fs-1);">Al pagar aceptas los términos de licencia. El material se enviará manualmente por email tras confirmar la compra.</p>
+          <p class="cart-summary__note">Al pagar aceptas los términos de licencia. El material se enviará manualmente por email tras confirmar la compra.</p>
         </aside>
       </div>
     </section>

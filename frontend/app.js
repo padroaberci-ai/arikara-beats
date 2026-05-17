@@ -16,6 +16,7 @@
   const qsa = (sel, scope=document) => Array.from(scope.querySelectorAll(sel));
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const apiUrl = (path) => `${API_BASE}${path}`;
+  const isCompactViewport = () => window.matchMedia('(max-width: 980px)').matches;
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   const fetchWithTimeout = (resource, options = {}, timeoutMs = 12000) => {
     const controller = new AbortController();
@@ -211,12 +212,133 @@
   let navigationInFlight = null;
   let loopEnabled = false;
   let shuffleEnabled = false;
+  let playerSheetOpen = false;
 
   const PLAY_ICON = '<polygon points="8,5 19,12 8,19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>';
   const PAUSE_ICON = '<line x1="9" y1="5" x2="9" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="5" x2="15" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+  const CART_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h2l2.1 9.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.77L20 8H7.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="19" r="1.4" fill="currentColor"/><circle cx="17" cy="19" r="1.4" fill="currentColor"/></svg>';
+  const CHEVRON_DOWN_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CHEVRON_UP_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const COVER_PLAY_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true">' + PLAY_ICON + '</svg>';
   const COVER_PAUSE_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true">' + PAUSE_ICON + '</svg>';
   const COVER_NO_SVG = '<span>!</span>';
+
+  if(playerRoot){
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="player-mobile" id="playerMobile" aria-hidden="true">
+        <button class="player-mobile__surface" id="playerMobileOpen" type="button" aria-label="Abrir reproductor">
+          <div class="player-mobile__cover">
+            <img id="playerMobileCover" src="./assets/placeholder.svg" alt="" />
+          </div>
+          <div class="player-mobile__copy">
+            <div class="player-mobile__title-row">
+              <div class="player-mobile__title" id="playerMobileTitle">Nada reproduciendo</div>
+              <span class="wave player-wave player-wave--mobile" aria-hidden="true"><span></span><span></span><span></span></span>
+            </div>
+            <div class="player-mobile__meta" id="playerMobileMeta">Reproduce un beat para escuchar la vista previa</div>
+          </div>
+        </button>
+        <button class="player-mobile__toggle" id="playerMobileToggle" type="button" aria-label="Play/Pause">
+          <span class="player-mobile__toggle-icon" id="playerMobileToggleIcon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">${PLAY_ICON}</svg>
+          </span>
+        </button>
+      </div>
+      <div class="player-sheet" id="playerSheet" aria-hidden="true">
+        <div class="player-sheet__backdrop" id="playerSheetBackdrop"></div>
+        <div class="player-sheet__panel" role="dialog" aria-modal="true" aria-label="Reproductor">
+          <div class="player-sheet__bg">
+            <img id="playerSheetBg" src="./assets/placeholder.svg" alt="" />
+          </div>
+          <div class="player-sheet__scrim"></div>
+          <div class="player-sheet__header">
+            <button class="player-sheet__close" id="playerSheetClose" type="button" aria-label="Cerrar reproductor">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="player-sheet__brand">ARIKARA BEATS</div>
+            <button class="player-sheet__cart" id="playerSheetCart" type="button" aria-label="Añadir Basic al carrito">
+              ${CART_ICON}
+            </button>
+          </div>
+          <div class="player-sheet__body">
+            <div class="player-sheet__artwork">
+              <img id="playerSheetCover" src="./assets/placeholder.svg" alt="" />
+            </div>
+            <div class="player-sheet__title" id="playerSheetTitle">Nada reproduciendo</div>
+            <div class="player-sheet__meta" id="playerSheetMeta">Reproduce un beat para escuchar la vista previa</div>
+            <div class="player-sheet__progress">
+              <input id="playerSheetSeek" class="player-seek player-sheet__seek" type="range" min="0" max="100" value="0" />
+              <div class="player-sheet__times">
+                <span id="playerSheetTime">0:00</span>
+                <span id="playerSheetDuration">0:00</span>
+              </div>
+            </div>
+            <div class="player-sheet__controls">
+              <button class="icon-btn" id="playerSheetShuffle" type="button" aria-label="Reproducción aleatoria" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h3l10 10h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M17 7h3v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20 7l-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 17h3l3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button class="icon-btn" id="playerSheetPrev" type="button" aria-label="Anterior">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18 6l-8 6 8 6V6zM8 6H6v12h2V6z" fill="currentColor"/>
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn--accent icon-btn--main" id="playerSheetToggle" type="button" aria-label="Play/Pause">
+                <svg id="playerSheetToggleIcon" viewBox="0 0 24 24" aria-hidden="true">${PLAY_ICON}</svg>
+              </button>
+              <button class="icon-btn" id="playerSheetNext" type="button" aria-label="Siguiente">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 6l8 6-8 6V6zm10 0h2v12h-2V6z" fill="currentColor"/>
+                </svg>
+              </button>
+              <button class="icon-btn" id="playerSheetLoop" type="button" aria-label="Repetir beat" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M17 17H7a4 4 0 0 1 0-8h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M15 20l3-3-3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 7h10a4 4 0 1 1 0 8H6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M9 4L6 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+            <button class="player-sheet__cta" id="playerSheetCartCta" type="button">
+              ${CART_ICON}
+              <span>Añadir Basic al carrito</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    `);
+  }
+
+  const playerMobile = qs('#playerMobile');
+  const playerMobileOpen = qs('#playerMobileOpen');
+  const playerMobileCover = qs('#playerMobileCover');
+  const playerMobileTitle = qs('#playerMobileTitle');
+  const playerMobileMeta = qs('#playerMobileMeta');
+  const playerMobileToggle = qs('#playerMobileToggle');
+  const playerMobileToggleIcon = qs('#playerMobileToggleIcon');
+  const playerSheet = qs('#playerSheet');
+  const playerSheetBackdrop = qs('#playerSheetBackdrop');
+  const playerSheetClose = qs('#playerSheetClose');
+  const playerSheetBg = qs('#playerSheetBg');
+  const playerSheetCover = qs('#playerSheetCover');
+  const playerSheetTitle = qs('#playerSheetTitle');
+  const playerSheetMeta = qs('#playerSheetMeta');
+  const playerSheetSeek = qs('#playerSheetSeek');
+  const playerSheetTime = qs('#playerSheetTime');
+  const playerSheetDuration = qs('#playerSheetDuration');
+  const playerSheetToggle = qs('#playerSheetToggle');
+  const playerSheetToggleIcon = qs('#playerSheetToggleIcon');
+  const playerSheetShuffle = qs('#playerSheetShuffle');
+  const playerSheetPrev = qs('#playerSheetPrev');
+  const playerSheetNext = qs('#playerSheetNext');
+  const playerSheetLoop = qs('#playerSheetLoop');
+  const playerSheetCart = qs('#playerSheetCart');
+  const playerSheetCartCta = qs('#playerSheetCartCta');
 
   const formatTime = (t) => {
     if(!Number.isFinite(t)) return '0:00';
@@ -224,10 +346,70 @@
     const s = Math.floor(t % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };
+  const currentBeat = () => state.beats[currentBeatIndex] || null;
+  const currentTrackHeading = () => {
+    const main = String(playerTitle?.textContent || '').trim() || 'Nada reproduciendo';
+    const secondary = String(playerSubtitle?.textContent || '').trim();
+    return secondary ? `${main} - "${secondary}"` : main;
+  };
+  const currentTrackMeta = () => {
+    const secondary = String(playerSubtitle?.textContent || '').trim();
+    const meta = String(playerMeta?.textContent || '').trim();
+    return [secondary, meta].filter(Boolean).join(' · ') || 'Reproduce un beat para escuchar la vista previa';
+  };
+  const updateMobilePlayerContent = () => {
+    const heading = currentTrackHeading();
+    const meta = currentTrackMeta();
+    const cover = playerCoverImg?.src || './assets/placeholder.svg';
+    if(playerMobileTitle) playerMobileTitle.textContent = heading;
+    if(playerMobileMeta) playerMobileMeta.textContent = meta;
+    if(playerMobileCover){
+      playerMobileCover.src = cover;
+      playerMobileCover.alt = heading ? `Cover ${heading}` : '';
+    }
+    if(playerSheetTitle) playerSheetTitle.textContent = heading;
+    if(playerSheetMeta) playerSheetMeta.textContent = meta;
+    if(playerSheetBg) playerSheetBg.src = cover;
+    if(playerSheetCover){
+      playerSheetCover.src = cover;
+      playerSheetCover.alt = heading ? `Cover ${heading}` : '';
+    }
+  };
+  const updateSheetCartButtons = () => {
+    const beat = currentBeat();
+    const isAvailable = Boolean(beat) && beat.status === 'available';
+    [playerSheetCart, playerSheetCartCta].forEach((btn) => {
+      if(!btn) return;
+      btn.disabled = !isAvailable;
+      btn.classList.toggle('is-disabled', !isAvailable);
+    });
+    if(playerSheetCartCta){
+      playerSheetCartCta.innerHTML = `${CART_ICON}<span>${isAvailable ? 'Añadir Basic al carrito' : 'Beat no disponible'}</span>`;
+    }
+  };
+  const setPlayerSheetOpen = (open) => {
+    playerSheetOpen = Boolean(open && playerSheet);
+    if(playerSheet) playerSheet.classList.toggle('is-open', playerSheetOpen);
+    document.body.classList.toggle('player-sheet-open', playerSheetOpen);
+  };
+  const addCurrentBeatToCart = () => {
+    const beat = currentBeat();
+    if(!beat || beat.status !== 'available') return;
+    Cart.add({
+      beatId: beat.id,
+      slug: beat.slug,
+      title: beat.title,
+      license: 'basic',
+      price: beat.prices.basic,
+      qty: 1
+    });
+  };
 
   const updateToggleIcon = () => {
     if(!playerToggleIcon) return;
     playerToggleIcon.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
+    if(playerMobileToggleIcon) playerMobileToggleIcon.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${playing ? PAUSE_ICON : PLAY_ICON}</svg>`;
+    if(playerSheetToggleIcon) playerSheetToggleIcon.innerHTML = playing ? PAUSE_ICON : PLAY_ICON;
   };
   const updateCoverIcons = () => {
     qsa('.cover-play').forEach(btn => {
@@ -264,7 +446,9 @@
   };
   const setPlayerVisible = (visible) => {
     if(playerRoot) playerRoot.classList.toggle('is-visible', visible);
+    if(playerMobile) playerMobile.classList.toggle('is-visible', visible);
     document.body.classList.toggle('player-active', visible);
+    if(!visible) setPlayerSheetOpen(false);
   };
   const setRangeProgress = (input, value) => {
     if(!input) return;
@@ -298,7 +482,7 @@
     }catch{}
   };
   const applyVolume = (value) => {
-    const safeVolume = Math.min(1, Math.max(0, Number(value || 0)));
+    const safeVolume = isCompactViewport() ? 1 : Math.min(1, Math.max(0, Number(value || 0)));
     audio.volume = safeVolume;
     audio.muted = safeVolume === 0;
     if(playerVolume) {
@@ -312,9 +496,17 @@
       playerLoop.classList.toggle('is-active', loopEnabled);
       playerLoop.setAttribute('aria-pressed', String(loopEnabled));
     }
+    if(playerSheetLoop){
+      playerSheetLoop.classList.toggle('is-active', loopEnabled);
+      playerSheetLoop.setAttribute('aria-pressed', String(loopEnabled));
+    }
     if(playerShuffle){
       playerShuffle.classList.toggle('is-active', shuffleEnabled);
       playerShuffle.setAttribute('aria-pressed', String(shuffleEnabled));
+    }
+    if(playerSheetShuffle){
+      playerSheetShuffle.classList.toggle('is-active', shuffleEnabled);
+      playerSheetShuffle.setAttribute('aria-pressed', String(shuffleEnabled));
     }
   };
 
@@ -324,6 +516,9 @@
     updatePreviewButton();
     updateModeButtons();
     if(playerRoot) playerRoot.classList.toggle('is-playing', playing);
+    if(playerMobile) playerMobile.classList.toggle('is-playing', playing);
+    updateMobilePlayerContent();
+    updateSheetCartButtons();
   };
   syncPlayUI();
 
@@ -512,6 +707,37 @@
       toggle(current);
     });
   }
+  if(playerMobileToggle){
+    playerMobileToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      sessionStorage.setItem(PLAYER_SESSION_KEY, '1');
+      if(!current){
+        const list = playableIndices();
+        if(list.length > 0) playBeatByIndex(list[0]);
+        return;
+      }
+      toggle(current);
+    });
+  }
+  if(playerMobileOpen){
+    playerMobileOpen.addEventListener('click', () => {
+      if(!current) return;
+      setPlayerSheetOpen(true);
+    });
+  }
+  if(playerSheetClose) playerSheetClose.addEventListener('click', () => setPlayerSheetOpen(false));
+  if(playerSheetBackdrop) playerSheetBackdrop.addEventListener('click', () => setPlayerSheetOpen(false));
+  if(playerSheetToggle){
+    playerSheetToggle.addEventListener('click', () => {
+      sessionStorage.setItem(PLAYER_SESSION_KEY, '1');
+      if(!current){
+        const list = playableIndices();
+        if(list.length > 0) playBeatByIndex(list[0]);
+        return;
+      }
+      toggle(current);
+    });
+  }
   document.addEventListener('click', resumeOnInteraction);
   if(playerShuffle){
     playerShuffle.addEventListener('click', () => {
@@ -520,8 +746,17 @@
       updateModeButtons();
     });
   }
+  if(playerSheetShuffle){
+    playerSheetShuffle.addEventListener('click', () => {
+      shuffleEnabled = !shuffleEnabled;
+      savePlayerPrefs();
+      updateModeButtons();
+    });
+  }
   if(playerPrev) playerPrev.addEventListener('click', () => playNext(-1));
   if(playerNext) playerNext.addEventListener('click', () => playNext(1));
+  if(playerSheetPrev) playerSheetPrev.addEventListener('click', () => playNext(-1));
+  if(playerSheetNext) playerSheetNext.addEventListener('click', () => playNext(1));
   if(playerLoop){
     playerLoop.addEventListener('click', () => {
       loopEnabled = !loopEnabled;
@@ -529,8 +764,19 @@
       updateModeButtons();
     });
   }
+  if(playerSheetLoop){
+    playerSheetLoop.addEventListener('click', () => {
+      loopEnabled = !loopEnabled;
+      savePlayerPrefs();
+      updateModeButtons();
+    });
+  }
+  [playerSheetCart, playerSheetCartCta].forEach((btn) => {
+    if(!btn) return;
+    btn.addEventListener('click', () => addCurrentBeatToCart());
+  });
   if(playerVolume) {
-    applyVolume(playerVolume.value || getStoredVolume());
+    applyVolume(isCompactViewport() ? 1 : (playerVolume.value || getStoredVolume()));
     ['input', 'change'].forEach((eventName) => {
       playerVolume.addEventListener(eventName, () => applyVolume(playerVolume.value));
     });
@@ -539,6 +785,8 @@
   audio.addEventListener('loadedmetadata', () => {
     if(playerDuration) playerDuration.textContent = formatTime(audio.duration);
     if(playerSeek) setRangeProgress(playerSeek, audio.currentTime);
+    if(playerSheetDuration) playerSheetDuration.textContent = formatTime(audio.duration);
+    if(playerSheetSeek) setRangeProgress(playerSheetSeek, audio.currentTime);
     if(pendingSeek !== null && Number.isFinite(pendingSeek)){
       audio.currentTime = Math.min(pendingSeek, audio.duration || pendingSeek);
       pendingSeek = null;
@@ -550,6 +798,12 @@
       const progress = ((audio.currentTime / audio.duration) * 100).toFixed(2);
       playerSeek.value = progress;
       setRangeProgress(playerSeek, progress);
+    }
+    if(playerSheetTime) playerSheetTime.textContent = formatTime(audio.currentTime);
+    if(playerSheetSeek && audio.duration){
+      const progress = ((audio.currentTime / audio.duration) * 100).toFixed(2);
+      playerSheetSeek.value = progress;
+      setRangeProgress(playerSheetSeek, progress);
     }
     if(playing && Number.isFinite(audio.currentTime)){
       const sec = Math.floor(audio.currentTime);
@@ -578,6 +832,25 @@
       audio.currentTime = (Number(playerSeek.value) / 100) * audio.duration;
     });
   }
+  if(playerSheetSeek){
+    playerSheetSeek.addEventListener('input', () => {
+      if(!audio.duration) return;
+      setRangeProgress(playerSheetSeek, playerSheetSeek.value);
+      audio.currentTime = (Number(playerSheetSeek.value) / 100) * audio.duration;
+    });
+  }
+  document.addEventListener('keydown', (event) => {
+    if(event.key === 'Escape' && playerSheetOpen){
+      setPlayerSheetOpen(false);
+    }
+  });
+  window.addEventListener('resize', () => {
+    if(isCompactViewport()){
+      applyVolume(1);
+    }else{
+      applyVolume(getStoredVolume());
+    }
+  });
 
   const licenseName = (id) => {
     const lic = state.licenses.find(l => l.id === id);
@@ -660,6 +933,7 @@
       const statusClass = isSold ? 'badge--status-sold' : (isUnavailable ? 'badge--status-unavailable' : 'badge--status-available');
       const hasPreview = Boolean(beat.preview);
       const beatIndex = state.beats.findIndex(b => b.id === beat.id);
+      const detailMeta = `${beat.bpm} BPM · ${esc(beat.key)}${beat.genre ? ` · ${esc(beat.genre)}` : ''}`;
       const tags = [...(beat.tags||[]), ...(beat.moods||[])].slice(0,5)
         .map(t => '<span class="tag">' + esc(t) + '</span>').join('');
       const coverOverlay = (!isUnavailable && hasPreview) ? `
@@ -668,27 +942,90 @@
               <span class="wave wave--cover" aria-hidden="true"><span></span><span></span><span></span></span>
             </button>
           ` : '';
+      const mobilePlay = hasPreview && !isUnavailable ? `
+        <button class="beat-row__mini-action beat-row__mini-action--play" type="button" data-mobile-play="${beatIndex}" aria-label="Reproducir preview">
+          <span class="beat-row__mini-action-icon">${COVER_PLAY_SVG}</span>
+        </button>
+      ` : '';
+      const mobileCart = !isUnavailable ? `
+        <button class="beat-row__mini-action beat-row__mini-action--cart" type="button"
+          data-mobile-cart
+          data-beat-id="${beat.id}"
+          data-slug="${beat.slug}"
+          data-title="${esc(beat.title)}"
+          data-license="basic"
+          data-price="${beat.prices.basic}"
+          aria-label="Añadir Basic al carrito">
+          <span class="beat-row__mini-action-icon">${CART_ICON}</span>
+        </button>
+      ` : '';
       return `
         <article class="beat-row ${isUnavailable ? 'is-unavailable' : ''}">
-          <div class="beat-cover">
-            <img src="${beat.cover}" alt="Cover ${esc(beat.title)}" />
-            ${coverOverlay}
-          </div>
-          <div class="beat-info">
-            <div class="badge ${statusClass}">${statusLabel}</div>
-            <div class="beat-title">${esc(beat.title)}</div>
-            <div class="beat-meta">
-              <span>${beat.bpm} BPM</span>
-              <span>${esc(beat.key)}</span>
-              <span>${esc(beat.genre)}</span>
+          <div class="beat-row__mobile-summary">
+            <button class="beat-row__mobile-toggle" type="button" data-mobile-toggle="${beatIndex}" aria-expanded="false" aria-controls="beatMobilePanel-${beat.id}">
+              <div class="beat-row__mobile-cover">
+                <img src="${beat.cover}" alt="Cover ${esc(beat.title)}" />
+              </div>
+              <div class="beat-row__mobile-copy">
+                <div class="beat-row__mobile-status badge ${statusClass}">${statusLabel}</div>
+                <div class="beat-row__mobile-title">${esc(beat.title)}</div>
+                <div class="beat-row__mobile-meta">${beat.bpm} BPM · ${esc(beat.key)}</div>
+              </div>
+              <span class="beat-row__mobile-chevron" aria-hidden="true">${CHEVRON_DOWN_ICON}</span>
+            </button>
+            <div class="beat-row__mobile-actions">
+              ${mobilePlay}
+              ${mobileCart}
             </div>
-            <div class="beat-tags">${tags}</div>
           </div>
-          <div class="beat-actions">
-            <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
-            <div class="beat-buttons">
-              <a class="btn btn--primary btn--sm" href="./beat.html?beat=${encodeURIComponent(beat.slug)}">Licencias</a>
-              <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
+          <div class="beat-row__mobile-panel" id="beatMobilePanel-${beat.id}" hidden>
+            <div class="beat-row__mobile-card">
+              <div class="beat-row__mobile-hero">
+                <img src="${beat.cover}" alt="Cover ${esc(beat.title)}" />
+              </div>
+              <div class="beat-row__mobile-body">
+                <div class="badge ${statusClass}">${statusLabel}</div>
+                <div class="beat-title">${esc(beat.title)}</div>
+                <div class="beat-meta">
+                  <span>${beat.bpm} BPM</span>
+                  <span>${esc(beat.key)}</span>
+                  <span>${esc(beat.genre)}</span>
+                </div>
+                <div class="beat-tags">${tags}</div>
+                <div class="beat-row__mobile-footer">
+                  <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
+                  <div class="beat-row__mobile-buttons">
+                    ${hasPreview && !isUnavailable ? `
+                      <button class="btn btn--ghost btn--sm" type="button" data-mobile-play="${beatIndex}">
+                        Reproducir
+                      </button>
+                    ` : ''}
+                    <a class="btn btn--primary btn--sm" href="./beat.html?beat=${encodeURIComponent(beat.slug)}">Licencias</a>
+                    <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="beat-row__desktop">
+            <div class="beat-cover">
+              <img src="${beat.cover}" alt="Cover ${esc(beat.title)}" />
+              ${coverOverlay}
+            </div>
+            <div class="beat-info">
+              <div class="badge ${statusClass}">${statusLabel}</div>
+              <div class="beat-title">${esc(beat.title)}</div>
+              <div class="beat-meta">
+                <span>${detailMeta}</span>
+              </div>
+              <div class="beat-tags">${tags}</div>
+            </div>
+            <div class="beat-actions">
+              <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
+              <div class="beat-buttons">
+                <a class="btn btn--primary btn--sm" href="./beat.html?beat=${encodeURIComponent(beat.slug)}">Licencias</a>
+                <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
+              </div>
             </div>
           </div>
         </article>
@@ -710,6 +1047,36 @@
       list.innerHTML = sorted.map(renderRow).join('');
       empty.classList.toggle('hidden', sorted.length !== 0);
 
+      const collapseMobileRows = (exceptId = '') => {
+        qsa('.beat-row__mobile-toggle', list).forEach((toggleBtn) => {
+          const panelId = toggleBtn.getAttribute('aria-controls') || '';
+          if(panelId === exceptId) return;
+          toggleBtn.setAttribute('aria-expanded', 'false');
+          const row = toggleBtn.closest('.beat-row');
+          if(row) row.classList.remove('is-expanded');
+          const panel = panelId ? qs(`#${panelId}`) : null;
+          if(panel) panel.hidden = true;
+          const chevron = qs('.beat-row__mobile-chevron', toggleBtn);
+          if(chevron) chevron.innerHTML = CHEVRON_DOWN_ICON;
+        });
+      };
+
+      qsa('.beat-row__mobile-toggle', list).forEach((toggleBtn) => {
+        toggleBtn.addEventListener('click', () => {
+          const panelId = toggleBtn.getAttribute('aria-controls') || '';
+          const panel = panelId ? qs(`#${panelId}`) : null;
+          if(!panel) return;
+          const nextExpanded = toggleBtn.getAttribute('aria-expanded') !== 'true';
+          collapseMobileRows(nextExpanded ? panelId : '');
+          toggleBtn.setAttribute('aria-expanded', String(nextExpanded));
+          panel.hidden = !nextExpanded;
+          const row = toggleBtn.closest('.beat-row');
+          if(row) row.classList.toggle('is-expanded', nextExpanded);
+          const chevron = qs('.beat-row__mobile-chevron', toggleBtn);
+          if(chevron) chevron.innerHTML = nextExpanded ? CHEVRON_UP_ICON : CHEVRON_DOWN_ICON;
+        });
+      });
+
       qsa('.cover-play[data-index]', list).forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
@@ -723,9 +1090,37 @@
           playBeatByIndex(idx);
         });
       });
+      qsa('[data-mobile-play]', list).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const idx = Number(btn.dataset.mobilePlay);
+          const beat = state.beats[idx];
+          if(!beat || !beat.preview) return;
+          if(current === beat.preview){
+            toggle(beat.preview);
+            return;
+          }
+          playBeatByIndex(idx);
+        });
+      });
 
       qsa('[data-add]', list).forEach(btn => {
         btn.addEventListener('click', () => {
+          Cart.add({
+            beatId: btn.dataset.beatId,
+            slug: btn.dataset.slug,
+            title: btn.dataset.title,
+            license: btn.dataset.license,
+            price: Number(btn.dataset.price),
+            qty: 1
+          });
+        });
+      });
+      qsa('[data-mobile-cart]', list).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           Cart.add({
             beatId: btn.dataset.beatId,
             slug: btn.dataset.slug,
@@ -954,23 +1349,21 @@
   const renderCartItem = (item, idx) => {
     const hasDiscount = Number(item.discountAmount || 0) > 0;
     const priceMeta = hasDiscount
-      ? `<div class="beat-meta">Antes ${fmtEUR(item.basePrice)} · Ahorro ${fmtEUR(item.discountAmount)}</div>`
-      : `<div class="beat-meta">${fmtEUR(item.basePrice)}</div>`;
+      ? `<div class="cart-item__notes">Antes ${fmtEUR(item.basePrice)} · Ahorro ${fmtEUR(item.discountAmount)}</div>`
+      : `<div class="cart-item__notes">Precio ${fmtEUR(item.basePrice)}</div>`;
 
     return `
-      <div class="card" style="padding: 18px; border-radius: 22px;">
-        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
-          <div>
-            <div class="beat-title">${esc(item.title)}</div>
-            <div class="beat-meta">${esc(licenseName(item.license))}</div>
-            ${priceMeta}
-          </div>
-          <div style="text-align:right; min-width: 120px;">
-            <div class="beat-title">${fmtEUR(item.finalPrice)}</div>
-            <button class="btn btn--ghost btn--sm" data-remove="${idx}">Eliminar</button>
-          </div>
+      <article class="cart-item">
+        <div class="cart-item__main">
+          <div class="cart-item__title">${esc(item.title)}</div>
+          <div class="cart-item__meta">${esc(licenseName(item.license))}</div>
+          ${priceMeta}
         </div>
-      </div>
+        <div class="cart-item__side">
+          <div class="cart-item__price">${fmtEUR(item.finalPrice)}</div>
+          <button class="cart-item__remove" type="button" data-remove="${idx}">Eliminar</button>
+        </div>
+      </article>
     `;
   };
 
