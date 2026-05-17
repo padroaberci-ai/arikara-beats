@@ -358,19 +358,28 @@ h3{ font-size: clamp(1.2rem, 2vw, 1.6rem); }
 .badge{ display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: var(--fs-0); font-weight: 700; background: var(--accent-soft); color: var(--text); }
 .badge--accent{ background: var(--accent-grad); color: #0b0b0b; }
 .badge--status-available{
-  background: linear-gradient(135deg, #f3a04e 0%, #d9772f 100%);
+  background: linear-gradient(135deg, #e8a55f 0%, #d6762a 52%, #bb5b1c 100%);
   color: #120d08;
-  border: 1px solid rgba(255, 205, 138, 0.4);
+  border: 1px solid rgba(255, 210, 156, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    0 10px 24px rgba(214,118,42,0.12);
 }
 .badge--status-sold{
-  background: linear-gradient(135deg, #ff6d57 0%, #d63a3a 100%);
-  color: #fff7f5;
-  border: 1px solid rgba(255, 179, 167, 0.38);
+  background: linear-gradient(135deg, rgba(48,48,48,0.96) 0%, rgba(35,35,35,0.96) 100%);
+  color: #d6762a;
+  border: 1px solid rgba(214,118,42,0.26);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 10px 24px rgba(0,0,0,0.2);
 }
 .badge--status-unavailable{
-  background: linear-gradient(135deg, #7f5b43 0%, #5f4637 100%);
-  color: rgba(255, 246, 238, 0.92);
-  border: 1px solid rgba(255, 214, 188, 0.16);
+  background: linear-gradient(135deg, rgba(92,68,53,0.94) 0%, rgba(60,44,35,0.96) 100%);
+  color: rgba(245,241,235,0.88);
+  border: 1px solid rgba(214,118,42,0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 10px 24px rgba(0,0,0,0.14);
 }
 .tag{ display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: var(--fs-0); border: 1px solid var(--border); background: rgba(255,255,255,0.06); color: var(--text); }
 
