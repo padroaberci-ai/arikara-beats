@@ -4,6 +4,7 @@
   const LAST_ORDER_KEY = 'arikara_last_order_v1';
   const PLAYER_STATE_KEY = 'arikara_player_state_v1';
   const PLAYER_SESSION_KEY = 'arikara_player_session_v1';
+  const PLAYER_HIDDEN_KEY = 'arikara_player_hidden_v1';
   const PLAYER_VOLUME_KEY = 'arikara_player_volume_v1';
   const PLAYER_PREFS_KEY = 'arikara_player_prefs_v1';
   const API_BASE = (() => {
@@ -213,6 +214,7 @@
   let loopEnabled = false;
   let shuffleEnabled = false;
   let playerSheetOpen = false;
+  let playerDismissed = false;
 
   const PLAY_ICON = '<polygon points="8,5 19,12 8,19" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>';
   const PAUSE_ICON = '<line x1="9" y1="5" x2="9" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="15" y1="5" x2="15" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
@@ -243,6 +245,9 @@
             <svg viewBox="0 0 24 24" aria-hidden="true">${PLAY_ICON}</svg>
           </span>
         </button>
+        <button class="player-mobile__dismiss" id="playerMobileDismiss" type="button" aria-label="Cerrar reproductor">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </button>
       </div>
       <div class="player-sheet" id="playerSheet" aria-hidden="true">
         <div class="player-sheet__backdrop" id="playerSheetBackdrop"></div>
@@ -256,7 +261,7 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="player-sheet__brand">ARIKARA BEATS</div>
-            <button class="player-sheet__cart" id="playerSheetCart" type="button" aria-label="Añadir Basic al carrito">
+            <button class="player-sheet__cart" id="playerSheetCart" type="button" aria-label="Ver licencias del beat">
               ${CART_ICON}
             </button>
           </div>
@@ -304,10 +309,15 @@
                 </svg>
               </button>
             </div>
-            <button class="player-sheet__cta" id="playerSheetCartCta" type="button">
-              ${CART_ICON}
-              <span>Añadir Basic al carrito</span>
-            </button>
+            <div class="player-sheet__actions">
+              <button class="player-sheet__cta player-sheet__cta--ghost" id="playerSheetLicenses" type="button">
+                <span>Ver licencias</span>
+              </button>
+              <button class="player-sheet__cta" id="playerSheetCartCta" type="button">
+                ${CART_ICON}
+                <span>Añadir Basic al carrito</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -321,6 +331,7 @@
   const playerMobileMeta = qs('#playerMobileMeta');
   const playerMobileToggle = qs('#playerMobileToggle');
   const playerMobileToggleIcon = qs('#playerMobileToggleIcon');
+  const playerMobileDismiss = qs('#playerMobileDismiss');
   const playerSheet = qs('#playerSheet');
   const playerSheetBackdrop = qs('#playerSheetBackdrop');
   const playerSheetClose = qs('#playerSheetClose');
@@ -338,6 +349,7 @@
   const playerSheetNext = qs('#playerSheetNext');
   const playerSheetLoop = qs('#playerSheetLoop');
   const playerSheetCart = qs('#playerSheetCart');
+  const playerSheetLicenses = qs('#playerSheetLicenses');
   const playerSheetCartCta = qs('#playerSheetCartCta');
 
   const formatTime = (t) => {
@@ -356,6 +368,17 @@
     const secondary = String(playerSubtitle?.textContent || '').trim();
     const meta = String(playerMeta?.textContent || '').trim();
     return [secondary, meta].filter(Boolean).join(' · ') || 'Reproduce un beat para escuchar la vista previa';
+  };
+  const preservePlaybackSession = () => {
+    if(!current) return;
+    try{ sessionStorage.setItem(PLAYER_SESSION_KEY, '1'); }catch{}
+    savePlayerState();
+  };
+  const openCurrentBeatLicenses = () => {
+    const beat = currentBeat();
+    if(!beat) return;
+    preservePlaybackSession();
+    window.location.href = `./beat.html?beat=${encodeURIComponent(beat.slug)}`;
   };
   const updateMobilePlayerContent = () => {
     const heading = currentTrackHeading();
@@ -379,8 +402,12 @@
     const beat = currentBeat();
     const isAvailable = Boolean(beat) && beat.status === 'available';
     if(playerSheetCart){
-      playerSheetCart.disabled = false;
-      playerSheetCart.classList.remove('is-disabled');
+      playerSheetCart.disabled = !beat;
+      playerSheetCart.classList.toggle('is-disabled', !beat);
+    }
+    if(playerSheetLicenses){
+      playerSheetLicenses.disabled = !beat;
+      playerSheetLicenses.classList.toggle('is-disabled', !beat);
     }
     if(playerSheetCartCta){
       playerSheetCartCta.disabled = !isAvailable;
@@ -427,6 +454,14 @@
       btn.classList.toggle('is-playing', isActive);
       icon.innerHTML = isActive ? COVER_PAUSE_SVG : COVER_PLAY_SVG;
     });
+    qsa('[data-mobile-play]').forEach(btn => {
+      const icon = btn.querySelector('.beat-row__mini-action-icon');
+      if(!icon) return;
+      const beat = state.beats[Number(btn.dataset.mobilePlay)];
+      const isActive = Boolean(beat?.preview) && playing && current === beat.preview;
+      btn.classList.toggle('is-playing', isActive);
+      icon.innerHTML = isActive ? COVER_PAUSE_SVG : COVER_PLAY_SVG;
+    });
   };
   const updatePreviewButton = () => {
     if(!previewButton || !previewButtonTarget) return;
@@ -452,6 +487,12 @@
     if(playerMobile) playerMobile.classList.toggle('is-visible', visible);
     document.body.classList.toggle('player-active', visible);
     if(!visible) setPlayerSheetOpen(false);
+  };
+  const dismissPlayer = () => {
+    pause();
+    playerDismissed = true;
+    try{ sessionStorage.setItem(PLAYER_HIDDEN_KEY, '1'); }catch{}
+    setPlayerVisible(false);
   };
   const setRangeProgress = (input, value) => {
     if(!input) return;
@@ -547,6 +588,8 @@
     if(!current) return;
     playing = true;
     syncPlayUI();
+    playerDismissed = false;
+    try{ sessionStorage.removeItem(PLAYER_HIDDEN_KEY); }catch{}
     setPlayerVisible(true);
     const attempt = audio.play();
     if(attempt && typeof attempt.then === 'function'){
@@ -604,6 +647,7 @@
   syncPlayUI();
 
   const stored = loadPlayerState();
+  playerDismissed = sessionStorage.getItem(PLAYER_HIDDEN_KEY) === '1';
   const storedPrefs = getStoredPlayerPrefs();
   loopEnabled = Boolean(storedPrefs.loop);
   shuffleEnabled = Boolean(storedPrefs.shuffle);
@@ -631,7 +675,7 @@
       pendingResume = true;
       tryResumePlayback();
     }else{
-      setPlayerVisible(true);
+      setPlayerVisible(!playerDismissed);
     }
     syncPlayUI();
   }else{
@@ -722,6 +766,12 @@
       toggle(current);
     });
   }
+  if(playerMobileDismiss){
+    playerMobileDismiss.addEventListener('click', (event) => {
+      event.stopPropagation();
+      dismissPlayer();
+    });
+  }
   if(playerMobileOpen){
     playerMobileOpen.addEventListener('click', () => {
       if(!current) return;
@@ -776,7 +826,12 @@
   }
   if(playerSheetCart){
     playerSheetCart.addEventListener('click', () => {
-      window.location.href = './cart.html';
+      openCurrentBeatLicenses();
+    });
+  }
+  if(playerSheetLicenses){
+    playerSheetLicenses.addEventListener('click', () => {
+      openCurrentBeatLicenses();
     });
   }
   if(playerSheetCartCta){
@@ -829,6 +884,10 @@
     playNext(1);
   });
   window.addEventListener('beforeunload', savePlayerState);
+  window.addEventListener('pagehide', savePlayerState);
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'hidden') savePlayerState();
+  });
   if(!playerVolume) applyVolume(getStoredVolume());
   if(playerSeek) setRangeProgress(playerSeek, playerSeek.value || 0);
 
@@ -851,6 +910,18 @@
       setPlayerSheetOpen(false);
     }
   });
+  document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[href]');
+    if(!link || !current) return;
+    if(event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const href = link.getAttribute('href') || '';
+    if(!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    try{
+      const nextUrl = new URL(link.href, window.location.href);
+      if(nextUrl.origin !== window.location.origin) return;
+      preservePlaybackSession();
+    }catch{}
+  }, true);
   window.addEventListener('resize', () => {
     if(isCompactViewport()){
       applyVolume(1);
@@ -955,8 +1026,8 @@
         </button>
       ` : '';
       const mobileLicense = !isUnavailable ? `
-        <a class="beat-row__mini-link" href="./beat.html?beat=${encodeURIComponent(beat.slug)}" aria-label="Ver licencias de ${esc(beat.title)}">
-          <span>Licencias</span>
+        <a class="beat-row__mini-action beat-row__mini-action--license" href="./beat.html?beat=${encodeURIComponent(beat.slug)}" aria-label="Ver licencias de ${esc(beat.title)}">
+          <span class="beat-row__mini-action-icon">${CART_ICON}</span>
         </a>
       ` : '';
       return `
