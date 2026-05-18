@@ -365,8 +365,14 @@
     return secondary ? `${main} - "${secondary}"` : main;
   };
   const currentTrackMeta = () => {
+    const beat = currentBeat();
     const secondary = String(playerSubtitle?.textContent || '').trim();
     const meta = String(playerMeta?.textContent || '').trim();
+    const genre = String(beat?.genre || '').trim();
+    if(genre){
+      if(meta && meta.toLowerCase().includes(genre.toLowerCase())) return meta;
+      return [genre, meta].filter(Boolean).join(' · ');
+    }
     return [secondary, meta].filter(Boolean).join(' · ') || 'Reproduce un beat para escuchar la vista previa';
   };
   const preservePlaybackSession = () => {
