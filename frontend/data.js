@@ -393,6 +393,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-05-17T15:00:00"
+    },
+    {
+      id: "ab-031",
+      slug: "granada",
+      title: "Dellafuente Type Beat - \"Granada\"",
+      bpm: 85,
+      key: "F# minor",
+      genre: "Trap Flamenco",
+      tags: ["typebeat", "dellafuente", "flamenco", "trap", "instrumental"],
+      moods: ["melódico", "oscuro", "nostálgico"],
+      cover: "./assets/covers/granada.jpg",
+      preview: "./assets/audio/granada-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-05-18T16:15:00"
     }
   ],
   licenses: [
