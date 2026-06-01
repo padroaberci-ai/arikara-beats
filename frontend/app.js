@@ -1000,13 +1000,29 @@
       return true;
     };
     const matchesGenre = (beat, genre) => !genre || String(beat.genre || '').toLowerCase() === String(genre).toLowerCase();
+    const applyMarketingSlots = (beats) => {
+      const next = [...beats];
+      const placeBeat = (slug, targetIndex) => {
+        const idx = next.findIndex((b) => b.slug === slug);
+        if(idx < 0) return;
+        const [beat] = next.splice(idx, 1);
+        const safeIndex = Math.max(0, Math.min(targetIndex, next.length));
+        next.splice(safeIndex, 0, beat);
+      };
+      placeBeat('grilletes', 1);
+      placeBeat('costa-del-sol', 8);
+      return next;
+    };
 
     const sortBeats = (beats, sort) => {
       const next = [...beats];
       if(sort === 'price') next.sort((a,b) => (a.prices?.basic ?? 0) - (b.prices?.basic ?? 0));
       else if(sort === 'bpm') next.sort((a,b) => (a.bpm ?? 0) - (b.bpm ?? 0));
       else if(sort === 'az') next.sort((a,b) => String(a.title).localeCompare(String(b.title)));
-      else next.sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      else {
+        next.sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        return applyMarketingSlots(next);
+      }
       return next;
     };
 
