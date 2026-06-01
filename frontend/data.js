@@ -453,6 +453,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-06-01T16:50:00"
+    },
+    {
+      id: "ab-035",
+      slug: "cupra-raval",
+      title: "Morad Type Beat - \"Cupra Raval\"",
+      bpm: 70,
+      key: "C minor",
+      genre: "Afrotrap",
+      tags: ["typebeat", "morad", "afrotrap", "drill", "instrumental"],
+      moods: ["oscuro", "callejero", "contundente"],
+      cover: "./assets/covers/cupra-raval.jpg",
+      preview: "./assets/audio/cupra-raval-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-06-01T17:00:00"
     }
   ],
   licenses: [
