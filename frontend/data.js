@@ -408,6 +408,51 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-05-18T16:15:00"
+    },
+    {
+      id: "ab-032",
+      slug: "perdonar",
+      title: "Maka Type Beat - \"Perdonar\"",
+      bpm: 81,
+      key: "G# minor",
+      genre: "Flamenco Trap",
+      tags: ["typebeat", "maka", "flamenco", "trap", "instrumental"],
+      moods: ["melódico", "íntimo", "nostálgico"],
+      cover: "./assets/covers/perdonar.jpg",
+      preview: "./assets/audio/perdonar-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-06-01T16:30:00"
+    },
+    {
+      id: "ab-033",
+      slug: "nocturno",
+      title: "JC Reyes Type Beat - \"Nocturno\"",
+      bpm: 70,
+      key: "G minor",
+      genre: "Spanish Guitar Drill",
+      tags: ["typebeat", "jcreyes", "guitar", "drill", "instrumental"],
+      moods: ["oscuro", "nocturno", "callejero"],
+      cover: "./assets/covers/nocturno.jpg",
+      preview: "./assets/audio/nocturno-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-06-01T16:40:00"
+    },
+    {
+      id: "ab-034",
+      slug: "playa-de-aguadulce",
+      title: "RVFV Type Beat - \"Playa de Aguadulce\"",
+      bpm: 106,
+      key: "D minor",
+      genre: "Afrobeat Flamenco",
+      tags: ["typebeat", "rvfv", "afrobeat", "flamenco", "instrumental"],
+      moods: ["veraniego", "melódico", "cálido"],
+      cover: "./assets/covers/playa-de-aguadulce.jpg",
+      preview: "./assets/audio/playa-de-aguadulce-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-06-01T16:50:00"
     }
   ],
   licenses: [
