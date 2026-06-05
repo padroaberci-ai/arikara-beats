@@ -468,6 +468,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-06-01T17:00:00"
+    },
+    {
+      id: "ab-036",
+      slug: "insomnio",
+      title: "Delaossa Type Beat - \"Insomnio\"",
+      bpm: 85,
+      key: "G# minor",
+      genre: "Flamenco Rap",
+      tags: ["typebeat", "delaossa", "flamenco", "rap", "instrumental"],
+      moods: ["oscuro", "melódico", "andaluz"],
+      cover: "./assets/covers/insomnio.jpg",
+      preview: "./assets/audio/insomnio-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-06-05T13:30:00"
     }
   ],
   licenses: [
