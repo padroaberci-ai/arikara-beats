@@ -618,6 +618,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T20:15:00"
+    },
+    {
+      id: "ab-046",
+      slug: "motores",
+      title: "Morad Type Beat - \"Motores\"",
+      bpm: 138,
+      key: "F# minor",
+      genre: "Drill Flamenco",
+      tags: ["typebeat", "morad", "drill", "flamenco", "instrumental"],
+      moods: ["oscuro", "tenso", "callejero"],
+      cover: "./assets/covers/motores.jpg",
+      preview: "./assets/audio/motores-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T20:20:00"
     }
   ],
   licenses: [
