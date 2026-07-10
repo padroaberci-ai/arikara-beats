@@ -483,6 +483,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-06-05T13:30:00"
+    },
+    {
+      id: "ab-037",
+      slug: "chula",
+      title: "JC Reyes Type Beat - \"Chula\"",
+      bpm: 114,
+      key: "C# minor",
+      genre: "Afro Trap",
+      tags: ["typebeat", "jcreyes", "afrotrap", "instrumental", "calle"],
+      moods: ["oscuro", "callejero", "contundente"],
+      cover: "./assets/covers/chula.jpg",
+      preview: "./assets/audio/chula-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T19:40:00"
     }
   ],
   licenses: [
