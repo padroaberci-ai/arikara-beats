@@ -543,6 +543,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T19:55:00"
+    },
+    {
+      id: "ab-041",
+      slug: "quejios",
+      title: "Dellafuente Type Beat - \"Quejíos\"",
+      bpm: 84,
+      key: "C# minor",
+      genre: "Flamenco Trap",
+      tags: ["typebeat", "dellafuente", "flamenco", "trap", "instrumental"],
+      moods: ["melódico", "oscuro", "andaluz"],
+      cover: "./assets/covers/quejios.jpg",
+      preview: "./assets/audio/quejios-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T19:58:00"
     }
   ],
   licenses: [
