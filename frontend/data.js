@@ -528,6 +528,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T19:50:00"
+    },
+    {
+      id: "ab-040",
+      slug: "destino",
+      title: "RVFV Type Beat - \"Destino\"",
+      bpm: 100,
+      key: "C# minor",
+      genre: "Afrobeat Flamenco",
+      tags: ["typebeat", "rvfv", "afrobeat", "flamenco", "instrumental"],
+      moods: ["veraniego", "melódico", "cálido"],
+      cover: "./assets/covers/destino.jpg",
+      preview: "./assets/audio/destino-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T19:55:00"
     }
   ],
   licenses: [
