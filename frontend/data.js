@@ -558,6 +558,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T19:58:00"
+    },
+    {
+      id: "ab-042",
+      slug: "europe",
+      title: "Morad x Baby Gang Type Beat - \"Europe\"",
+      bpm: 70,
+      key: "C# minor",
+      genre: "Flamenco Drill",
+      tags: ["typebeat", "morad", "babygang", "drill", "instrumental"],
+      moods: ["oscuro", "callejero", "contundente"],
+      cover: "./assets/covers/europe.jpg",
+      preview: "./assets/audio/europe-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T20:00:00"
     }
   ],
   licenses: [
