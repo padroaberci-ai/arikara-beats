@@ -513,6 +513,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T19:45:00"
+    },
+    {
+      id: "ab-039",
+      slug: "raices",
+      title: "Maka Type Beat - \"Raíces\"",
+      bpm: 95,
+      key: "F minor",
+      genre: "Flamenco Trap",
+      tags: ["typebeat", "maka", "flamenco", "trap", "instrumental"],
+      moods: ["melódico", "oscuro", "andaluz"],
+      cover: "./assets/covers/raices.jpg",
+      preview: "./assets/audio/raices-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T19:50:00"
     }
   ],
   licenses: [
