@@ -498,6 +498,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T19:40:00"
+    },
+    {
+      id: "ab-038",
+      slug: "calmame",
+      title: "Pepe y Vizio Type Beat - \"Cálmame\"",
+      bpm: 100,
+      key: "A minor",
+      genre: "Flamenco Experimental",
+      tags: ["typebeat", "pepeyvizio", "flamenco", "experimental", "instrumental"],
+      moods: ["melódico", "emocional", "experimental"],
+      cover: "./assets/covers/calmame.jpg",
+      preview: "./assets/audio/calmame-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T19:45:00"
     }
   ],
   licenses: [
