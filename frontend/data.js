@@ -573,6 +573,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T20:00:00"
+    },
+    {
+      id: "ab-043",
+      slug: "fuego",
+      title: "Camin Type Beat - \"Fuego\"",
+      bpm: 104,
+      key: "F minor",
+      genre: "Rap Flamenco",
+      tags: ["typebeat", "camin", "flamenco", "rap", "instrumental"],
+      moods: ["callejero", "intenso", "oscuro"],
+      cover: "./assets/covers/fuego.jpg",
+      preview: "./assets/audio/fuego-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T20:05:00"
     }
   ],
   licenses: [
