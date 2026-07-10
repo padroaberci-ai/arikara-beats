@@ -588,6 +588,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T20:05:00"
+    },
+    {
+      id: "ab-044",
+      slug: "nostalgia",
+      title: "Fernando Costa Type Beat - \"Nostalgia\"",
+      bpm: 88,
+      key: "A minor",
+      genre: "Rap Flamenco",
+      tags: ["typebeat", "fernandocosta", "flamenco", "rap", "instrumental"],
+      moods: ["melódico", "nostálgico", "oscuro"],
+      cover: "./assets/covers/nostalgia.jpg",
+      preview: "./assets/audio/nostalgia-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T20:10:00"
     }
   ],
   licenses: [
