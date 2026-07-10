@@ -603,6 +603,21 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-07-10T20:10:00"
+    },
+    {
+      id: "ab-045",
+      slug: "culpable",
+      title: "Maka Type Beat - \"Culpable\"",
+      bpm: 94,
+      key: "F minor",
+      genre: "Flamenco Reggaeton",
+      tags: ["typebeat", "maka", "flamenco", "reggaeton", "instrumental"],
+      moods: ["emotivo", "callejero", "oscuro"],
+      cover: "./assets/covers/culpable.jpg",
+      preview: "./assets/audio/culpable-preview.mp3",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-07-10T20:15:00"
     }
   ],
   licenses: [
