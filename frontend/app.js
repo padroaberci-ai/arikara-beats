@@ -16,6 +16,12 @@
   const qs = (sel, scope=document) => scope.querySelector(sel);
   const qsa = (sel, scope=document) => Array.from(scope.querySelectorAll(sel));
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const CONTACT_EMAIL_USER = 'arikarabeats';
+  const CONTACT_EMAIL_DOMAIN = 'gmail.com';
+  const contactEmail = () => `${CONTACT_EMAIL_USER}@${CONTACT_EMAIL_DOMAIN}`;
+  const contactMailto = (subject = 'Contacto directo - ARIKARA BEATS') => (
+    `mailto:${contactEmail()}?subject=${encodeURIComponent(subject)}`
+  );
   const apiUrl = (path) => `${API_BASE}${path}`;
   const APP_BASE_PATH = (() => {
     const script = document.currentScript || qsa('script[src$="app.js"]').at(-1);
@@ -180,6 +186,14 @@
     const year = new Date().getFullYear();
     qsa('[data-year]').forEach(el => el.textContent = year);
   };
+  const syncContactEmail = () => {
+    qsa('[data-email-text]').forEach(el => {
+      el.textContent = contactEmail();
+    });
+    qsa('[data-direct-email]').forEach(el => {
+      el.setAttribute('aria-label', `Enviar email a ${contactEmail()}`);
+    });
+  };
   const updateBadge = () => {
     const badge = qs('#cartBadge');
     if(!badge) return;
@@ -189,10 +203,18 @@
   };
   const syncShellUi = () => {
     syncYear();
+    syncContactEmail();
     updateBadge();
   };
   syncShellUi();
   document.addEventListener('cart:update', updateBadge);
+  document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-direct-email]');
+    if(!trigger) return;
+    event.preventDefault();
+    const subject = trigger.getAttribute('data-email-subject') || 'Contacto directo - ARIKARA BEATS';
+    window.location.href = contactMailto(subject);
+  });
 
   // Player
   const audio = new Audio();
@@ -1341,8 +1363,6 @@
       `;
     }).join('');
 
-    const contactHref = 'mailto:arikarabeats@gmail.com?subject=Licencia%20Exclusive%20-%20' + encodeURIComponent(beat.title);
-
     let selected = 'basic';
     const updateAdd = () => {
       if(beatUnavailable){
@@ -1373,7 +1393,7 @@
     addBtn.addEventListener('click', () => {
       if(beatUnavailable) return;
       if(selected === 'exclusive'){
-        window.location.href = contactHref;
+        window.location.href = contactMailto(`Licencia Exclusive - ${beat.title}`);
         return;
       }
       Cart.add({
@@ -1395,7 +1415,7 @@
     licGrid.innerHTML = state.licenses.map(l => {
       const highlight = l.highlight ? ' highlight' : '';
       const cta = (l.cta && l.id !== 'exclusive') ? '<div class="badge">' + esc(l.cta) + '</div>' : '';
-      const contactBtn = l.id === 'exclusive' ? '<a class="btn btn--ghost btn--sm" href="mailto:arikarabeats@gmail.com?subject=Licencia%20Exclusive">Consultar</a>' : '';
+      const contactBtn = l.id === 'exclusive' ? '<a class="btn btn--ghost btn--sm" href="#contacto" data-direct-email data-email-subject="Licencia Exclusive">Consultar</a>' : '';
       const priceLabel = l.priceLabel || fmtEUR(l.price);
       const flag = l.highlight ? '<div class="license-flag">Licencia recomendada</div>' : '';
       return `

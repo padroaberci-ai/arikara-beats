@@ -60,12 +60,16 @@ const write = (file, content) => {
   fs.writeFileSync(file, content.trimStart() + '\n');
 };
 const jsonLd = (value) => `<script type="application/ld+json" data-seo>${JSON.stringify(value).replace(/</g, '\\u003c')}</script>`;
+const contactLink = (label = 'Contacto directo', subject = 'Contacto directo - ARIKARA BEATS', className = '') => (
+  `<a${className ? ` class="${className}"` : ''} href="#contacto" data-direct-email data-email-subject="${escapeHtml(subject)}">${escapeHtml(label)}</a>`
+);
+const emailDisplay = () => '<a class="footer-email" href="#contacto" data-direct-email data-email-subject="Contacto directo - ARIKARA BEATS"><span data-email-text><span>arikarabeats</span><span>@</span><span>gmail.com</span></span></a>';
 
 const header = (prefix = '../../') => `
 <header class="header">
   <div class="container header__inner">
     <div class="header-left">
-      <a class="btn btn--ghost btn--sm header-contact" href="mailto:arikarabeats@gmail.com?subject=Contacto%20directo%20-%20ARIKARA%20BEATS">Contacto directo</a>
+      ${contactLink('Contacto directo', 'Contacto directo - ARIKARA BEATS', 'btn btn--ghost btn--sm header-contact')}
     </div>
     <a class="logo" href="${prefix}index.html" aria-label="ARIKARA BEATS">
       <img class="logo-image" src="${prefix}assets/logo-white.png" alt="ARIKARA BEATS" />
@@ -88,7 +92,7 @@ const footer = () => `
     </div>
     <div>
       <div style="font-weight:700;">Contacto</div>
-      <div>arikarabeats@gmail.com</div>
+      <div>${emailDisplay()}</div>
       <div>@arikarastudios</div>
     </div>
   </div>
@@ -256,7 +260,7 @@ ${header('../../')}
       </div>
     </div>
   </section>
-  <section class="section"><div class="container seo-links"><h2>También encaja con</h2><a href="${artistHref(parts.artist)}">${escapeHtml(parts.artist)} type beats</a><a href="${genreHref(beat.genre)}">${escapeHtml(beat.genre)} beats</a><a href="../../licencias.html">Comparar licencias</a><a href="mailto:arikarabeats@gmail.com?subject=${encodeURIComponent(`Consulta ${beat.title}`)}">Contacto directo</a></div></section>
+  <section class="section"><div class="container seo-links"><h2>También encaja con</h2><a href="${artistHref(parts.artist)}">${escapeHtml(parts.artist)} type beats</a><a href="${genreHref(beat.genre)}">${escapeHtml(beat.genre)} beats</a><a href="../../licencias.html">Comparar licencias</a>${contactLink('Contacto directo', `Consulta ${beat.title}`)}</div></section>
 </main>
 ${footer()}
 ${player('../../')}
