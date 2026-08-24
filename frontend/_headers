@@ -1,0 +1,29 @@
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/beat.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/licencias.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/cart.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/success.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/cancel.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/beats/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/type-beats/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/generos/*
+  Cache-Control: public, max-age=0, must-revalidate
