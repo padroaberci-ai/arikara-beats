@@ -978,6 +978,14 @@
     return lic ? lic.name : id;
   };
 
+  const licenseHint = (id) => ({
+    basic: 'Archivos esenciales para empezar y publicar con claridad.',
+    premium: 'STEMS y más margen para un lanzamiento profesional.',
+    exclusive: 'Exclusividad y retirada del beat de futuras ventas.'
+  }[id] || 'Licencia para tu lanzamiento.');
+
+  const licenseShortIncludes = (license, limit = 4) => (license?.includes || []).slice(0, limit);
+
   // Page routing
   const registerCleanup = (fn) => {
     if(typeof fn === 'function') pageCleanups.push(fn);
@@ -1070,6 +1078,7 @@
       const statusLabel = isSold ? 'Vendido' : (isUnavailable ? 'No disponible' : 'Disponible');
       const statusClass = isSold ? 'badge--status-sold' : (isUnavailable ? 'badge--status-unavailable' : 'badge--status-available');
       const hasPreview = Boolean(beat.preview);
+      const detailHref = beatUrl(beat);
       const beatIndex = state.beats.findIndex(b => b.id === beat.id);
       const detailMeta = `${beat.bpm} BPM · ${esc(beat.key)}${beat.genre ? ` · ${esc(beat.genre)}` : ''}`;
       const tags = [...(beat.tags||[]), ...(beat.moods||[])].slice(0,5)
@@ -1086,7 +1095,7 @@
         </button>
       ` : '';
       const mobileLicense = !isUnavailable ? `
-        <a class="beat-row__mini-action beat-row__mini-action--license" href="${beatUrl(beat)}" aria-label="Ver licencias de ${esc(beat.title)}">
+        <a class="beat-row__mini-action beat-row__mini-action--license" href="${detailHref}" aria-label="Ver licencias de ${esc(beat.title)}">
           <span class="beat-row__mini-action-icon">${CART_ICON}</span>
         </a>
       ` : '';
@@ -1126,7 +1135,7 @@
                 <div class="beat-row__mobile-footer">
                   <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
                   <div class="beat-row__mobile-buttons">
-                    <a class="btn btn--primary btn--sm" href="${beatUrl(beat)}">Ver licencias</a>
+                    <a class="btn btn--primary btn--sm" href="${detailHref}">Ver licencias</a>
                     <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
                   </div>
                 </div>
@@ -1149,11 +1158,12 @@
             <div class="beat-actions">
               <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
               <div class="beat-buttons">
-                <a class="btn btn--primary btn--sm" href="${beatUrl(beat)}">Escuchar y licenciar</a>
+                <a class="btn btn--primary btn--sm" href="${detailHref}">Ver beat</a>
                 <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
               </div>
             </div>
           </div>
+          <a class="beat-row__hit" href="${detailHref}" aria-label="Abrir página de ${esc(beat.title)}"></a>
         </article>
       `;
     };
@@ -1352,18 +1362,22 @@
 
     licenseWrap.innerHTML = state.licenses.map(l => {
       const highlight = l.highlight ? ' highlight' : '';
-      const active = l.id === 'basic' ? ' active' : '';
+      const isActive = l.id === 'basic';
+      const active = isActive ? ' active' : '';
       const priceLabel = l.priceLabel || fmtEUR(l.price);
-      const items = (l.includes || []).map((item, idx) => (
-        `<span>${esc(item)}</span>${idx < l.includes.length - 1 ? '<span class="license-dot">·</span>' : ''}`
-      )).join('');
-      const flag = l.highlight ? '<div class="license-flag">Licencia recomendada</div>' : '';
+      const features = licenseShortIncludes(l, 4).map(item => `<span class="license-card__feature">${esc(item)}</span>`).join('');
+      const flag = l.highlight ? '<div class="license-flag">Recomendada</div>' : '';
       return `
-        <article class="license-card license-card--beat${highlight}${active}" data-license="${l.id}">
-          <div class="license-title">${esc(l.name)}</div>
-          <div class="license-items">${items}</div>
+        <article class="license-card license-card--beat${highlight}${active}" data-license="${l.id}" role="button" tabindex="0" aria-pressed="${isActive ? 'true' : 'false'}">
+          <div class="license-card__top">
+            <div>
+              <div class="license-title">${esc(l.name)}</div>
+              <p class="license-card__hint">${esc(licenseHint(l.id))}</p>
+            </div>
+            ${flag}
+          </div>
+          <div class="license-card__features">${features}</div>
           <div class="license-price">${esc(priceLabel)}</div>
-          ${flag}
         </article>
       `;
     }).join('');
@@ -1381,17 +1395,28 @@
       if(lic.id === 'exclusive'){
         addBtn.textContent = 'Consultar Exclusive';
       }else{
-        addBtn.textContent = 'Añadir ' + lic.name + ' - ' + priceLabel;
+        addBtn.textContent = 'Añadir ' + lic.name;
       }
     };
     updateAdd();
 
+    const selectLicenseCard = (card) => {
+      qsa('#licenseOptions .license-card').forEach(c => {
+        c.classList.remove('active');
+        c.setAttribute('aria-pressed', 'false');
+      });
+      card.classList.add('active');
+      card.setAttribute('aria-pressed', 'true');
+      selected = card.dataset.license;
+      updateAdd();
+    };
+
     qsa('#licenseOptions .license-card').forEach(card => {
-      card.addEventListener('click', () => {
-        qsa('#licenseOptions .license-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-        selected = card.dataset.license;
-        updateAdd();
+      card.addEventListener('click', () => selectLicenseCard(card));
+      card.addEventListener('keydown', (event) => {
+        if(event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        selectLicenseCard(card);
       });
     });
 
@@ -1419,18 +1444,24 @@
 
     licGrid.innerHTML = state.licenses.map(l => {
       const highlight = l.highlight ? ' highlight' : '';
-      const cta = (l.cta && l.id !== 'exclusive') ? '<div class="badge">' + esc(l.cta) + '</div>' : '';
-      const contactBtn = l.id === 'exclusive' ? '<a class="btn btn--ghost btn--sm" href="#contacto" data-direct-email data-email-subject="Licencia Exclusive">Consultar</a>' : '';
       const priceLabel = l.priceLabel || fmtEUR(l.price);
-      const flag = l.highlight ? '<div class="license-flag">Licencia recomendada</div>' : '';
+      const flag = l.highlight ? '<div class="license-flag">Recomendada</div>' : '';
+      const features = licenseShortIncludes(l, 6).map(i => `<li><span class="comparison-mark" aria-hidden="true">✓</span><span>${esc(i)}</span></li>`).join('');
+      const action = l.id === 'exclusive'
+        ? '<a class="btn btn--ghost btn--sm" href="#contacto" data-direct-email data-email-subject="Licencia Exclusive">Consultar</a>'
+        : `<a class="btn btn--primary btn--sm" href="./index.html#catalogo">Elegir ${esc(l.name)}</a>`;
       return `
-        <article class="license-card${highlight}">
-          <div class="beat-title">${esc(l.name)}</div>
-          <div class="beat-title">${esc(priceLabel)}</div>
-          ${cta}
-          <div class="license-list">${l.includes.map(i => '<div>- ' + esc(i) + '</div>').join('')}</div>
-          ${contactBtn}
-          ${flag}
+        <article class="license-card license-card--choice${highlight}">
+          <div class="license-card__top">
+            <div>
+              <div class="beat-title">${esc(l.name)}</div>
+              <p class="license-card__hint">${esc(licenseHint(l.id))}</p>
+            </div>
+            ${flag}
+          </div>
+          <div class="license-price">${esc(priceLabel)}</div>
+          <ul class="license-choice-list">${features}</ul>
+          ${action}
         </article>
       `;
     }).join('');
@@ -1457,7 +1488,6 @@
       });
     };
 
-    enableCardSelection('#licensesGrid .license-card');
     enableCardSelection('#servicesGrid .license-card');
   };
 
@@ -1469,6 +1499,8 @@
       candidate.title === item.title
     ));
     const coverSrc = beat ? assetUrl(beat.cover, './assets/placeholder.svg') : './assets/placeholder.svg';
+    const license = state.licenses.find((candidate) => candidate.id === item.license);
+    const includes = licenseShortIncludes(license, 4).map((include) => `<span>${esc(include)}</span>`).join('');
     const priceMeta = hasDiscount
       ? `<div class="cart-item__notes">Antes ${fmtEUR(item.basePrice)} · Ahorro ${fmtEUR(item.discountAmount)}</div>`
       : `<div class="cart-item__notes">Precio ${fmtEUR(item.basePrice)}</div>`;
@@ -1481,6 +1513,7 @@
         <div class="cart-item__main">
           <div class="cart-item__title">${esc(item.title)}</div>
           <div class="cart-item__meta">${esc(licenseName(item.license))}</div>
+          ${includes ? `<div class="cart-item__includes">${includes}</div>` : ''}
           ${priceMeta}
         </div>
         <div class="cart-item__side">

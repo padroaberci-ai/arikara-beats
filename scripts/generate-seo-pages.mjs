@@ -168,6 +168,12 @@ const head = ({ title, description, canonical, image, prefix = '../../', robots 
   <script src="${prefix}app.js" defer></script>
 </head>`;
 
+const licenseHint = (id) => ({
+  basic: 'Archivos esenciales para empezar y publicar con claridad.',
+  premium: 'STEMS y más margen para un lanzamiento profesional.',
+  exclusive: 'Exclusividad y retirada del beat de futuras ventas.'
+}[id] || 'Licencia para tu lanzamiento.');
+
 const trustStrip = `
 <div class="trust-strip" aria-label="Confianza">
   <span>Pago seguro con Stripe</span>
@@ -178,22 +184,26 @@ const trustStrip = `
 
 const licensePreview = () => licenses.map((license) => {
   const priceLabel = license.priceLabel || fmtEUR(license.price);
-  const flag = license.highlight ? '<div class="license-flag">Licencia recomendada</div>' : '';
-  return `<article class="license-card license-card--compact${license.highlight ? ' highlight' : ''}"><div class="license-title">${escapeHtml(license.name)}</div><div class="license-price">${escapeHtml(priceLabel)}</div><div class="license-list">${(license.includes || []).slice(0, 4).map((item) => `<div>- ${escapeHtml(item)}</div>`).join('')}</div>${flag}</article>`;
+  const flag = license.highlight ? '<div class="license-flag">Recomendada</div>' : '';
+  const active = license.id === 'basic' ? ' active' : '';
+  const features = (license.includes || []).slice(0, 4).map((item) => `<span class="license-card__feature">${escapeHtml(item)}</span>`).join('');
+  return `<article class="license-card license-card--beat${license.highlight ? ' highlight' : ''}${active}" data-license="${escapeHtml(license.id)}" role="button" tabindex="0" aria-pressed="${license.id === 'basic' ? 'true' : 'false'}"><div class="license-card__top"><div><div class="license-title">${escapeHtml(license.name)}</div><p class="license-card__hint">${escapeHtml(licenseHint(license.id))}</p></div>${flag}</div><div class="license-card__features">${features}</div><div class="license-price">${escapeHtml(priceLabel)}</div></article>`;
 }).join('');
 
 const beatCard = (beat, prefix = '../../') => {
   const status = beat.status === 'sold' ? 'Vendido' : beat.status === 'available' ? 'Disponible' : 'No disponible';
   const statusClass = beat.status === 'sold' ? 'badge--status-sold' : beat.status === 'available' ? 'badge--status-available' : 'badge--status-unavailable';
   const price = beat.prices?.basic || 29.99;
+  const href = beatHref(beat, prefix);
   return `<article class="seo-card ${beat.status !== 'available' ? 'is-unavailable' : ''}">
-    <a class="seo-card__media" href="${beatHref(beat, prefix)}"><img src="${relAsset(beat.cover, prefix)}" alt="Cover ${escapeHtml(beat.title)}" loading="lazy" /></a>
+    <a class="seo-card__hit" href="${href}" aria-label="Abrir página de ${escapeHtml(beat.title)}"></a>
+    <a class="seo-card__media" href="${href}"><img src="${relAsset(beat.cover, prefix)}" alt="Cover ${escapeHtml(beat.title)}" loading="lazy" /></a>
     <div class="seo-card__body">
       <span class="badge ${statusClass}">${status}</span>
-      <h3><a href="${beatHref(beat, prefix)}">${escapeHtml(beat.title)}</a></h3>
+      <h3><a href="${href}">${escapeHtml(beat.title)}</a></h3>
       <p>${escapeHtml(beat.genre)} · ${beat.bpm} BPM · ${escapeHtml(beat.key)}</p>
       <div class="seo-card__price">Desde ${fmtEUR(price)}</div>
-      <a class="btn btn--primary btn--sm" href="${beatHref(beat, prefix)}">Escuchar y licenciar</a>
+      <a class="btn btn--primary btn--sm" href="${href}">Ver beat</a>
     </div>
   </article>`;
 };
