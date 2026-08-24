@@ -39,17 +39,31 @@
   <main class="main">
     <section class="section">
       <div class="container">
-        <div class="eyebrow">Carrito</div>
-        <h1>Tu selección de beats</h1>
-        <p class="lead">Revisa tu pedido y confirma tu compra. Nuestro equipo enviará el material por email tras validar el pago.</p>
+        <div class="eyebrow">Compra segura</div>
+        <h1>Revisa tus licencias antes de pagar</h1>
+        <p class="lead">Aquí tienes el recibo de lo que compras: beat, licencia, descuento aplicado y total final. El material se envía manualmente por email tras confirmar el pago.</p>
+        <div class="hero-proof">
+          <span>Stripe checkout</span>
+          <span>Descuento automático por pack</span>
+          <span>Entrega manual por email</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--tight">
+      <div class="container conversion-panel cart-preflight">
+        <div class="eyebrow">Antes de pagar</div>
+        <h2>Tu pedido como recibo claro</h2>
+        <p class="lead">Primero revisa la lista de beats. Abajo verás subtotal original, descuento y total final antes de ir a Stripe.</p>
       </div>
     </section>
 
     <section class="section">
-      <div class="container cart-layout">
+      <div class="container cart-layout cart-layout--receipt">
         <div id="cartList" class="cart-list"></div>
 
         <aside class="card cart-summary">
+          <div class="eyebrow">Resumen</div>
           <div class="cart-summary__rows">
             <div class="cart-summary__row">
               <div class="cart-summary__label">Subtotal original</div>
@@ -65,10 +79,15 @@
             </div>
           </div>
           <div class="cart-summary__actions">
-            <button id="checkoutBtn" class="btn btn--primary">Pagar con Stripe</button>
+            <button id="checkoutBtn" class="btn btn--primary">Finalizar compra segura</button>
             <button id="clearBtn" class="btn btn--ghost">Vaciar carrito</button>
           </div>
           <p class="cart-summary__note">Al pagar aceptas los términos de licencia. El material se enviará manualmente por email tras confirmar la compra.</p>
+          <div class="cart-trust">
+            <span>Pago procesado con Stripe.</span>
+            <span>Emails de confirmación al finalizar el pedido.</span>
+            <span>¿Dudas? Usa contacto directo antes de pagar.</span>
+          </div>
         </aside>
       </div>
     </section>
@@ -78,7 +97,7 @@
         <div id="cartEmpty" class="hidden" style="text-align:center; padding: 40px 0; color: var(--muted);">
           Tu carrito está vacío.
           <div style="margin-top: 12px;">
-            <a class="btn btn--primary" href="./index.html">Volver al catálogo</a>
+            <a class="btn btn--primary" href="./index.html#catalogo">Volver al catálogo</a>
           </div>
         </div>
       </div>
@@ -86,8 +105,8 @@
 
     <section class="section">
       <div class="container">
-        <div class="banner">
-          <div>El beat más caro mantiene su precio y el resto del carrito recibe un 25% de descuento.</div>
+        <div class="banner banner--conversion">
+          <div><strong>Pack automático:</strong> el beat más caro mantiene su precio y el resto del carrito recibe un 25% de descuento.</div>
           <a class="btn btn--ghost btn--sm" href="./licencias.html">Ver condiciones</a>
         </div>
       </div>

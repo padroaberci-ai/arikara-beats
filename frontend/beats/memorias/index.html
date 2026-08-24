@@ -46,27 +46,31 @@
 </header>
 <main class="main">
   <section class="section section--tight">
-    <div class="container breadcrumb"><a href="../../index.html">Beats</a><span>/</span><a href="../../generos/trap-flamenco/">Trap Flamenco</a><span>/</span><span>Memorias</span></div>
+    <div class="container breadcrumb-actions">
+      <div class="breadcrumb"><a href="../../index.html">Beats</a><span>/</span><a href="../../generos/trap-flamenco/">Trap Flamenco</a><span>/</span><span>Memorias</span></div>
+      <a class="btn btn--ghost btn--sm" href="../../licencias.html">Comparar licencias</a>
+    </div>
   </section>
   <section class="section">
-    <div class="container beat-layout">
-      <div class="card beat-hero">
-        <div class="beat-hero__media">
+    <div class="container product-detail">
+      <article class="card product-media-card">
+        <div class="product-media-card__image">
           <img id="coverImg" src="../../assets/covers/memorias.jpg" alt="Cover Cano Type Beat - &quot;Memorias&quot;" />
-          <div class="beat-hero__overlay">
-            <div class="eyebrow">Beat</div>
+          <div class="product-media-card__overlay">
+            <div class="eyebrow">Beat listo para licenciar</div>
             <h1 id="beatTitle">Cano Type Beat - &quot;Memorias&quot;</h1>
-            <p id="beatMeta" class="beat-hero__meta">103 BPM - E minor - Trap Flamenco</p>
+            <p id="beatMeta" class="beat-hero__meta">103 BPM · E minor · Trap Flamenco</p>
             <div id="tagRow" class="beat-tags"><span class="tag">typebeat</span><span class="tag">cano</span><span class="tag">trap</span><span class="tag">flamenco</span><span class="tag">instrumental</span><span class="tag">nostálgico</span><span class="tag">melódico</span><span class="tag">profundo</span></div>
           </div>
         </div>
-        <div class="beat-hero__actions">
+        <div class="product-media-card__actions">
           <button id="previewBtn" class="btn btn--primary btn--preview" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"></svg>Reproducir preview</button>
         </div>
-      </div>
-      <div class="card license-panel">
-        <h2>Licencia para Memorias</h2>
-        <p class="lead">Selecciona la licencia que necesitas para tu lanzamiento. El material y la licencia se envían manualmente por email tras confirmar el pago.</p>
+      </article>
+      <aside class="card product-buy-card">
+        <div class="eyebrow">Compra directa</div>
+        <h2>Escucha, elige licencia y añade al carrito</h2>
+        <p class="lead">Licencias Basic, Premium y Exclusive para Memorias. Pago seguro con Stripe y entrega manual por email tras confirmar el pedido.</p>
         
 <div class="trust-strip" aria-label="Confianza">
   <span>Pago seguro con Stripe</span>
@@ -74,8 +78,19 @@
   <span>Licencias claras</span>
   <span>Contacto directo</span>
 </div>
-        <div id="licenseOptions" class="license-grid license-grid--beat" style="margin-top:16px;"><article class="license-card license-card--compact"><div class="license-title">Basic</div><div class="license-price">29,99 EUR</div><div class="license-list"><div>- MP3</div><div>- WAV</div><div>- Uso comercial</div><div>- Hasta 100K streams</div></div></article><article class="license-card license-card--compact highlight"><div class="license-title">Premium</div><div class="license-price">79,99 EUR</div><div class="license-list"><div>- MP3</div><div>- WAV</div><div>- STEMS</div><div>- Uso comercial</div></div><div class="license-flag">Licencia recomendada</div></article><article class="license-card license-card--compact"><div class="license-title">Exclusive</div><div class="license-price">Desde 299,99 EUR</div><div class="license-list"><div>- MP3</div><div>- WAV</div><div>- STEMS</div><div>- Uso comercial</div></div></article></div>
-        <div style="margin-top:18px;display:grid;gap:10px;"><button id="addToCartBtn" class="btn btn--primary" type="button">Añadir</button><a class="btn btn--ghost" href="../../cart.html">Ir al carrito</a></div>
+        <div id="licenseOptions" class="license-grid license-grid--beat" style="margin-top:18px;"><article class="license-card license-card--compact"><div class="license-title">Basic</div><div class="license-price">29,99 EUR</div><div class="license-list"><div>- MP3</div><div>- WAV</div><div>- Uso comercial</div><div>- Hasta 100K streams</div></div></article><article class="license-card license-card--compact highlight"><div class="license-title">Premium</div><div class="license-price">79,99 EUR</div><div class="license-list"><div>- MP3</div><div>- WAV</div><div>- STEMS</div><div>- Uso comercial</div></div><div class="license-flag">Licencia recomendada</div></article><article class="license-card license-card--compact"><div class="license-title">Exclusive</div><div class="license-price">Desde 299,99 EUR</div><div class="license-list"><div>- MP3</div><div>- WAV</div><div>- STEMS</div><div>- Uso comercial</div></div></article></div>
+        <div class="product-actions"><button id="addToCartBtn" class="btn btn--primary" type="button">Añadir licencia seleccionada</button><a class="btn btn--ghost" href="../../cart.html">Ver carrito</a></div>
+        <div class="product-proof"><span>Sin descargas instantáneas confusas.</span><span>El equipo revisa el pago y envía el material correcto.</span><span>Si tienes dudas, <a href="#contacto" data-direct-email data-email-subject="Consulta Cano Type Beat - &quot;Memorias&quot;">escríbenos antes de comprar</a>.</span></div>
+      </aside>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container conversion-panel">
+      <div class="section-head"><div class="eyebrow">Después de pagar</div><h2>Confirmación clara y entrega manual por email</h2><p>El checkout confirma tu pedido, mostramos el resumen y nuestro equipo envía archivos y licencia al email de compra.</p></div>
+      <div class="fulfillment-steps">
+        <article><h3>1. Pago Stripe</h3><p>Compras la licencia elegida con tarjeta de forma segura.</p></article>
+        <article><h3>2. Pedido confirmado</h3><p>La web muestra estado y resumen real de tu compra.</p></article>
+        <article><h3>3. Entrega cuidada</h3><p>Recibes el material por email, preparado manualmente.</p></article>
       </div>
     </div>
   </section>
@@ -123,6 +138,6 @@
     <div class="player-right"><div class="volume-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4z" fill="currentColor"/></svg><input id="playerVolume" class="player-volume" type="range" min="0" max="1" step="0.01" value="0.8" /></div></div>
   </div>
 </div>
-<script type="application/ld+json" data-seo>{"@context":"https://schema.org","@graph":[{"@type":"MusicRecording","@id":"https://arikarabeats.com/beats/memorias/#music","name":"Cano Type Beat - \"Memorias\"","byArtist":{"@type":"MusicGroup","name":"ARIKARA BEATS"},"genre":"Trap Flamenco","image":"https://arikarabeats.com/assets/covers/memorias.jpg","url":"https://arikarabeats.com/beats/memorias/"},{"@type":"Product","@id":"https://arikarabeats.com/beats/memorias/#product","name":"Cano Type Beat - \"Memorias\"","image":"https://arikarabeats.com/assets/covers/memorias.jpg","description":"Cano Type Beat - \"Memorias\": Trap Flamenco, 103 BPM, E minor. Escucha preview y compra licencia Basic o Premium con pago seguro Stripe. Entrega manual por email.","brand":{"@type":"Brand","name":"ARIKARA BEATS"},"offers":{"@type":"Offer","priceCurrency":"EUR","price":29.99,"availability":"https://schema.org/InStock","url":"https://arikarabeats.com/beats/memorias/"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Beats","item":"https://arikarabeats.com"},{"@type":"ListItem","position":2,"name":"Trap Flamenco","item":"https://arikarabeats.com/generos/trap-flamenco/"},{"@type":"ListItem","position":3,"name":"Cano Type Beat - \"Memorias\"","item":"https://arikarabeats.com/beats/memorias/"}]}]}</script>
+<script type="application/ld+json" data-seo>{"@context":"https://schema.org","@graph":[{"@type":"MusicRecording","@id":"https://arikarabeats.com/beats/memorias/#music","name":"Cano Type Beat - \"Memorias\"","byArtist":{"@type":"MusicGroup","name":"ARIKARA BEATS"},"genre":"Trap Flamenco","image":"https://arikarabeats.com/assets/covers/memorias.jpg","url":"https://arikarabeats.com/beats/memorias/"},{"@type":"Product","@id":"https://arikarabeats.com/beats/memorias/#product","name":"Cano Type Beat - \"Memorias\"","image":"https://arikarabeats.com/assets/covers/memorias.jpg","description":"Cano Type Beat - \"Memorias\": Trap Flamenco, 103 BPM, E minor. Escucha preview y compra licencia Basic o Premium con pago seguro Stripe. Entrega manual por email.","brand":{"@type":"Brand","name":"ARIKARA BEATS"},"offers":{"@type":"AggregateOffer","priceCurrency":"EUR","lowPrice":29.99,"highPrice":299.99,"offerCount":3,"availability":"https://schema.org/InStock","offers":[{"@type":"Offer","name":"Cano Type Beat - \"Memorias\" - Licencia Basic","priceCurrency":"EUR","price":29.99,"availability":"https://schema.org/InStock","url":"https://arikarabeats.com/beats/memorias/"},{"@type":"Offer","name":"Cano Type Beat - \"Memorias\" - Licencia Premium","priceCurrency":"EUR","price":79.99,"availability":"https://schema.org/InStock","url":"https://arikarabeats.com/beats/memorias/"},{"@type":"Offer","name":"Cano Type Beat - \"Memorias\" - Licencia Exclusive","priceCurrency":"EUR","price":299.99,"availability":"https://schema.org/SoldOut","url":"https://arikarabeats.com/beats/memorias/"}]}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Beats","item":"https://arikarabeats.com"},{"@type":"ListItem","position":2,"name":"Trap Flamenco","item":"https://arikarabeats.com/generos/trap-flamenco/"},{"@type":"ListItem","position":3,"name":"Cano Type Beat - \"Memorias\"","item":"https://arikarabeats.com/beats/memorias/"}]}]}</script>
 </body>
 </html>

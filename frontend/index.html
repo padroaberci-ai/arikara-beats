@@ -48,18 +48,23 @@
 
   <main class="main">
     <section class="section">
-      <div class="container hero">
-        <div>
-          <div class="eyebrow">Flamenco urban beats</div>
-          <h1><span class="text-accent">ARIKARA BEATS</span><br>Spanish Guitar beats.<br>Flamenco urban sound.</h1>
-          <div class="hero-slogan">SPANISH GUITAR <span class="text-accent">ENERGY</span></div>
-          <p class="lead">Type beats con guitarras españolas, identidad urbana y licencias claras para artistas que quieren un sonido propio.</p>
+      <div class="container hero hero--conversion">
+        <div class="hero-copy">
+          <div class="eyebrow">Premium urban beats</div>
+          <h1><span class="text-accent">ARIKARA BEATS</span><br>Beats con identidad urbana.<br>Licencias claras.</h1>
+          <div class="hero-slogan">SPANISH GUITAR <span class="text-accent">ENERGY</span> · FLAMENCO URBAN SOUND</div>
+          <p class="lead">Escucha previews, entra en la página exacta del beat y elige Basic, Premium o Exclusive. Licencias desde 29,99 € con pago seguro por Stripe y entrega manual por email.</p>
+          <div class="hero-proof" aria-label="Confianza de compra">
+            <span>Licencias desde 29,99 €</span>
+            <span>Pago seguro Stripe</span>
+            <span>Entrega manual por email</span>
+          </div>
           <div class="hero-cta">
-            <a class="btn btn--primary" href="#catalogo">Explorar catálogo</a>
-            <a class="btn btn--ghost" href="./licencias.html">Ver licencias</a>
+            <a class="btn btn--primary" href="#catalogo">Escuchar y comprar beats</a>
+            <a class="btn btn--ghost" href="./licencias.html">Comparar licencias</a>
           </div>
         </div>
-        <div class="hero-card hero-highlight" id="heroHighlight">
+        <a class="hero-card hero-highlight hero-highlight--clickable" id="heroHighlightLink" href="#catalogo" aria-label="Ver beat destacado">
           <div class="hero-highlight__image">
             <img id="heroHighlightImg" src="./assets/placeholder.svg" alt="" />
           </div>
@@ -68,23 +73,40 @@
             <div class="hero-highlight__badge">Novedad</div>
             <div class="hero-highlight__title" id="heroHighlightTitle">Último lanzamiento</div>
             <div class="hero-highlight__meta" id="heroHighlightMeta">-</div>
+            <div class="hero-highlight__cta">Entrar al beat y licenciar</div>
           </div>
-        </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section section--tight">
+      <div class="container conversion-steps" aria-label="Cómo comprar un beat">
+        <article><b>01</b><h3>Escucha previews</h3><p>Reproduce cada beat sin salir del catálogo y entra solo en los que encajan con tu release.</p></article>
+        <article><b>02</b><h3>Elige licencia</h3><p>Basic, Premium o Exclusive con diferencias visibles antes de añadir al carrito.</p></article>
+        <article><b>03</b><h3>Paga seguro</h3><p>Checkout con Stripe y resumen claro de precio, descuento y licencia.</p></article>
+        <article><b>04</b><h3>Recibe por email</h3><p>El equipo envía manualmente el material y la licencia después de confirmar el pago.</p></article>
       </div>
     </section>
 
     <section id="catalogo" class="section">
-      <div class="container">
-        <div class="eyebrow">Catálogo curado</div>
-        <h2>Flamenco urban beats y guitarras españolas</h2>
-        <p class="lead">Explora instrumentales con carácter, BPM claros y licencias listas para tu próximo release.</p>
+      <div class="container catalog-intro">
+        <div class="eyebrow">Catálogo listo para comprar</div>
+        <h2>Encuentra el beat exacto y entra en su página</h2>
+        <p class="lead">Explora por artista, género o título. Cada beat tiene URL propia para escuchar, comparar licencias y comprar sin volver a buscar.</p>
+        <div class="catalog-shortcuts" aria-label="Accesos rápidos SEO">
+          <a href="./type-beats/maka/">Maka type beats</a>
+          <a href="./type-beats/morad/">Morad type beats</a>
+          <a href="./type-beats/jc-reyes/">JC Reyes type beats</a>
+          <a href="./generos/flamenco-trap/">Flamenco Trap</a>
+          <a href="./generos/drill-flamenco/">Drill Flamenco</a>
+        </div>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section section--filters">
       <div class="container">
         <div class="filters">
-          <input id="searchInput" class="input" type="search" placeholder="Buscar por título o tag" autocomplete="off" />
+          <input id="searchInput" class="input" type="search" placeholder="Buscar por título, artista o tag" autocomplete="off" />
           <input id="bpmMin" class="input" type="number" inputmode="numeric" placeholder="BPM mínimo" />
           <input id="bpmMax" class="input" type="number" inputmode="numeric" placeholder="BPM máximo" />
           <select id="genreSelect" class="input"><option value="">Género</option></select>
@@ -107,18 +129,32 @@
 
     <section class="section">
       <div class="container">
-        <div class="banner">
-          <div>El beat más caro mantiene su precio y el resto del carrito recibe un 25% de descuento.</div>
+        <div class="banner banner--conversion">
+          <div><strong>Pack automático:</strong> el beat más caro mantiene su precio y el resto recibe un 25% de descuento.</div>
           <a class="btn btn--ghost btn--sm" href="./licencias.html">Ver licencias</a>
         </div>
       </div>
     </section>
 
     <section class="section">
+      <div class="container secondary-channel">
+        <div>
+          <div class="eyebrow">Canal</div>
+          <h2>YouTube es el escaparate. La licencia se compra aquí.</h2>
+          <p class="lead">Si llegas desde un vídeo, busca el título del beat, entra en su página y elige licencia antes de ir al carrito.</p>
+        </div>
+        <div class="secondary-channel__actions">
+          <a class="btn btn--primary" href="#catalogo">Buscar beat</a>
+          <a class="btn btn--ghost" href="https://www.youtube.com/@arikarabeats" target="_blank" rel="noopener noreferrer">Ver canal</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
       <div class="container">
-        <div class="eyebrow">Servicios premium</div>
+        <div class="eyebrow">Servicios secundarios</div>
         <h2>Producción, mezcla y mastering bajo consulta</h2>
-        <p class="lead">Servicios profesionales de mezcla, mastering y producción para artistas que quieren un resultado final sólido.</p>
+        <p class="lead">Si ya tienes el beat y quieres cerrar el sonido, también gestionamos servicios profesionales por contacto directo.</p>
       </div>
     </section>
 
@@ -131,26 +167,8 @@
     <section class="section">
       <div class="container">
         <div class="banner">
-          <div>Segunda canción a mitad de precio, 50% de descuento.</div>
+          <div>Servicios de producción y mezcla bajo consulta personalizada.</div>
           <a class="btn btn--ghost btn--sm" href="#contacto" data-direct-email data-email-subject="Consulta de servicios - ARIKARA BEATS">Consultar servicios</a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="container">
-        <div class="eyebrow">Canal</div>
-        <h2>Canal ARIKARA BEATS en YouTube</h2>
-        <p class="lead">Suscríbete al canal para ver los últimos lanzamientos.</p>
-        <div class="video-card">
-          <div class="video-frame">
-            <iframe width="560" height="315" src="https://www.youtube.com/embed/fUY-RLyuo3s?si=kHnwcSA2EMfd0omj" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-          </div>
-          <div class="video-content">
-            <h3>Suscríbete al canal</h3>
-            <p>Últimos lanzamientos, vídeos completos y novedades cada semana.</p>
-            <a class="btn btn--primary btn--pill" href="https://www.youtube.com/@arikarabeats" target="_blank" rel="noopener noreferrer">Ver canal en YouTube</a>
-          </div>
         </div>
       </div>
     </section>

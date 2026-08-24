@@ -1001,6 +1001,7 @@
     const heroHighlightImg = qs('#heroHighlightImg');
     const heroHighlightTitle = qs('#heroHighlightTitle');
     const heroHighlightMeta = qs('#heroHighlightMeta');
+    const heroHighlightLink = qs('#heroHighlightLink');
 
     const search = qs('#searchInput');
     const bpmMinEl = qs('#bpmMin');
@@ -1148,7 +1149,7 @@
             <div class="beat-actions">
               <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
               <div class="beat-buttons">
-                <a class="btn btn--primary btn--sm" href="${beatUrl(beat)}">Licencias</a>
+                <a class="btn btn--primary btn--sm" href="${beatUrl(beat)}">Escuchar y licenciar</a>
                 <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
               </div>
             </div>
@@ -1256,6 +1257,10 @@
       heroHighlightImg.alt = latestBeat.title ? 'Cover ' + latestBeat.title : 'Cover';
       if(heroHighlightTitle) heroHighlightTitle.textContent = latestBeat.title || 'Último lanzamiento';
       if(heroHighlightMeta) heroHighlightMeta.textContent = `${latestBeat.genre || 'Beat'} · ${latestBeat.bpm || '-'} BPM`;
+      if(heroHighlightLink){
+        heroHighlightLink.href = beatUrl(latestBeat);
+        heroHighlightLink.setAttribute('aria-label', `Ver licencias de ${latestBeat.title || 'beat destacado'}`);
+      }
     }
 
     render();
@@ -1458,12 +1463,21 @@
 
   const renderCartItem = (item, idx) => {
     const hasDiscount = Number(item.discountAmount || 0) > 0;
+    const beat = state.beats.find((candidate) => (
+      candidate.id === item.beatId ||
+      candidate.slug === item.slug ||
+      candidate.title === item.title
+    ));
+    const coverSrc = beat ? assetUrl(beat.cover, './assets/placeholder.svg') : './assets/placeholder.svg';
     const priceMeta = hasDiscount
       ? `<div class="cart-item__notes">Antes ${fmtEUR(item.basePrice)} · Ahorro ${fmtEUR(item.discountAmount)}</div>`
       : `<div class="cart-item__notes">Precio ${fmtEUR(item.basePrice)}</div>`;
 
     return `
       <article class="cart-item">
+        <div class="cart-item__thumb">
+          <img src="${coverSrc}" alt="Cover ${esc(item.title)}" loading="lazy" />
+        </div>
         <div class="cart-item__main">
           <div class="cart-item__title">${esc(item.title)}</div>
           <div class="cart-item__meta">${esc(licenseName(item.license))}</div>

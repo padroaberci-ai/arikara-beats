@@ -64,6 +64,22 @@ const contactLink = (label = 'Contacto directo', subject = 'Contacto directo - A
   `<a${className ? ` class="${className}"` : ''} href="#contacto" data-direct-email data-email-subject="${escapeHtml(subject)}">${escapeHtml(label)}</a>`
 );
 const emailDisplay = () => '<a class="footer-email" href="#contacto" data-direct-email data-email-subject="Contacto directo - ARIKARA BEATS"><span data-email-text><span>arikarabeats</span><span>@</span><span>gmail.com</span></span></a>';
+const offerList = (beat, canonical) => ({
+  '@type': 'AggregateOffer',
+  priceCurrency: 'EUR',
+  lowPrice: beat.prices?.basic || 29.99,
+  highPrice: beat.prices?.exclusive || 299.99,
+  offerCount: licenses.length,
+  availability: beat.status === 'available' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+  offers: licenses.map((license) => ({
+    '@type': 'Offer',
+    name: `${beat.title} - Licencia ${license.name}`,
+    priceCurrency: 'EUR',
+    price: beat.prices?.[license.id] || license.price,
+    availability: beat.status === 'available' && !license.disabled ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+    url: canonical
+  }))
+});
 
 const header = (prefix = '../../') => `
 <header class="header">
@@ -169,13 +185,15 @@ const licensePreview = () => licenses.map((license) => {
 const beatCard = (beat, prefix = '../../') => {
   const status = beat.status === 'sold' ? 'Vendido' : beat.status === 'available' ? 'Disponible' : 'No disponible';
   const statusClass = beat.status === 'sold' ? 'badge--status-sold' : beat.status === 'available' ? 'badge--status-available' : 'badge--status-unavailable';
+  const price = beat.prices?.basic || 29.99;
   return `<article class="seo-card ${beat.status !== 'available' ? 'is-unavailable' : ''}">
     <a class="seo-card__media" href="${beatHref(beat, prefix)}"><img src="${relAsset(beat.cover, prefix)}" alt="Cover ${escapeHtml(beat.title)}" loading="lazy" /></a>
     <div class="seo-card__body">
       <span class="badge ${statusClass}">${status}</span>
       <h3><a href="${beatHref(beat, prefix)}">${escapeHtml(beat.title)}</a></h3>
       <p>${escapeHtml(beat.genre)} · ${beat.bpm} BPM · ${escapeHtml(beat.key)}</p>
-      <a class="btn btn--primary btn--sm" href="${beatHref(beat, prefix)}">Ver licencias</a>
+      <div class="seo-card__price">Desde ${fmtEUR(price)}</div>
+      <a class="btn btn--primary btn--sm" href="${beatHref(beat, prefix)}">Escuchar y licenciar</a>
     </div>
   </article>`;
 };
@@ -208,13 +226,7 @@ for (const beat of beats) {
         image: absAsset(beat.cover),
         description,
         brand: { '@type': 'Brand', name: 'ARIKARA BEATS' },
-        offers: {
-          '@type': 'Offer',
-          priceCurrency: 'EUR',
-          price: beat.prices?.basic || 29.99,
-          availability: beat.status === 'available' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
-          url: canonical
-        }
+        offers: offerList(beat, canonical)
       },
       {
         '@type': 'BreadcrumbList',
@@ -233,30 +245,45 @@ ${head({ title: `${beat.title} | ${beat.genre} | ARIKARA BEATS`, description, ca
 ${header('../../')}
 <main class="main">
   <section class="section section--tight">
-    <div class="container breadcrumb"><a href="../../index.html">Beats</a><span>/</span><a href="${genreHref(beat.genre)}">${escapeHtml(beat.genre)}</a><span>/</span><span>${escapeHtml(parts.song)}</span></div>
+    <div class="container breadcrumb-actions">
+      <div class="breadcrumb"><a href="../../index.html">Beats</a><span>/</span><a href="${genreHref(beat.genre)}">${escapeHtml(beat.genre)}</a><span>/</span><span>${escapeHtml(parts.song)}</span></div>
+      <a class="btn btn--ghost btn--sm" href="../../licencias.html">Comparar licencias</a>
+    </div>
   </section>
   <section class="section">
-    <div class="container beat-layout">
-      <div class="card beat-hero">
-        <div class="beat-hero__media">
+    <div class="container product-detail">
+      <article class="card product-media-card">
+        <div class="product-media-card__image">
           <img id="coverImg" src="${relAsset(beat.cover)}" alt="Cover ${escapeHtml(beat.title)}" />
-          <div class="beat-hero__overlay">
-            <div class="eyebrow">Beat</div>
+          <div class="product-media-card__overlay">
+            <div class="eyebrow">Beat listo para licenciar</div>
             <h1 id="beatTitle">${escapeHtml(beat.title)}</h1>
-            <p id="beatMeta" class="beat-hero__meta">${beat.bpm} BPM - ${escapeHtml(beat.key)} - ${escapeHtml(beat.genre)}</p>
+            <p id="beatMeta" class="beat-hero__meta">${beat.bpm} BPM · ${escapeHtml(beat.key)} · ${escapeHtml(beat.genre)}</p>
             <div id="tagRow" class="beat-tags">${[...(beat.tags || []), ...(beat.moods || [])].map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>
           </div>
         </div>
-        <div class="beat-hero__actions">
+        <div class="product-media-card__actions">
           <button id="previewBtn" class="btn btn--primary btn--preview" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"></svg>Reproducir preview</button>
         </div>
-      </div>
-      <div class="card license-panel">
-        <h2>Licencia para ${escapeHtml(parts.song)}</h2>
-        <p class="lead">Selecciona la licencia que necesitas para tu lanzamiento. El material y la licencia se envían manualmente por email tras confirmar el pago.</p>
+      </article>
+      <aside class="card product-buy-card">
+        <div class="eyebrow">Compra directa</div>
+        <h2>Escucha, elige licencia y añade al carrito</h2>
+        <p class="lead">Licencias Basic, Premium y Exclusive para ${escapeHtml(parts.song)}. Pago seguro con Stripe y entrega manual por email tras confirmar el pedido.</p>
         ${trustStrip}
-        <div id="licenseOptions" class="license-grid license-grid--beat" style="margin-top:16px;">${licensePreview()}</div>
-        <div style="margin-top:18px;display:grid;gap:10px;"><button id="addToCartBtn" class="btn btn--primary" type="button">Añadir</button><a class="btn btn--ghost" href="../../cart.html">Ir al carrito</a></div>
+        <div id="licenseOptions" class="license-grid license-grid--beat" style="margin-top:18px;">${licensePreview()}</div>
+        <div class="product-actions"><button id="addToCartBtn" class="btn btn--primary" type="button">Añadir licencia seleccionada</button><a class="btn btn--ghost" href="../../cart.html">Ver carrito</a></div>
+        <div class="product-proof"><span>Sin descargas instantáneas confusas.</span><span>El equipo revisa el pago y envía el material correcto.</span><span>Si tienes dudas, ${contactLink('escríbenos antes de comprar', `Consulta ${beat.title}`)}.</span></div>
+      </aside>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container conversion-panel">
+      <div class="section-head"><div class="eyebrow">Después de pagar</div><h2>Confirmación clara y entrega manual por email</h2><p>El checkout confirma tu pedido, mostramos el resumen y nuestro equipo envía archivos y licencia al email de compra.</p></div>
+      <div class="fulfillment-steps">
+        <article><h3>1. Pago Stripe</h3><p>Compras la licencia elegida con tarjeta de forma segura.</p></article>
+        <article><h3>2. Pedido confirmado</h3><p>La web muestra estado y resumen real de tu compra.</p></article>
+        <article><h3>3. Entrega cuidada</h3><p>Recibes el material por email, preparado manualmente.</p></article>
       </div>
     </div>
   </section>
@@ -285,7 +312,21 @@ for (const [artistSlug, group] of artistGroups) {
 ${head({ title: `${group.artist} Type Beats | ARIKARA BEATS`, description, canonical, image: absAsset(items[0]?.cover) })}
 <body data-page="seo-listing">
 ${header('../../')}
-<main class="main"><section class="section"><div class="container seo-hero"><div class="eyebrow">Type beats</div><h1>${escapeHtml(group.artist)} Type Beats</h1><p class="lead">Instrumentales con identidad urbana, guitarras españolas y licencias listas para tu próximo release.</p>${trustStrip}</div></section><section class="section"><div class="container seo-grid">${items.map((beat) => beatCard(beat)).join('')}</div></section></main>
+<main class="main">
+  <section class="section">
+    <div class="container seo-hero seo-hero--conversion">
+      <div class="eyebrow">Type beats</div>
+      <h1>${escapeHtml(group.artist)} Type Beats con licencias claras</h1>
+      <p class="lead">Escucha previews, entra en el beat exacto y compra la licencia que encaja con tu lanzamiento. Entrega manual por email y pago seguro con Stripe.</p>
+      ${trustStrip}
+      <div class="catalog-shortcuts"><a href="../../index.html#catalogo">Ver catálogo completo</a><a href="../../licencias.html">Comparar Basic, Premium y Exclusive</a>${contactLink('Contacto directo', `${group.artist} type beats`)}</div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container section-head"><div class="eyebrow">Comprar ${escapeHtml(group.artist)} type beats</div><h2>Elige un beat y revisa sus licencias</h2><p>Cada tarjeta te lleva a una página propia con preview, BPM, tonalidad, licencias y carrito.</p></div>
+    <div class="container seo-grid">${items.map((beat) => beatCard(beat)).join('')}</div>
+  </section>
+</main>
 ${footer()}
 ${player('../../')}
 ${jsonLd({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: `${group.artist} Type Beats`, url: canonical, hasPart: items.map((beat) => ({ '@type': 'MusicRecording', name: beat.title, url: `${siteUrl}/beats/${beat.slug}/` })) })}
@@ -309,7 +350,21 @@ for (const [genreSlug, group] of genreGroups) {
 ${head({ title: `${group.genre} Beats | ARIKARA BEATS`, description, canonical, image: absAsset(items[0]?.cover) })}
 <body data-page="seo-listing">
 ${header('../../')}
-<main class="main"><section class="section"><div class="container seo-hero"><div class="eyebrow">Género</div><h1>${escapeHtml(group.genre)} Beats</h1><p class="lead">Catálogo curado por género con BPM claros, tono y licencias listas para publicar.</p>${trustStrip}</div></section><section class="section"><div class="container seo-grid">${items.map((beat) => beatCard(beat)).join('')}</div></section></main>
+<main class="main">
+  <section class="section">
+    <div class="container seo-hero seo-hero--conversion">
+      <div class="eyebrow">Género</div>
+      <h1>${escapeHtml(group.genre)} Beats listos para licenciar</h1>
+      <p class="lead">Catálogo curado por género con preview, BPM, tonalidad y compra directa de licencia. Todo preparado para artistas que quieren un sonido propio.</p>
+      ${trustStrip}
+      <div class="catalog-shortcuts"><a href="../../index.html#catalogo">Ver todos los beats</a><a href="../../licencias.html">Comparar licencias</a>${contactLink('Contacto directo', `${group.genre} beats`)}</div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container section-head"><div class="eyebrow">Comprar ${escapeHtml(group.genre)} beats</div><h2>Entra al beat, escucha y elige licencia</h2><p>La venta ocurre en la página del beat: preview, licencia, carrito, Stripe y entrega manual por email.</p></div>
+    <div class="container seo-grid">${items.map((beat) => beatCard(beat)).join('')}</div>
+  </section>
+</main>
 ${footer()}
 ${player('../../')}
 ${jsonLd({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: `${group.genre} Beats`, url: canonical, hasPart: items.map((beat) => ({ '@type': 'MusicRecording', name: beat.title, url: `${siteUrl}/beats/${beat.slug}/` })) })}

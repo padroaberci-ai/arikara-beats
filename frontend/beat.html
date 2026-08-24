@@ -37,31 +37,32 @@
   </header>
 
   <main class="main">
-    <section class="section">
-      <div class="container">
-        <a class="btn btn--primary btn--sm btn--back" href="./index.html">
+    <section class="section section--tight">
+      <div class="container breadcrumb-actions">
+        <a class="btn btn--primary btn--sm btn--back" href="./index.html#catalogo">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <line x1="7" y1="5" x2="7" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             <polyline points="18 5 10 12 18 19" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           Volver al catálogo
         </a>
+        <a class="btn btn--ghost btn--sm" href="./licencias.html">Comparar licencias</a>
       </div>
     </section>
 
     <section class="section">
-      <div class="container beat-layout">
-        <div class="card beat-hero">
-          <div class="beat-hero__media">
+      <div class="container product-detail">
+        <div class="card product-media-card">
+          <div class="product-media-card__image">
             <img id="coverImg" src="" alt="" />
-            <div class="beat-hero__overlay">
+            <div class="product-media-card__overlay">
               <div class="eyebrow">Beat</div>
-              <h2 id="beatTitle">-</h2>
+              <h1 id="beatTitle">-</h1>
               <p id="beatMeta" class="beat-hero__meta">-</p>
               <div id="tagRow" class="beat-tags"></div>
             </div>
           </div>
-          <div class="beat-hero__actions">
+          <div class="product-media-card__actions">
             <button id="previewBtn" class="btn btn--primary btn--preview" type="button">
               <svg viewBox="0 0 24 24" aria-hidden="true"></svg>
               Reproducir preview
@@ -69,15 +70,37 @@
           </div>
         </div>
 
-        <div class="card license-panel">
-          <h3>Elige tu licencia</h3>
-          <p class="lead">Selecciona la opción que necesitas para tu lanzamiento.</p>
-          <div id="licenseOptions" class="license-grid license-grid--beat" style="margin-top: 16px;"></div>
-          <div style="margin-top: 18px; display:grid; gap: 10px;">
-            <button id="addToCartBtn" class="btn btn--primary" type="button">Añadir</button>
+        <aside class="card product-buy-card">
+          <div class="eyebrow">Licencia del beat</div>
+          <h2>Escucha, elige licencia y añade al carrito</h2>
+          <p class="lead">Precios visibles antes de comprar. La entrega sigue siendo manual por email después de confirmar el pago.</p>
+          <div class="hero-proof">
+            <span>Pago seguro Stripe</span>
+            <span>Uso comercial</span>
+            <span>Entrega manual</span>
+          </div>
+          <div id="licenseOptions" class="license-grid license-grid--beat" style="margin-top: 18px;"></div>
+          <div class="product-actions">
+            <button id="addToCartBtn" class="btn btn--primary" type="button">Añadir licencia</button>
             <a class="btn btn--ghost" href="./cart.html">Ir al carrito</a>
           </div>
-          <p style="margin-top: 12px; font-size: var(--fs-1);">Pago seguro con Stripe. El material y la licencia se enviarán manualmente por email tras confirmar la compra.</p>
+          <div class="product-proof">
+            <span>Selecciona Basic, Premium o Exclusive según tu release.</span>
+            <span>Las exclusivas vendidas retiran el beat de venta.</span>
+            <span>Si tienes dudas, usa contacto directo antes de comprar.</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container conversion-panel">
+        <div class="eyebrow">Después de pagar</div>
+        <h2>Confirmación clara, entrega manual por email</h2>
+        <div class="fulfillment-steps">
+          <article><h3>Pedido confirmado</h3><p>Stripe valida el pago y el pedido queda registrado.</p></article>
+          <article><h3>Revisión del equipo</h3><p>Preparamos el material correspondiente a la licencia elegida.</p></article>
+          <article><h3>Envío por email</h3><p>Recibirás archivos y licencia manualmente en el correo de compra.</p></article>
         </div>
       </div>
     </section>
