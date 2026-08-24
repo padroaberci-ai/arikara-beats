@@ -17,6 +17,21 @@
   const qsa = (sel, scope=document) => Array.from(scope.querySelectorAll(sel));
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   const apiUrl = (path) => `${API_BASE}${path}`;
+  const APP_BASE_PATH = (() => {
+    const script = document.currentScript || qsa('script[src$="app.js"]').at(-1);
+    const src = script?.getAttribute('src') || './app.js';
+    return new URL('.', new URL(src, window.location.href)).pathname;
+  })();
+  const pagePath = (path = '') => `${APP_BASE_PATH}${String(path).replace(/^\.?\//, '')}`.replace(/\/{2,}/g, '/');
+  const assetUrl = (path, fallback = '') => {
+    const value = String(path || fallback || '').trim();
+    if(!value) return '';
+    if(/^(https?:|data:|blob:|mailto:|tel:)/i.test(value)) return value;
+    if(value.startsWith('/')) return value;
+    return pagePath(value);
+  };
+  const beatUrl = (beatOrSlug) => pagePath(`beats/${encodeURIComponent(typeof beatOrSlug === 'string' ? beatOrSlug : beatOrSlug?.slug || '')}/`);
+  const placeholderUrl = () => assetUrl('./assets/placeholder.svg');
   const isCompactViewport = () => window.matchMedia('(max-width: 980px)').matches;
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   const fetchWithTimeout = (resource, options = {}, timeoutMs = 12000) => {
@@ -230,7 +245,7 @@
       <div class="player-mobile" id="playerMobile" aria-hidden="true">
         <button class="player-mobile__surface" id="playerMobileOpen" type="button" aria-label="Abrir reproductor">
           <div class="player-mobile__cover">
-            <img id="playerMobileCover" src="./assets/placeholder.svg" alt="" />
+            <img id="playerMobileCover" src="${placeholderUrl()}" alt="" />
           </div>
           <div class="player-mobile__copy">
             <div class="player-mobile__title-row">
@@ -253,7 +268,7 @@
         <div class="player-sheet__backdrop" id="playerSheetBackdrop"></div>
         <div class="player-sheet__panel" role="dialog" aria-modal="true" aria-label="Reproductor">
           <div class="player-sheet__bg">
-            <img id="playerSheetBg" src="./assets/placeholder.svg" alt="" />
+            <img id="playerSheetBg" src="${placeholderUrl()}" alt="" />
           </div>
           <div class="player-sheet__scrim"></div>
           <div class="player-sheet__header">
@@ -267,7 +282,7 @@
           </div>
           <div class="player-sheet__body">
             <div class="player-sheet__artwork">
-              <img id="playerSheetCover" src="./assets/placeholder.svg" alt="" />
+              <img id="playerSheetCover" src="${placeholderUrl()}" alt="" />
             </div>
             <div class="player-sheet__title" id="playerSheetTitle">Nada reproduciendo</div>
             <div class="player-sheet__meta" id="playerSheetMeta">Reproduce un beat para escuchar la vista previa</div>
@@ -384,12 +399,12 @@
     const beat = currentBeat();
     if(!beat) return;
     preservePlaybackSession();
-    window.location.href = `./beat.html?beat=${encodeURIComponent(beat.slug)}`;
+    window.location.href = beatUrl(beat);
   };
   const updateMobilePlayerContent = () => {
     const heading = currentTrackHeading();
     const meta = currentTrackMeta();
-    const cover = playerCoverImg?.src || './assets/placeholder.svg';
+    const cover = playerCoverImg?.src || placeholderUrl();
     if(playerMobileTitle) playerMobileTitle.textContent = heading;
     if(playerMobileMeta) playerMobileMeta.textContent = meta;
     if(playerMobileCover){
@@ -464,7 +479,7 @@
       const icon = btn.querySelector('.beat-row__mini-action-icon');
       if(!icon) return;
       const beat = state.beats[Number(btn.dataset.mobilePlay)];
-      const isActive = Boolean(beat?.preview) && playing && current === beat.preview;
+      const isActive = Boolean(beat?.preview) && playing && current === assetUrl(beat.preview);
       btn.classList.toggle('is-playing', isActive);
       icon.innerHTML = isActive ? COVER_PAUSE_SVG : COVER_PLAY_SVG;
     });
@@ -646,7 +661,7 @@
     if(playerCoverPlay.dataset.preview) return;
     const list = playableIndices();
     if(list.length > 0){
-      playerCoverPlay.dataset.preview = state.beats[list[0]].preview;
+      playerCoverPlay.dataset.preview = assetUrl(state.beats[list[0]].preview);
     }
   };
   setPlayerCoverFallback();
@@ -695,14 +710,14 @@
     currentBeatIndex = idx;
     if(playerSeek) playerSeek.value = 0;
     if(playerTime) playerTime.textContent = '0:00';
-    play(beat.preview);
+    play(assetUrl(beat.preview));
     const parsed = splitTitle(beat.title);
     document.dispatchEvent(new CustomEvent('player:change', { detail: {
       title: beat.title,
       artist: parsed.artist,
       song: parsed.song,
       meta: [beat.bpm ? `${beat.bpm} BPM` : '', beat.key || ''].filter(Boolean).join(' · '),
-      cover: beat.cover
+      cover: assetUrl(beat.cover)
     }}));
     savePlayerState();
   };
@@ -1037,7 +1052,7 @@
       const tags = [...(beat.tags||[]), ...(beat.moods||[])].slice(0,5)
         .map(t => '<span class="tag">' + esc(t) + '</span>').join('');
       const coverOverlay = (!isUnavailable && hasPreview) ? `
-            <button class="cover-play" type="button" data-index="${beatIndex}" data-preview="${beat.preview}" data-title="${esc(beat.title)}" data-meta="${beat.bpm} BPM - ${esc(beat.key)}" data-cover="${beat.cover}" aria-label="Reproducir preview">
+            <button class="cover-play" type="button" data-index="${beatIndex}" data-preview="${assetUrl(beat.preview)}" data-title="${esc(beat.title)}" data-meta="${beat.bpm} BPM - ${esc(beat.key)}" data-cover="${assetUrl(beat.cover)}" aria-label="Reproducir preview">
               <span class="cover-play__icon">${COVER_PLAY_SVG}</span>
               <span class="wave wave--cover" aria-hidden="true"><span></span><span></span><span></span></span>
             </button>
@@ -1048,7 +1063,7 @@
         </button>
       ` : '';
       const mobileLicense = !isUnavailable ? `
-        <a class="beat-row__mini-action beat-row__mini-action--license" href="./beat.html?beat=${encodeURIComponent(beat.slug)}" aria-label="Ver licencias de ${esc(beat.title)}">
+        <a class="beat-row__mini-action beat-row__mini-action--license" href="${beatUrl(beat)}" aria-label="Ver licencias de ${esc(beat.title)}">
           <span class="beat-row__mini-action-icon">${CART_ICON}</span>
         </a>
       ` : '';
@@ -1057,7 +1072,7 @@
           <div class="beat-row__mobile-summary">
             <button class="beat-row__mobile-toggle" type="button" data-mobile-toggle="${beatIndex}" aria-expanded="false" aria-controls="beatMobilePanel-${beat.id}">
               <div class="beat-row__mobile-cover">
-                <img src="${beat.cover}" alt="Cover ${esc(beat.title)}" />
+                <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
               </div>
               <div class="beat-row__mobile-copy">
                 <div class="beat-row__mobile-status badge ${statusClass}">${statusLabel}</div>
@@ -1074,7 +1089,7 @@
           <div class="beat-row__mobile-panel" id="beatMobilePanel-${beat.id}" hidden>
             <div class="beat-row__mobile-card">
               <div class="beat-row__mobile-hero">
-                <img src="${beat.cover}" alt="Cover ${esc(beat.title)}" />
+                <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
               </div>
               <div class="beat-row__mobile-body">
                 <div class="badge ${statusClass}">${statusLabel}</div>
@@ -1088,7 +1103,7 @@
                 <div class="beat-row__mobile-footer">
                   <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
                   <div class="beat-row__mobile-buttons">
-                    <a class="btn btn--primary btn--sm" href="./beat.html?beat=${encodeURIComponent(beat.slug)}">Ver licencias</a>
+                    <a class="btn btn--primary btn--sm" href="${beatUrl(beat)}">Ver licencias</a>
                     <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
                   </div>
                 </div>
@@ -1097,7 +1112,7 @@
           </div>
           <div class="beat-row__desktop">
             <div class="beat-cover">
-              <img src="${beat.cover}" alt="Cover ${esc(beat.title)}" />
+              <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
               ${coverOverlay}
             </div>
             <div class="beat-info">
@@ -1111,7 +1126,7 @@
             <div class="beat-actions">
               <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
               <div class="beat-buttons">
-                <a class="btn btn--primary btn--sm" href="./beat.html?beat=${encodeURIComponent(beat.slug)}">Licencias</a>
+                <a class="btn btn--primary btn--sm" href="${beatUrl(beat)}">Licencias</a>
                 <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
               </div>
             </div>
@@ -1171,8 +1186,8 @@
           const idx = Number(btn.dataset.index);
           const beat = state.beats[idx];
           if(!beat || !beat.preview) return;
-          if(current === beat.preview){
-            toggle(beat.preview);
+          if(current === assetUrl(beat.preview)){
+            toggle(assetUrl(beat.preview));
             return;
           }
           playBeatByIndex(idx);
@@ -1185,8 +1200,8 @@
           const idx = Number(btn.dataset.mobilePlay);
           const beat = state.beats[idx];
           if(!beat || !beat.preview) return;
-          if(current === beat.preview){
-            toggle(beat.preview);
+          if(current === assetUrl(beat.preview)){
+            toggle(assetUrl(beat.preview));
             return;
           }
           playBeatByIndex(idx);
@@ -1215,7 +1230,7 @@
       return beatDate > accDate ? beat : acc;
     }, null);
     if(latestBeat && heroHighlightImg){
-      heroHighlightImg.src = latestBeat.cover || './assets/placeholder.svg';
+      heroHighlightImg.src = assetUrl(latestBeat.cover, './assets/placeholder.svg');
       heroHighlightImg.alt = latestBeat.title ? 'Cover ' + latestBeat.title : 'Cover';
       if(heroHighlightTitle) heroHighlightTitle.textContent = latestBeat.title || 'Último lanzamiento';
       if(heroHighlightMeta) heroHighlightMeta.textContent = `${latestBeat.genre || 'Beat'} · ${latestBeat.bpm || '-'} BPM`;
@@ -1245,7 +1260,9 @@
   };
 
   const initBeatPage = () => {
-    const slug = new URLSearchParams(window.location.search).get('beat');
+    const urlSlug = new URLSearchParams(window.location.search).get('beat');
+    const pathSlug = decodeURIComponent((window.location.pathname.match(/\/beats\/([^/]+)/) || [])[1] || '');
+    const slug = urlSlug || document.body.dataset.beatSlug || pathSlug;
     const beatIndex = state.beats.findIndex(b => b.slug === slug);
     const beat = state.beats[beatIndex];
     if(!beat) return;
@@ -1263,7 +1280,7 @@
 
     beatTitle.textContent = beat.title;
     beatMeta.textContent = beat.bpm + ' BPM - ' + beat.key + ' - ' + beat.genre;
-    coverImg.src = beat.cover;
+    coverImg.src = assetUrl(beat.cover);
     coverImg.alt = 'Cover ' + beat.title;
 
     const tags = [...(beat.tags||[]), ...(beat.moods||[])];
@@ -1272,21 +1289,21 @@
     if(beat.preview){
       if(previewBtn){
         previewButton = previewBtn;
-        previewButtonTarget = beat.preview;
+        previewButtonTarget = assetUrl(beat.preview);
         updatePreviewButton();
         previewBtn.addEventListener('click', () => {
-          if(current === beat.preview){
-            toggle(beat.preview);
+          if(current === assetUrl(beat.preview)){
+            toggle(assetUrl(beat.preview));
             return;
           }
           playBeatByIndex(beatIndex);
         });
       }
       if(coverPlayBtn){
-        coverPlayBtn.dataset.preview = beat.preview;
+        coverPlayBtn.dataset.preview = assetUrl(beat.preview);
         coverPlayBtn.addEventListener('click', () => {
-          if(current === beat.preview){
-            toggle(beat.preview);
+          if(current === assetUrl(beat.preview)){
+            toggle(assetUrl(beat.preview));
             return;
           }
           playBeatByIndex(beatIndex);
@@ -1660,6 +1677,11 @@
     if(currentDescription && nextDescription){
       currentDescription.setAttribute('content', nextDescription);
     }
+
+    ['link[rel="canonical"]', 'meta[property^="og:"]', 'meta[name^="twitter:"]', 'script[type="application/ld+json"][data-seo]'].forEach((selector) => {
+      qsa(selector, document.head).forEach((node) => node.remove());
+      qsa(selector, nextDoc.head).forEach((node) => document.head.appendChild(node.cloneNode(true)));
+    });
   };
 
   const replacePageShell = (nextDoc) => {
@@ -1673,7 +1695,10 @@
     if(nextHeader && currentHeader) currentHeader.replaceWith(nextHeader);
     if(nextMain && currentMain) currentMain.replaceWith(nextMain);
     if(nextFooter && currentFooter) currentFooter.replaceWith(nextFooter);
-    if(nextDoc.body?.dataset?.page) document.body.dataset.page = nextDoc.body.dataset.page;
+    Object.keys(document.body.dataset).forEach((key) => delete document.body.dataset[key]);
+    Object.entries(nextDoc.body?.dataset || {}).forEach(([key, value]) => {
+      document.body.dataset[key] = value;
+    });
   };
 
   const isInternalPageLink = (href) => {
@@ -1681,7 +1706,8 @@
     if(url.origin !== window.location.origin) return false;
     if(url.hash && url.pathname === window.location.pathname && url.search === window.location.search) return false;
     const pathname = url.pathname || '/';
-    return pathname.endsWith('.html') || pathname === '/' || pathname === '/index.html';
+    const cleanPath = pathname.startsWith(APP_BASE_PATH) ? `/${pathname.slice(APP_BASE_PATH.length)}` : pathname;
+    return pathname.endsWith('.html') || pathname === '/' || pathname === '/index.html' || /^\/(beats|type-beats|generos)(\/|$)/.test(cleanPath);
   };
 
   const navigateToPage = async (href, { replaceHistory = false } = {}) => {

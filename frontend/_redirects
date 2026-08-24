@@ -1,0 +1,3 @@
+/beats/:slug /beats/:slug/index.html 200
+/type-beats/:slug /type-beats/:slug/index.html 200
+/generos/:slug /generos/:slug/index.html 200

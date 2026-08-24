@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /success.html
+Disallow: /cancel.html
+Sitemap: https://arikarabeats.com/sitemap.xml
