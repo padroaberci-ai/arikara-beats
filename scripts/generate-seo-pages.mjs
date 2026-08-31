@@ -101,18 +101,36 @@ const header = (prefix = '../../') => `
     </nav>
   </div>
 </header>`;
-const footer = () => `
-<footer class="footer">
+const footer = (prefix = '../../') => `
+<footer class="footer footer--expanded">
   <div class="container footer__inner">
-    <div>
-      <div style="font-weight:700;">ARIKARA BEATS</div>
-      <p>Beats premium, licencias transparentes y entrega manual por email.</p>
-      <div>(c) <span data-year></span> ARIKARA BEATS</div>
+    <div class="footer__brand">
+      <a class="footer-logo" href="${prefix}index.html" aria-label="ARIKARA BEATS">
+        <img src="${prefix}assets/logo-white.png" alt="ARIKARA BEATS" />
+      </a>
+      <p>Beats premium con raíces españolas, licencias claras y entrega cuidada por email.</p>
+      <div class="footer__legal">(c) <span data-year></span> ARIKARA BEATS</div>
     </div>
-    <div>
-      <div style="font-weight:700;">Contacto</div>
-      <div>${emailDisplay()}</div>
-      <div>@arikarastudios</div>
+    <nav class="footer__column" aria-label="Explorar beats">
+      <div class="footer__title">Explora</div>
+      <a href="${prefix}index.html#catalogo">Todos los beats</a>
+      <a href="${prefix}type-beats/morad/">Morad type beats</a>
+      <a href="${prefix}type-beats/maka/">Maka type beats</a>
+      <a href="${prefix}type-beats/jc-reyes/">JC Reyes type beats</a>
+    </nav>
+    <nav class="footer__column" aria-label="Géneros">
+      <div class="footer__title">Géneros</div>
+      <a href="${prefix}generos/flamenco-trap/">Flamenco Trap</a>
+      <a href="${prefix}generos/drill-flamenco/">Drill Flamenco</a>
+      <a href="${prefix}generos/afrotrap/">Afrotrap</a>
+      <a href="${prefix}generos/reggaeton/">Reggaeton</a>
+    </nav>
+    <div class="footer__column">
+      <div class="footer__title">Contacto</div>
+      ${emailDisplay()}
+      <a href="${prefix}licencias.html">Licencias</a>
+      <a href="${prefix}cart.html">Carrito</a>
+      <span>@arikarastudios</span>
     </div>
   </div>
 </footer>`;
@@ -302,7 +320,7 @@ ${header('../../')}
   </section>
   <section class="section"><div class="container seo-links"><h2>También encaja con</h2><a href="${artistHref(parts.artist)}">${escapeHtml(parts.artist)} type beats</a><a href="${genreHref(beat.genre)}">${escapeHtml(beat.genre)} beats</a><a href="../../licencias.html">Comparar licencias</a>${contactLink('Contacto directo', `Consulta ${beat.title}`)}</div></section>
 </main>
-${footer()}
+${footer('../../')}
 ${player('../../')}
 ${jsonLd(graph)}
 </body>
@@ -340,7 +358,7 @@ ${header('../../')}
     <div class="container seo-grid">${items.map((beat) => beatCard(beat)).join('')}</div>
   </section>
 </main>
-${footer()}
+${footer('../../')}
 ${player('../../')}
 ${jsonLd({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: `${group.artist} Type Beats`, url: canonical, hasPart: items.map((beat) => ({ '@type': 'MusicRecording', name: beat.title, url: `${siteUrl}/beats/${beat.slug}/` })) })}
 </body></html>`);
@@ -378,7 +396,7 @@ ${header('../../')}
     <div class="container seo-grid">${items.map((beat) => beatCard(beat)).join('')}</div>
   </section>
 </main>
-${footer()}
+${footer('../../')}
 ${player('../../')}
 ${jsonLd({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: `${group.genre} Beats`, url: canonical, hasPart: items.map((beat) => ({ '@type': 'MusicRecording', name: beat.title, url: `${siteUrl}/beats/${beat.slug}/` })) })}
 </body></html>`);

@@ -233,7 +233,42 @@
     badge.textContent = count;
     badge.classList.toggle('hidden', count === 0);
   };
+  const upgradeLegacyFooter = () => {
+    const footer = qs('.footer');
+    if(!footer || footer.classList.contains('footer--expanded')) return;
+    footer.classList.add('footer--expanded');
+    footer.innerHTML = `
+      <div class="container footer__inner">
+        <div class="footer__brand">
+          <a class="footer-logo" href="./index.html" aria-label="ARIKARA BEATS"><img src="./assets/logo-white.png" alt="ARIKARA BEATS" /></a>
+          <p>Beats premium con raíces españolas, licencias claras y entrega cuidada por email.</p>
+          <div class="footer__legal">(c) <span data-year></span> ARIKARA BEATS</div>
+        </div>
+        <nav class="footer__column" aria-label="Explorar beats">
+          <div class="footer__title">Explora</div>
+          <a href="./index.html#catalogo">Todos los beats</a>
+          <a href="./type-beats/morad/">Morad type beats</a>
+          <a href="./type-beats/maka/">Maka type beats</a>
+          <a href="./type-beats/jc-reyes/">JC Reyes type beats</a>
+        </nav>
+        <nav class="footer__column" aria-label="Géneros">
+          <div class="footer__title">Géneros</div>
+          <a href="./generos/flamenco-trap/">Flamenco Trap</a>
+          <a href="./generos/drill-flamenco/">Drill Flamenco</a>
+          <a href="./generos/afrotrap/">Afrotrap</a>
+          <a href="./generos/reggaeton/">Reggaeton</a>
+        </nav>
+        <div class="footer__column">
+          <div class="footer__title">Contacto</div>
+          <a class="footer-email" href="#contacto" data-direct-email data-email-subject="Contacto directo - ARIKARA BEATS"><span data-email-text>arikarabeats@gmail.com</span></a>
+          <a href="./licencias.html">Licencias</a>
+          <a href="./cart.html">Carrito</a>
+          <span>@arikarastudios</span>
+        </div>
+      </div>`;
+  };
   const syncShellUi = () => {
+    upgradeLegacyFooter();
     syncYear();
     syncContactEmail();
     updateBadge();
@@ -1084,6 +1119,55 @@
   };
 
   const initCatalogPage = () => {
+    const heroCarousel = qs('#heroCoverCarousel');
+    if(heroCarousel && !heroCarousel.childElementCount){
+      const covers = state.beats
+        .filter((beat) => beat.cover)
+        .sort(() => Math.random() - .5);
+      const rowConfigs = [
+        { top: 2, min: 104, max: 176, direction: 'left', duration: 55 },
+        { top: 19, min: 138, max: 224, direction: 'right', duration: 70 },
+        { top: 42, min: 98, max: 164, direction: 'left', duration: 62 },
+        { top: 63, min: 124, max: 208, direction: 'right', duration: 76 },
+        { top: 82, min: 92, max: 154, direction: 'left', duration: 58 }
+      ];
+      let coverIndex = 0;
+      const nextCover = () => {
+        const beat = covers[coverIndex % covers.length];
+        coverIndex += 1;
+        return beat;
+      };
+      const random = (min, max) => Math.round(min + Math.random() * (max - min));
+
+      rowConfigs.forEach((config, rowIndex) => {
+        const row = document.createElement('div');
+        row.className = `hero-cover-carousel__row hero-cover-carousel__row--${config.direction}`;
+        row.style.setProperty('--row-top', `${config.top}%`);
+        row.style.setProperty('--row-duration', `${config.duration + random(-7, 8)}s`);
+        row.style.setProperty('--row-delay', `-${random(0, config.duration)}s`);
+
+        const track = document.createElement('div');
+        track.className = 'hero-cover-carousel__track';
+        const rowCovers = Array.from({ length: 12 }, nextCover).filter(Boolean);
+        [...rowCovers, ...rowCovers, ...rowCovers].forEach((beat, tileIndex) => {
+          const tile = document.createElement('div');
+          tile.className = 'hero-cover-carousel__tile';
+          tile.style.setProperty('--cover-size', `${random(config.min, config.max)}px`);
+          tile.style.setProperty('--cover-tilt', `${random(-7, 7)}deg`);
+          tile.style.setProperty('--cover-depth', `${random(2, 16)}px`);
+          const image = document.createElement('img');
+          image.src = beat.cover;
+          image.alt = '';
+          image.loading = rowIndex < 2 && tileIndex < 12 ? 'eager' : 'lazy';
+          image.decoding = 'async';
+          tile.appendChild(image);
+          track.appendChild(tile);
+        });
+        row.appendChild(track);
+        heroCarousel.appendChild(row);
+      });
+    }
+
     const list = qs('#catalogList');
     const empty = qs('#emptyState');
     if(!list || !empty) return;

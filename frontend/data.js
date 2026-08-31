@@ -666,22 +666,22 @@ window.ARIKARA = {
     {
       id: "mix-basic",
       name: "Mix básico",
-      priceLabel: "79,99 EUR / canción",
-      includes: ["Mixing", "Mastering", "Por stems/pistas"],
+      priceLabel: "80,00 EUR / canción",
+      includes: ["Mixing", "Mastering", "1 archivo WAV"],
       highlight: false
     },
     {
       id: "mix-pro",
       name: "Mix Pro",
       priceLabel: "129,99 EUR / canción",
-      includes: ["Mixing", "Mastering", "Por stems/pistas", "Arreglos", "Producción"],
+      includes: ["Mixing", "Mastering", "Por stems/pistas"],
       highlight: false
     },
     {
       id: "production-plus",
       name: "Producción Plus",
       priceLabel: "199,99 EUR / canción",
-      includes: ["Mixing", "Mastering", "Por stems/pistas", "Arreglos", "Producción", "Tratamiento vocal"],
+      includes: ["Producción musical", "Arreglos", "Dirección creativa", "Tratamiento vocal", "Mixing", "Mastering", "Por stems/pistas"],
       highlight: true
     }
   ]
