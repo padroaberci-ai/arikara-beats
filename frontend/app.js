@@ -1121,20 +1121,20 @@
   const initCatalogPage = () => {
     const heroCarousel = qs('#heroCoverCarousel');
     if(heroCarousel && !heroCarousel.childElementCount){
-      const covers = state.beats
-        .filter((beat) => beat.cover)
-        .sort(() => Math.random() - .5);
+      const covers = state.beats.filter((beat) => beat.cover);
       const rowConfigs = [
-        { top: 4, min: 104, max: 146, direction: 'left', duration: 102 },
-        { top: 28, min: 214, max: 292, direction: 'right', duration: 146 },
-        { top: 56, min: 126, max: 174, direction: 'left', duration: 118 },
-        { top: 80, min: 164, max: 226, direction: 'right', duration: 160 }
+        { top: -8, size: 178, direction: 'left', duration: 94 },
+        { top: 12, size: 310, direction: 'right', duration: 128 },
+        { top: 42, size: 198, direction: 'left', duration: 108 },
+        { top: 63, size: 262, direction: 'right', duration: 142 }
       ];
-      let coverIndex = 0;
-      const nextCover = () => {
-        const beat = covers[coverIndex % covers.length];
-        coverIndex += 1;
-        return beat;
+      const shuffleCovers = () => {
+        const shuffled = [...covers];
+        for(let index = shuffled.length - 1; index > 0; index -= 1){
+          const randomIndex = Math.floor(Math.random() * (index + 1));
+          [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+        }
+        return shuffled;
       };
       const random = (min, max) => Math.round(min + Math.random() * (max - min));
 
@@ -1142,21 +1142,21 @@
         const row = document.createElement('div');
         row.className = `hero-cover-carousel__row hero-cover-carousel__row--${config.direction}`;
         row.style.setProperty('--row-top', `${config.top}%`);
-        row.style.setProperty('--row-duration', `${config.duration + random(-7, 8)}s`);
-        row.style.setProperty('--row-delay', `-${random(0, config.duration)}s`);
 
         const track = document.createElement('div');
         track.className = 'hero-cover-carousel__track';
-        const rowCovers = Array.from({ length: 12 }, nextCover).filter(Boolean);
-        [...rowCovers, ...rowCovers, ...rowCovers].forEach((beat, tileIndex) => {
+        const rowCovers = shuffleCovers();
+        const duration = config.duration + rowCovers.length * 3;
+        row.style.setProperty('--row-duration', `${duration}s`);
+        row.style.setProperty('--row-delay', `-${random(0, duration)}s`);
+        [...rowCovers, ...rowCovers].forEach((beat, tileIndex) => {
           const tile = document.createElement('div');
           tile.className = 'hero-cover-carousel__tile';
-          tile.style.setProperty('--cover-size', `${random(config.min, config.max)}px`);
-          tile.style.setProperty('--cover-depth', `${random(2, 16)}px`);
+          tile.style.setProperty('--cover-size', `${config.size}px`);
           const image = document.createElement('img');
           image.src = beat.cover;
           image.alt = '';
-          image.loading = rowIndex < 2 && tileIndex < 12 ? 'eager' : 'lazy';
+          image.loading = rowIndex < 2 && tileIndex < rowCovers.length ? 'eager' : 'lazy';
           image.decoding = 'async';
           tile.appendChild(image);
           track.appendChild(tile);
