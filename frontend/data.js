@@ -641,7 +641,7 @@ window.ARIKARA = {
       name: "Basic",
       price: 29.99,
       priceLabel: "29,99 EUR",
-      includes: ["MP3", "WAV", "Uso comercial", "Hasta 100K streams"],
+      includes: ["MP3", "WAV", "Sin tag", "Licencia comercial"],
       highlight: false
     },
     {
@@ -649,7 +649,7 @@ window.ARIKARA = {
       name: "Premium",
       price: 79.99,
       priceLabel: "79,99 EUR",
-      includes: ["MP3", "WAV", "STEMS", "Uso comercial", "Hasta 500K streams"],
+      includes: ["MP3", "WAV", "STEMS", "Sin tag", "Licencia comercial"],
       highlight: true
     },
     {
@@ -657,29 +657,29 @@ window.ARIKARA = {
       name: "Exclusive",
       price: 299.99,
       priceLabel: "Desde 299,99 EUR",
-      includes: ["MP3", "WAV", "STEMS", "Uso comercial", "Streams ilimitados", "Full rights"],
+      includes: ["Exclusividad", "Retirada del beat", "MP3", "WAV", "STEMS", "Licencia comercial"],
       highlight: false,
       disabled: true
     }
   ],
   services: [
     {
-      id: "basic",
-      name: "Basic",
+      id: "mix-basic",
+      name: "Mix básico",
       priceLabel: "79,99 EUR / canción",
       includes: ["Mixing", "Mastering", "Por stems/pistas"],
       highlight: false
     },
     {
-      id: "premium",
-      name: "Premium",
+      id: "mix-pro",
+      name: "Mix Pro",
       priceLabel: "129,99 EUR / canción",
       includes: ["Mixing", "Mastering", "Por stems/pistas", "Arreglos", "Producción"],
       highlight: false
     },
     {
-      id: "pro",
-      name: "Pro",
+      id: "production-plus",
+      name: "Producción Plus",
       priceLabel: "199,99 EUR / canción",
       includes: ["Mixing", "Mastering", "Por stems/pistas", "Arreglos", "Producción", "Tratamiento vocal"],
       highlight: true

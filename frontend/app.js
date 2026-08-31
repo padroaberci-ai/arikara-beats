@@ -59,6 +59,36 @@
     throw lastError;
   };
 
+  const trackEvent = (name, payload = {}) => {
+    try{
+      const safePayload = Object.fromEntries(
+        Object.entries(payload).filter(([, value]) => value !== undefined && value !== null)
+      );
+      if(Array.isArray(window.dataLayer)){
+        window.dataLayer.push({ event: name, ...safePayload });
+      }
+      window.ARIKARA_EVENTS = window.ARIKARA_EVENTS || [];
+      window.ARIKARA_EVENTS.push({ name, payload: safePayload, ts: Date.now() });
+    }catch{}
+  };
+
+  let toastTimer = null;
+  const showToast = (message) => {
+    let toast = qs('#siteToast');
+    if(!toast){
+      toast = document.createElement('div');
+      toast.id = 'siteToast';
+      toast.className = 'site-toast';
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.hidden = false;
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => { toast.hidden = true; }, 3200);
+  };
+
   const fmtEUR = (n) => Number(n || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
   const roundMoney = (value) => Number((Math.round(Number(value || 0) * 100) / 100).toFixed(2));
   const compareCartDiscountOrder = (a, b, indexA = 0, indexB = 0) => {
@@ -167,6 +197,8 @@
       const cart = loadCart().filter((entry) => entry.beatId !== item.beatId);
       cart.push({ ...item, qty: 1 });
       saveCart(cart);
+      trackEvent('add_to_cart', { beatId: item.beatId, slug: item.slug, licencia: item.license, precio: item.price, source: document.body.dataset.page || 'site' });
+      showToast(`${item.title} - ${item.license} añadido al carrito.`);
       document.dispatchEvent(new Event('cart:update'));
     },
     remove: (idx) => {
@@ -206,7 +238,57 @@
     syncContactEmail();
     updateBadge();
   };
+  const initMobileMenu = () => {
+    const header = qs('.header');
+    const nav = qs('.header .nav');
+    if(!header || !nav || qs('#mobileMenuButton')) return;
+
+    const menuButton = document.createElement('button');
+    menuButton.id = 'mobileMenuButton';
+    menuButton.className = 'header-menu';
+    menuButton.type = 'button';
+    menuButton.setAttribute('aria-label', 'Abrir menú');
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.setAttribute('aria-controls', 'mobileNavDrawer');
+    menuButton.innerHTML = '<span></span><span></span><span></span>';
+    header.querySelector('.header__inner')?.appendChild(menuButton);
+
+    const drawer = document.createElement('aside');
+    drawer.id = 'mobileNavDrawer';
+    drawer.className = 'mobile-nav-drawer';
+    drawer.setAttribute('aria-hidden', 'true');
+    drawer.innerHTML = '<div class="mobile-nav-drawer__backdrop" data-menu-close></div><div class="mobile-nav-drawer__panel" role="dialog" aria-modal="true" aria-label="Navegación"><div class="mobile-nav-drawer__top"><span>ARIKARA BEATS</span><button class="icon-btn" type="button" data-menu-close aria-label="Cerrar menú">×</button></div><nav class="mobile-nav-drawer__links" aria-label="Navegación móvil"></nav></div>';
+    document.body.appendChild(drawer);
+    const links = qs('.mobile-nav-drawer__links', drawer);
+    qsa('a', nav).forEach((link) => {
+      const item = link.cloneNode(true);
+      const badge = qs('#cartBadge', item);
+      if(badge) badge.removeAttribute('id');
+      links?.appendChild(item);
+    });
+
+    let previousFocus = null;
+    const close = () => {
+      drawer.classList.remove('is-open');
+      drawer.setAttribute('aria-hidden', 'true');
+      menuButton.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('menu-open');
+      previousFocus?.focus();
+    };
+    const open = () => {
+      previousFocus = document.activeElement;
+      drawer.classList.add('is-open');
+      drawer.setAttribute('aria-hidden', 'false');
+      menuButton.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('menu-open');
+      qs('a,button', drawer)?.focus();
+    };
+    menuButton.addEventListener('click', () => drawer.classList.contains('is-open') ? close() : open());
+    qsa('[data-menu-close], a', drawer).forEach((element) => element.addEventListener('click', close));
+    document.addEventListener('keydown', (event) => { if(event.key === 'Escape' && drawer.classList.contains('is-open')) close(); });
+  };
   syncShellUi();
+  initMobileMenu();
   document.addEventListener('cart:update', updateBadge);
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-direct-email]');
@@ -1016,6 +1098,10 @@
     const bpmMaxEl = qs('#bpmMax');
     const genreEl = qs('#genreSelect');
     const sortEl = qs('#sortSelect');
+    const universalResults = qs('#universalResults');
+    const searchClear = qs('#searchClear');
+    const searchStatus = qs('#searchStatus');
+    const resultCount = qs('#resultCount');
 
     const genres = [...new Set(
       state.beats
@@ -1032,12 +1118,95 @@
       });
     }
 
+    const normalizeSearch = (value = '') => String(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[“”"']/g, ' ')
+      .replace(/[#♯]/g, '#')
+      .replace(/\bminor\b|\bmenor\b/g, 'min')
+      .replace(/\bmajor\b|\bmayor\b/g, 'maj')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const youtubeIdFrom = (value = '') => {
+      const raw = String(value || '').trim();
+      if(!raw) return '';
+      try{
+        const url = new URL(raw);
+        if(url.hostname.includes('youtu.be')) return url.pathname.replace(/^\//, '').split('/')[0] || '';
+        if(url.hostname.includes('youtube.com')) return url.searchParams.get('v') || url.pathname.split('/').filter(Boolean).pop() || '';
+      }catch{}
+      const match = raw.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{6,})/);
+      return match?.[1] || '';
+    };
+
+    const beatSearchText = (beat) => normalizeSearch([
+      beat.title,
+      String(beat.title || '').split(/type beat/i)[0],
+      beat.slug,
+      beat.genre,
+      beat.key,
+      beat.youtubeId,
+      beat.youtubeUrl,
+      ...(beat.tags || []),
+      ...(beat.moods || []),
+      ...(beat.aliases || [])
+    ].join(' '));
+
+    const parseSearch = (query = '') => {
+      const normalized = normalizeSearch(query);
+      const youtubeId = youtubeIdFrom(query);
+      const bpmRange = normalized.match(/(\d{2,3})\s*[-–]\s*(\d{2,3})\s*bpm/);
+      const bpmExact = normalized.match(/(\d{2,3})\s*bpm/);
+      const key = normalized.match(/([a-g](?:#|b)?)\s*(min|maj)/)?.[0] || '';
+      const cleaned = normalized
+        .replace(/\d{2,3}\s*[-–]\s*\d{2,3}\s*bpm/g, ' ')
+        .replace(/\d{2,3}\s*bpm/g, ' ')
+        .replace(/[a-g](?:#|b)?\s*(?:min|maj)/g, ' ')
+        .replace(/https?:\/\/\S+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return {
+        raw: query,
+        normalized,
+        youtubeId,
+        terms: cleaned ? cleaned.split(' ').filter(Boolean) : [],
+        bpmMin: bpmRange ? Number(bpmRange[1]) : (bpmExact ? Number(bpmExact[1]) : NaN),
+        bpmMax: bpmRange ? Number(bpmRange[2]) : (bpmExact ? Number(bpmExact[1]) : NaN),
+        key
+      };
+    };
+
+    const scoreBeat = (beat, parsed) => {
+      if(!parsed.normalized) return 1;
+      const hay = beatSearchText(beat);
+      const title = normalizeSearch(beat.title);
+      const slug = normalizeSearch(beat.slug);
+      const genre = normalizeSearch(beat.genre);
+      const key = normalizeSearch(beat.key);
+      const youtube = normalizeSearch([beat.youtubeId, beat.youtubeUrl].join(' '));
+      let score = 0;
+      if(parsed.youtubeId){
+        if(youtube.includes(normalizeSearch(parsed.youtubeId))) score += 1000;
+        else return 0;
+      }
+      if(parsed.key && !key.includes(parsed.key)) return 0;
+      if(Number.isFinite(parsed.bpmMin) && Number(beat.bpm || 0) < parsed.bpmMin) return 0;
+      if(Number.isFinite(parsed.bpmMax) && Number(beat.bpm || 0) > parsed.bpmMax) return 0;
+      if(parsed.terms.length && !parsed.terms.every((term) => hay.includes(term))) return 0;
+      if(title === parsed.normalized || slug === parsed.normalized) score += 500;
+      else if(title.includes(parsed.normalized)) score += 320;
+      if(genre.includes(parsed.normalized)) score += 140;
+      if(key.includes(parsed.normalized)) score += 110;
+      if(Number.isFinite(parsed.bpmMin)) score += Number(beat.bpm) === parsed.bpmMin ? 120 : 40;
+      score += parsed.terms.reduce((sum, term) => sum + (title.includes(term) ? 60 : hay.includes(term) ? 20 : 0), 0);
+      return score || 1;
+    };
+
     const matchesText = (beat, q) => {
-      if(!q) return true;
-      const s = q.trim().toLowerCase();
-      if(!s) return true;
-      const hay = [beat.title, beat.genre, beat.key, ...(beat.tags||[]), ...(beat.moods||[])].join(' ').toLowerCase();
-      return hay.includes(s);
+      const parsed = parseSearch(q);
+      return scoreBeat(beat, parsed) > 0;
     };
     const matchesBpm = (beat, min, max) => {
       const bpm = Number(beat.bpm || 0);
@@ -1084,13 +1253,13 @@
       const tags = [...(beat.tags||[]), ...(beat.moods||[])].slice(0,5)
         .map(t => '<span class="tag">' + esc(t) + '</span>').join('');
       const coverOverlay = (!isUnavailable && hasPreview) ? `
-            <button class="cover-play" type="button" data-index="${beatIndex}" data-preview="${assetUrl(beat.preview)}" data-title="${esc(beat.title)}" data-meta="${beat.bpm} BPM - ${esc(beat.key)}" data-cover="${assetUrl(beat.cover)}" aria-label="Reproducir preview">
+            <button class="cover-play" type="button" data-index="${beatIndex}" data-preview="${assetUrl(beat.preview)}" data-title="${esc(beat.title)}" data-meta="${beat.bpm} BPM - ${esc(beat.key)}" data-cover="${assetUrl(beat.cover)}" aria-label="Reproducir ${esc(beat.title)}">
               <span class="cover-play__icon">${COVER_PLAY_SVG}</span>
               <span class="wave wave--cover" aria-hidden="true"><span></span><span></span><span></span></span>
             </button>
           ` : '';
       const mobilePlay = hasPreview && !isUnavailable ? `
-        <button class="beat-row__mini-action beat-row__mini-action--play" type="button" data-mobile-play="${beatIndex}" aria-label="Reproducir preview">
+        <button class="beat-row__mini-action beat-row__mini-action--play" type="button" data-mobile-play="${beatIndex}" aria-label="Reproducir ${esc(beat.title)}">
           <span class="beat-row__mini-action-icon">${COVER_PLAY_SVG}</span>
         </button>
       ` : '';
@@ -1135,8 +1304,8 @@
                 <div class="beat-row__mobile-footer">
                   <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
                   <div class="beat-row__mobile-buttons">
-                    <a class="btn btn--primary btn--sm" href="${detailHref}">Ver licencias</a>
-                    <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
+                    <a class="btn btn--primary btn--sm" href="${detailHref}">Ver beat</a>
+                    <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Basic · ${fmtEUR(beat.prices.basic)}</button>
                   </div>
                 </div>
               </div>
@@ -1158,8 +1327,8 @@
             <div class="beat-actions">
               <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
               <div class="beat-buttons">
-                <a class="btn btn--primary btn--sm" href="${detailHref}">Ver beat</a>
-                <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Añadir Basic</button>
+                <a class="btn btn--ghost btn--sm" href="${detailHref}">Ver beat</a>
+                ${!isUnavailable ? `<details class="quick-license"><summary class="btn btn--primary btn--sm">Licenciar</summary><div class="quick-license__menu"><button type="button" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}">Basic · ${fmtEUR(beat.prices.basic)}</button><button type="button" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="premium" data-price="${beat.prices.premium}">Premium · ${fmtEUR(beat.prices.premium)}</button><a href="#contacto" data-direct-email data-email-subject="Consulta Exclusive - ${esc(beat.title)}">Exclusive · consultar</a></div></details>` : `<a class="btn btn--ghost btn--sm" href="${detailHref}">Ver similares</a>`}
               </div>
             </div>
           </div>
@@ -1175,13 +1344,45 @@
       const genre = genreEl ? genreEl.value : '';
       const sort = sortEl ? sortEl.value : 'latest';
 
-      const filtered = state.beats.filter((beat) =>
-        matchesText(beat, q) && matchesBpm(beat, min, max) && matchesGenre(beat, genre)
-      );
+      const parsed = parseSearch(q);
+      const filtered = state.beats
+        .map((beat) => ({ beat, score: scoreBeat(beat, parsed) }))
+        .filter((entry) => entry.score > 0 && matchesBpm(entry.beat, min, max) && matchesGenre(entry.beat, genre));
 
-      const sorted = sortBeats(filtered, sort);
+      const sorted = parsed.normalized
+        ? filtered.sort((a, b) => b.score - a.score || new Date(b.beat.createdAt || 0) - new Date(a.beat.createdAt || 0)).map((entry) => entry.beat)
+        : sortBeats(filtered.map((entry) => entry.beat), sort);
       list.innerHTML = sorted.map(renderRow).join('');
       empty.classList.toggle('hidden', sorted.length !== 0);
+      if(resultCount) resultCount.textContent = `${sorted.length} beat${sorted.length === 1 ? '' : 's'}`;
+      if(searchStatus) searchStatus.textContent = parsed.normalized ? `${sorted.length} resultados para ${q}` : `${sorted.length} beats en catálogo`;
+      if(search) search.setAttribute('aria-expanded', parsed.normalized && sorted.length ? 'true' : 'false');
+      if(searchClear) searchClear.hidden = !parsed.normalized;
+      if(universalResults){
+        const artistHits = sorted
+          .map((beat) => String(beat.title || '').split(/type beat/i)[0].replace(/[–-]+$/g, '').trim())
+          .filter((artist) => artist && (normalizeSearch(artist).includes(parsed.normalized) || parsed.terms.some((term) => normalizeSearch(artist).includes(term))));
+        const artists = [...new Set(artistHits)].slice(0, 4);
+        const genreHits = genres.filter((candidate) => normalizeSearch(candidate).includes(parsed.normalized) || parsed.terms.some((term) => normalizeSearch(candidate).includes(term))).slice(0, 4);
+        const beatHits = sorted.slice(0, 5);
+        universalResults.hidden = !parsed.normalized;
+        universalResults.innerHTML = parsed.normalized ? `
+          <div class="universal-results__group"><div class="universal-results__label">Beats</div>${beatHits.length ? beatHits.map((beat) => `
+            <a class="universal-results__item" role="option" href="${beatUrl(beat)}">
+              <img src="${assetUrl(beat.cover)}" alt="" loading="lazy" />
+              <span><strong>${esc(beat.title)}</strong><small>${beat.bpm} BPM · ${esc(beat.key)} · ${esc(beat.genre)}</small></span>
+            </a>`).join('') : '<p class="universal-results__empty">No encontramos ese beat. Prueba por artista, BPM o género.</p>'}</div>
+          ${genreHits.length ? `<div class="universal-results__group"><div class="universal-results__label">Géneros</div>${genreHits.map((g) => `<a class="universal-results__pill" href="./generos/${normalizeSearch(g).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/">${esc(g)}</a>`).join('')}</div>` : ''}
+          ${artists.length ? `<div class="universal-results__group"><div class="universal-results__label">Artistas / type beats</div>${artists.map((artist) => `<a class="universal-results__pill" href="./type-beats/${normalizeSearch(artist).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}/">${esc(artist)}</a>`).join('')}</div>` : ''}
+        ` : '';
+        qsa('.universal-results__item', universalResults).forEach((item, index, items) => {
+          item.addEventListener('keydown', (event) => {
+            if(event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+            event.preventDefault();
+            items[(index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus();
+          });
+        });
+      }
 
       const collapseMobileRows = (exceptId = '') => {
         qsa('.beat-row__mobile-toggle', list).forEach((toggleBtn) => {
@@ -1273,11 +1474,52 @@
       }
     }
 
+    const initialQ = new URLSearchParams(window.location.search).get('q');
+    if(search && initialQ) search.value = initialQ;
     render();
     [search, bpmMinEl, bpmMaxEl, genreEl, sortEl].filter(Boolean).forEach(el => {
-      el.addEventListener('input', render);
+      el.addEventListener('input', () => {
+        render();
+        if(el === search){
+          const url = new URL(window.location.href);
+          if(search.value.trim()) url.searchParams.set('q', search.value.trim());
+          else url.searchParams.delete('q');
+          window.history.replaceState({}, '', url);
+        }
+      });
       el.addEventListener('change', render);
     });
+    if(searchClear && search){
+      searchClear.addEventListener('click', () => {
+        search.value = '';
+        const url = new URL(window.location.href);
+        url.searchParams.delete('q');
+        window.history.replaceState({}, '', url);
+        render();
+        search.focus();
+      });
+    }
+    if(search){
+      search.addEventListener('keydown', (event) => {
+        if(event.key === 'Escape'){
+          search.value = '';
+          if(universalResults) universalResults.hidden = true;
+          render();
+        }
+        if(event.key === 'Enter'){
+          const parsed = parseSearch(search.value);
+          const hits = state.beats.map((beat) => ({ beat, score: scoreBeat(beat, parsed) })).filter((entry) => entry.score > 0).sort((a, b) => b.score - a.score);
+          if(hits.length === 1 || hits[0]?.score >= 500){
+            event.preventDefault();
+            window.location.href = beatUrl(hits[0].beat);
+          }
+        }
+        if(event.key === 'ArrowDown'){
+          const firstResult = qs('.universal-results__item', universalResults);
+          if(firstResult){ event.preventDefault(); firstResult.focus(); }
+        }
+      });
+    }
 
     const servicesHome = qs('#servicesGridHome');
     if(servicesHome){
@@ -1315,10 +1557,12 @@
     const addBtn = qs('#addToCartBtn');
     if(!beatTitle || !beatMeta || !coverImg || !tagRow || !licenseWrap || !addBtn) return;
 
+    trackEvent('view_beat', { beatId: beat.id, slug: beat.slug, artista: (beat.tags || [])[0], genero: beat.genre, source: 'product' });
     beatTitle.textContent = beat.title;
     beatMeta.textContent = beat.bpm + ' BPM - ' + beat.key + ' - ' + beat.genre;
     coverImg.src = assetUrl(beat.cover);
     coverImg.alt = 'Cover ' + beat.title;
+    if(previewBtn) previewBtn.setAttribute('aria-label', 'Reproducir ' + beat.title);
 
     const tags = [...(beat.tags||[]), ...(beat.moods||[])];
     tagRow.innerHTML = tags.map(t => '<span class="tag">' + esc(t) + '</span>').join('');
@@ -1393,9 +1637,9 @@
       if(!lic) return;
       const priceLabel = lic.priceLabel || fmtEUR(beat.prices[selected]);
       if(lic.id === 'exclusive'){
-        addBtn.textContent = 'Consultar Exclusive';
+        addBtn.textContent = `Consultar Exclusive · ${lic.priceLabel || 'desde 299,99 EUR'}`;
       }else{
-        addBtn.textContent = 'Añadir ' + lic.name;
+        addBtn.textContent = `Añadir ${lic.name} · ${fmtEUR(beat.prices[selected])}`;
       }
     };
     updateAdd();
@@ -1408,6 +1652,7 @@
       card.classList.add('active');
       card.setAttribute('aria-pressed', 'true');
       selected = card.dataset.license;
+      trackEvent('select_license', { beatId: beat.id, slug: beat.slug, licencia: selected, precio: beat.prices?.[selected], source: 'product' });
       updateAdd();
     };
 
@@ -1543,6 +1788,7 @@
         subtotalEl.textContent = '-';
         discountEl.textContent = '-';
         totalEl.textContent = '-';
+        checkoutBtn.textContent = 'Pagar con Stripe';
         return;
       }
 
@@ -1550,6 +1796,7 @@
       subtotalEl.textContent = fmtEUR(pricing.subtotal);
       discountEl.textContent = pricing.discount > 0 ? `- ${fmtEUR(pricing.discount)}` : fmtEUR(0);
       totalEl.textContent = fmtEUR(pricing.total);
+      checkoutBtn.textContent = `Pagar ${fmtEUR(pricing.total)} con Stripe`;
       qsa('[data-remove]', listEl).forEach(btn => btn.addEventListener('click', () => Cart.remove(Number(btn.dataset.remove))));
     };
 
@@ -1565,6 +1812,8 @@
         return;
       }
       try{
+        const pricing = getCartPricing(cart);
+        trackEvent('begin_checkout', { total: pricing.total, currency: 'EUR', items: cart.length, source: 'cart' });
         const res = await withRetry(() => fetch(apiUrl('/api/checkout'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1608,6 +1857,13 @@
     if(!titleEl || !leadEl || !statusEl || !orderIdEl || !orderDateEl || !customerEl || !totalEl || !itemsEl) return;
 
     const isActiveToken = () => token === pageRequestToken;
+    const trackPurchaseOnce = (order) => {
+      if(order?.status !== 'paid_pending_delivery' || !order.id) return;
+      const key = `arikara_purchase_${order.id}`;
+      if(sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+      trackEvent('purchase', { orderId: order.id, total: order.total, currency: 'EUR', items: (order.items || []).length, source: 'success' });
+    };
     const renderSummary = (order) => {
       if(!order || !isActiveToken()) return;
       const paid = order.status === 'paid_pending_delivery';
@@ -1633,6 +1889,7 @@
           </div>
         </div>
       `).join('');
+      trackPurchaseOnce(order);
     };
 
     const chooseBestOrder = (primary, secondary) => {

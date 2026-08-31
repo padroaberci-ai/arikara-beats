@@ -64,14 +64,16 @@ const contactLink = (label = 'Contacto directo', subject = 'Contacto directo - A
   `<a${className ? ` class="${className}"` : ''} href="#contacto" data-direct-email data-email-subject="${escapeHtml(subject)}">${escapeHtml(label)}</a>`
 );
 const emailDisplay = () => '<a class="footer-email" href="#contacto" data-direct-email data-email-subject="Contacto directo - ARIKARA BEATS"><span data-email-text><span>arikarabeats</span><span>@</span><span>gmail.com</span></span></a>';
-const offerList = (beat, canonical) => ({
+const offerList = (beat, canonical) => {
+  const purchasable = licenses.filter((license) => !license.disabled && license.id !== 'exclusive');
+  return ({
   '@type': 'AggregateOffer',
   priceCurrency: 'EUR',
   lowPrice: beat.prices?.basic || 29.99,
-  highPrice: beat.prices?.exclusive || 299.99,
-  offerCount: licenses.length,
+  highPrice: beat.prices?.premium || 79.99,
+  offerCount: purchasable.length,
   availability: beat.status === 'available' ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
-  offers: licenses.map((license) => ({
+  offers: purchasable.map((license) => ({
     '@type': 'Offer',
     name: `${beat.title} - Licencia ${license.name}`,
     priceCurrency: 'EUR',
@@ -79,7 +81,8 @@ const offerList = (beat, canonical) => ({
     availability: beat.status === 'available' && !license.disabled ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
     url: canonical
   }))
-});
+  });
+};
 
 const header = (prefix = '../../') => `
 <header class="header">
@@ -128,7 +131,7 @@ const player = (prefix = '../../') => `
       </div>
     </div>
     <div class="player-center">
-      <div class="player-timeline"><span id="playerTime">0:00</span><input id="playerSeek" class="player-seek" type="range" min="0" max="100" value="0" /><span id="playerDuration">0:00</span></div>
+      <div class="player-progress"><div class="player-time" id="playerTime">0:00</div><input id="playerSeek" class="player-seek" type="range" min="0" max="100" value="0" aria-label="Progreso del reproductor" /><div class="player-time" id="playerDuration">0:00</div></div>
       <div class="player-buttons">
         <button class="icon-btn" id="playerShuffle" type="button" aria-label="Reproducción aleatoria" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l10 10h3M17 7h3v3M20 7l-4 4M4 17h3l3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button class="icon-btn" id="playerPrev" type="button" aria-label="Anterior"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6l-8 6 8 6V6zM8 6H6v12h2V6z" fill="currentColor"/></svg></button>
@@ -137,7 +140,7 @@ const player = (prefix = '../../') => `
         <button class="icon-btn" id="playerLoop" type="button" aria-label="Repetir beat" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 17H7a4 4 0 0 1 0-8h11M15 20l3-3-3-3M7 7h10a4 4 0 1 1 0 8H6M9 4L6 7l3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
-    <div class="player-right"><div class="volume-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4z" fill="currentColor"/></svg><input id="playerVolume" class="player-volume" type="range" min="0" max="1" step="0.01" value="0.8" /></div></div>
+    <div class="player-controls"><div class="player-volume"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4z" fill="currentColor"/></svg><input id="playerVolume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volumen" /></div></div>
   </div>
 </div>`;
 

@@ -5,6 +5,7 @@
   "scripts": {
     "build": "npm run seo:generate",
     "seo:generate": "node scripts/generate-seo-pages.mjs",
+    "test": "node scripts/validate-frontend.mjs",
     "start": "node server/index.js",
     "dev": "node server/index.js",
     "dev:watch": "node --watch server/index.js"

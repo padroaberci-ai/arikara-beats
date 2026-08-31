@@ -47,52 +47,34 @@
   </header>
 
   <main class="main">
-    <section class="section">
-      <div class="container hero hero--conversion">
-        <div class="hero-copy">
-          <div class="eyebrow">Premium urban beats</div>
-          <h1><span class="text-accent">ARIKARA BEATS</span><br>Beats con identidad urbana.<br>Licencias claras.</h1>
-          <div class="hero-slogan">SPANISH GUITAR <span class="text-accent">ENERGY</span> · FLAMENCO URBAN SOUND</div>
-          <p class="lead">Escucha previews, entra en la página exacta del beat y elige Basic, Premium o Exclusive. Licencias desde 29,99 € con pago seguro por Stripe y entrega manual por email.</p>
-          <div class="hero-proof" aria-label="Confianza de compra">
+    <section class="section section--hero-search">
+      <div class="container hero-search">
+        <div class="eyebrow">Premium urban beats · Spanish roots</div>
+        <h1>Encuentra el beat que buscas.</h1>
+        <p class="lead">Busca por artista, título, género, BPM o tonalidad. También puedes pegar el enlace de YouTube.</p>
+        <form class="universal-search" role="search" aria-label="Buscar beats" autocomplete="off">
+          <label class="sr-only" for="searchInput">Artista, beat, género, BPM, tonalidad o enlace de YouTube</label>
+          <div class="universal-search__box">
+            <span class="universal-search__icon" aria-hidden="true">⌕</span>
+            <input id="searchInput" class="universal-search__input" type="search" placeholder="Artista, beat, género, BPM, tonalidad o enlace de YouTube" autocomplete="off" aria-controls="universalResults" aria-expanded="false" />
+            <button id="searchClear" class="universal-search__clear" type="button" hidden>Limpiar</button>
+          </div>
+          <div class="hero-proof hero-proof--center" aria-label="Confianza de compra">
             <span>Licencias desde 29,99 €</span>
-            <span>Pago seguro Stripe</span>
+            <span>Pago seguro con Stripe</span>
             <span>Entrega manual por email</span>
           </div>
-          <div class="hero-cta">
-            <a class="btn btn--primary" href="#catalogo">Escuchar y comprar beats</a>
-            <a class="btn btn--ghost" href="./licencias.html">Comparar licencias</a>
-          </div>
-        </div>
-        <a class="hero-card hero-highlight hero-highlight--clickable" id="heroHighlightLink" href="#catalogo" aria-label="Ver beat destacado">
-          <div class="hero-highlight__image">
-            <img id="heroHighlightImg" src="./assets/placeholder.svg" alt="" />
-          </div>
-          <div class="hero-highlight__overlay"></div>
-          <div class="hero-highlight__content">
-            <div class="hero-highlight__badge">Novedad</div>
-            <div class="hero-highlight__title" id="heroHighlightTitle">Último lanzamiento</div>
-            <div class="hero-highlight__meta" id="heroHighlightMeta">-</div>
-            <div class="hero-highlight__cta">Entrar al beat y licenciar</div>
-          </div>
-        </a>
-      </div>
-    </section>
-
-    <section class="section section--tight">
-      <div class="container conversion-steps" aria-label="Cómo comprar un beat">
-        <article><b>01</b><h3>Escucha previews</h3><p>Reproduce cada beat sin salir del catálogo y entra solo en los que encajan con tu release.</p></article>
-        <article><b>02</b><h3>Elige licencia</h3><p>Basic, Premium o Exclusive con diferencias visibles antes de añadir al carrito.</p></article>
-        <article><b>03</b><h3>Paga seguro</h3><p>Checkout con Stripe y resumen claro de precio, descuento y licencia.</p></article>
-        <article><b>04</b><h3>Recibe por email</h3><p>El equipo envía manualmente el material y la licencia después de confirmar el pago.</p></article>
+          <div id="universalResults" class="universal-results" role="listbox" aria-label="Resultados de búsqueda" hidden></div>
+          <div id="searchStatus" class="sr-only" aria-live="polite"></div>
+        </form>
       </div>
     </section>
 
     <section id="catalogo" class="section">
       <div class="container catalog-intro">
-        <div class="eyebrow">Catálogo listo para comprar</div>
-        <h2>Encuentra el beat exacto y entra en su página</h2>
-        <p class="lead">Explora por artista, género o título. Cada beat tiene URL propia para escuchar, comparar licencias y comprar sin volver a buscar.</p>
+        <div class="eyebrow">Catálogo curado</div>
+        <h2>Últimos beats listos para escuchar y licenciar</h2>
+        <p class="lead">Cards compactas, play visible y licencia rápida sin perder el hilo del catálogo.</p>
         <div class="catalog-shortcuts" aria-label="Accesos rápidos SEO">
           <a href="./type-beats/maka/">Maka type beats</a>
           <a href="./type-beats/morad/">Morad type beats</a>
@@ -105,17 +87,17 @@
 
     <section class="section section--filters">
       <div class="container">
-        <div class="filters">
-          <input id="searchInput" class="input" type="search" placeholder="Buscar por título, artista o tag" autocomplete="off" />
-          <input id="bpmMin" class="input" type="number" inputmode="numeric" placeholder="BPM mínimo" />
-          <input id="bpmMax" class="input" type="number" inputmode="numeric" placeholder="BPM máximo" />
-          <select id="genreSelect" class="input"><option value="">Género</option></select>
-          <select id="sortSelect" class="input">
-            <option value="recent">Orden: Recientes</option>
-            <option value="price">Orden: Precio</option>
-            <option value="bpm">Orden: BPM</option>
-            <option value="az">Orden: A-Z</option>
+        <div class="filters filters--compact" aria-label="Filtros del catálogo">
+          <input id="bpmMin" class="input" type="number" inputmode="numeric" placeholder="BPM mínimo" aria-label="BPM mínimo" />
+          <input id="bpmMax" class="input" type="number" inputmode="numeric" placeholder="BPM máximo" aria-label="BPM máximo" />
+          <select id="genreSelect" class="input" aria-label="Filtrar por género"><option value="">Género</option></select>
+          <select id="sortSelect" class="input" aria-label="Ordenar catálogo">
+            <option value="recent">Recientes</option>
+            <option value="price">Precio</option>
+            <option value="bpm">BPM</option>
+            <option value="az">A-Z</option>
           </select>
+          <div id="resultCount" class="result-count" aria-live="polite"></div>
         </div>
       </div>
     </section>
@@ -132,20 +114,6 @@
         <div class="banner banner--conversion">
           <div><strong>Pack automático:</strong> el beat más caro mantiene su precio y el resto recibe un 25% de descuento.</div>
           <a class="btn btn--ghost btn--sm" href="./licencias.html">Ver licencias</a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="container secondary-channel">
-        <div>
-          <div class="eyebrow">Canal</div>
-          <h2>YouTube es el escaparate. La licencia se compra aquí.</h2>
-          <p class="lead">Si llegas desde un vídeo, busca el título del beat, entra en su página y elige licencia antes de ir al carrito.</p>
-        </div>
-        <div class="secondary-channel__actions">
-          <a class="btn btn--primary" href="#catalogo">Buscar beat</a>
-          <a class="btn btn--ghost" href="https://www.youtube.com/@arikarabeats" target="_blank" rel="noopener noreferrer">Ver canal</a>
         </div>
       </div>
     </section>
@@ -212,7 +180,7 @@
       <div class="player-center">
         <div class="player-progress">
           <div class="player-time" id="playerTime">0:00</div>
-          <input id="playerSeek" class="player-seek" type="range" min="0" max="100" value="0" />
+          <input id="playerSeek" class="player-seek" type="range" min="0" max="100" value="0" aria-label="Progreso del reproductor" />
           <div class="player-time" id="playerDuration">0:00</div>
         </div>
         <div class="player-buttons">
