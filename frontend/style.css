@@ -691,12 +691,12 @@ h3{ font-size: clamp(1.2rem, 2vw, 1.6rem); }
   transition: background 220ms var(--ease);
 }
 .beat-cover .cover-play__icon{
-  opacity: .3;
+  opacity: .42;
   transform: scale(.9);
   transition: opacity 220ms var(--ease), transform 220ms var(--ease), background 220ms var(--ease), box-shadow 220ms var(--ease);
 }
 .beat-cover .wave--cover{
-  opacity: .24;
+  opacity: .36;
   transition: opacity 220ms var(--ease), color 220ms var(--ease);
 }
 .beat-cover:hover .cover-play,
@@ -1990,6 +1990,7 @@ body.player-sheet-open{ overflow: hidden; }
 .beat-row__desktop :is(a,button),
 .beat-row__mobile-summary :is(a,button),
 .beat-row__mobile-panel :is(a,button){ position: relative; z-index: 3; pointer-events: auto; }
+.beat-row__desktop .beat-cover .cover-play{ position:absolute; inset:0; z-index:4; pointer-events:auto; }
 .beat-row__hit{ position:absolute; inset:0; border-radius:inherit; z-index:1; text-decoration:none; }
 .beat-row__hit:focus-visible{ outline:2px solid var(--accent); outline-offset:4px; }
 .seo-card{ position:relative; isolation:isolate; }
