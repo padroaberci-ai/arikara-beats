@@ -1123,10 +1123,10 @@
     if(heroCarousel && !heroCarousel.childElementCount){
       const covers = state.beats.filter((beat) => beat.cover);
       const rowConfigs = [
-        { top: -10, size: 156, direction: 'left', speed: 22, gapMin: 185, gapMax: 230 },
-        { top: 8, size: 360, direction: 'right', speed: 36, gapMin: 235, gapMax: 290 },
-        { top: 42, size: 204, direction: 'left', speed: 28, gapMin: 195, gapMax: 245 },
-        { top: 64, size: 280, direction: 'right', speed: 17, gapMin: 215, gapMax: 270 }
+        { top: -10, size: 156, direction: 'left', speed: 22, gapMin: 280, gapMax: 360 },
+        { top: 8, size: 360, direction: 'right', speed: 36, gapMin: 540, gapMax: 680 },
+        { top: 42, size: 204, direction: 'left', speed: 28, gapMin: 360, gapMax: 470 },
+        { top: 64, size: 280, direction: 'right', speed: 17, gapMin: 470, gapMax: 600 }
       ];
       const shuffleCovers = () => {
         const shuffled = [...covers];
