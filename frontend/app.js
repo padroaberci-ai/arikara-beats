@@ -1123,10 +1123,10 @@
     if(heroCarousel && !heroCarousel.childElementCount){
       const covers = state.beats.filter((beat) => beat.cover);
       const rowConfigs = [
-        { top: -8, size: 178, direction: 'left', duration: 94 },
-        { top: 12, size: 310, direction: 'right', duration: 128 },
-        { top: 42, size: 198, direction: 'left', duration: 108 },
-        { top: 63, size: 262, direction: 'right', duration: 142 }
+        { top: -10, size: 184, direction: 'left', duration: 116, gapMin: 76, gapMax: 224 },
+        { top: 8, size: 330, direction: 'right', duration: 144, gapMin: 104, gapMax: 286 },
+        { top: 42, size: 204, direction: 'left', duration: 124, gapMin: 70, gapMax: 236 },
+        { top: 64, size: 280, direction: 'right', duration: 154, gapMin: 92, gapMax: 262 }
       ];
       const shuffleCovers = () => {
         const shuffled = [...covers];
@@ -1146,13 +1146,18 @@
         const track = document.createElement('div');
         track.className = 'hero-cover-carousel__track';
         const rowCovers = shuffleCovers();
-        const duration = config.duration + rowCovers.length * 3;
+        const duration = config.duration + rowCovers.length * 5;
         row.style.setProperty('--row-duration', `${duration}s`);
         row.style.setProperty('--row-delay', `-${random(0, duration)}s`);
-        [...rowCovers, ...rowCovers].forEach((beat, tileIndex) => {
+        const rowTiles = rowCovers.map((beat) => ({
+          beat,
+          gap: random(config.gapMin, config.gapMax)
+        }));
+        [...rowTiles, ...rowTiles].forEach(({ beat, gap }, tileIndex) => {
           const tile = document.createElement('div');
           tile.className = 'hero-cover-carousel__tile';
           tile.style.setProperty('--cover-size', `${config.size}px`);
+          tile.style.setProperty('--cover-gap', `${gap}px`);
           const image = document.createElement('img');
           image.src = beat.cover;
           image.alt = '';
