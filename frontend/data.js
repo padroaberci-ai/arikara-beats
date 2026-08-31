@@ -666,7 +666,7 @@ window.ARIKARA = {
     {
       id: "mix-basic",
       name: "Mix básico",
-      priceLabel: "80,00 EUR / canción",
+      priceLabel: "79,99 EUR / canción",
       includes: ["Mixing", "Mastering", "1 archivo WAV"],
       highlight: false
     },

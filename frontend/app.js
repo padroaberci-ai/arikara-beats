@@ -1125,11 +1125,10 @@
         .filter((beat) => beat.cover)
         .sort(() => Math.random() - .5);
       const rowConfigs = [
-        { top: 2, min: 104, max: 176, direction: 'left', duration: 55 },
-        { top: 19, min: 138, max: 224, direction: 'right', duration: 70 },
-        { top: 42, min: 98, max: 164, direction: 'left', duration: 62 },
-        { top: 63, min: 124, max: 208, direction: 'right', duration: 76 },
-        { top: 82, min: 92, max: 154, direction: 'left', duration: 58 }
+        { top: 4, min: 104, max: 146, direction: 'left', duration: 102 },
+        { top: 28, min: 214, max: 292, direction: 'right', duration: 146 },
+        { top: 56, min: 126, max: 174, direction: 'left', duration: 118 },
+        { top: 80, min: 164, max: 226, direction: 'right', duration: 160 }
       ];
       let coverIndex = 0;
       const nextCover = () => {
@@ -1153,7 +1152,6 @@
           const tile = document.createElement('div');
           tile.className = 'hero-cover-carousel__tile';
           tile.style.setProperty('--cover-size', `${random(config.min, config.max)}px`);
-          tile.style.setProperty('--cover-tilt', `${random(-7, 7)}deg`);
           tile.style.setProperty('--cover-depth', `${random(2, 16)}px`);
           const image = document.createElement('img');
           image.src = beat.cover;
