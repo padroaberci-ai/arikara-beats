@@ -1123,10 +1123,10 @@
     if(heroCarousel && !heroCarousel.childElementCount){
       const covers = state.beats.filter((beat) => beat.cover);
       const rowConfigs = [
-        { top: -10, size: 184, direction: 'left', duration: 116, gapMin: 76, gapMax: 224 },
-        { top: 8, size: 330, direction: 'right', duration: 144, gapMin: 104, gapMax: 286 },
-        { top: 42, size: 204, direction: 'left', duration: 124, gapMin: 70, gapMax: 236 },
-        { top: 64, size: 280, direction: 'right', duration: 154, gapMin: 92, gapMax: 262 }
+        { top: -10, size: 156, direction: 'left', speed: 22, gapMin: 185, gapMax: 230 },
+        { top: 8, size: 360, direction: 'right', speed: 36, gapMin: 235, gapMax: 290 },
+        { top: 42, size: 204, direction: 'left', speed: 28, gapMin: 195, gapMax: 245 },
+        { top: 64, size: 280, direction: 'right', speed: 17, gapMin: 215, gapMax: 270 }
       ];
       const shuffleCovers = () => {
         const shuffled = [...covers];
@@ -1146,13 +1146,15 @@
         const track = document.createElement('div');
         track.className = 'hero-cover-carousel__track';
         const rowCovers = shuffleCovers();
-        const duration = config.duration + rowCovers.length * 5;
-        row.style.setProperty('--row-duration', `${duration}s`);
-        row.style.setProperty('--row-delay', `-${random(0, duration)}s`);
         const rowTiles = rowCovers.map((beat) => ({
           beat,
           gap: random(config.gapMin, config.gapMax)
         }));
+        // Keep a constant perceived speed even as the beat catalog grows.
+        const travelDistance = rowTiles.reduce((total, tile) => total + config.size + tile.gap, 0);
+        const duration = Math.round(travelDistance / config.speed);
+        row.style.setProperty('--row-duration', `${duration}s`);
+        row.style.setProperty('--row-delay', `-${random(0, duration)}s`);
         [...rowTiles, ...rowTiles].forEach(({ beat, gap }, tileIndex) => {
           const tile = document.createElement('div');
           tile.className = 'hero-cover-carousel__tile';
