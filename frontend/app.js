@@ -1221,13 +1221,35 @@
     const youtubeIdFrom = (value = '') => {
       const raw = String(value || '').trim();
       if(!raw) return '';
-      try{
-        const url = new URL(raw);
-        if(url.hostname.includes('youtu.be')) return url.pathname.replace(/^\//, '').split('/')[0] || '';
-        if(url.hostname.includes('youtube.com')) return url.searchParams.get('v') || url.pathname.split('/').filter(Boolean).pop() || '';
-      }catch{}
-      const match = raw.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([a-zA-Z0-9_-]{6,})/);
-      return match?.[1] || '';
+      const validId = (candidate = '') => /^[a-zA-Z0-9_-]{11}$/.test(candidate) ? candidate : '';
+      const getIdFromUrl = (input, depth = 0) => {
+        if(depth > 2 || !input) return '';
+        let url;
+        try{
+          url = new URL(/^https?:\/\//i.test(input) ? input : `https://${input}`);
+        }catch{
+          return '';
+        }
+        const hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+        const isShort = hostname === 'youtu.be';
+        const isYoutube = /(^|\.)youtube\.com$/.test(hostname) || hostname === 'youtube-nocookie.com';
+        if(!isShort && !isYoutube) return '';
+        if(isShort) return validId(url.pathname.split('/').filter(Boolean)[0]);
+        const queryId = validId(url.searchParams.get('v') || '');
+        if(queryId) return queryId;
+        const nestedUrl = url.searchParams.get('u') || url.searchParams.get('q') || url.searchParams.get('url');
+        if(nestedUrl){
+          try{ return getIdFromUrl(decodeURIComponent(nestedUrl), depth + 1); }catch{ return getIdFromUrl(nestedUrl, depth + 1); }
+        }
+        const segments = url.pathname.split('/').filter(Boolean);
+        const videoRoute = segments.findIndex((segment) => ['embed', 'shorts', 'live', 'v'].includes(segment.toLowerCase()));
+        return videoRoute >= 0 ? validId(segments[videoRoute + 1]) : '';
+      };
+      const urlId = getIdFromUrl(raw);
+      if(urlId) return urlId;
+      if(validId(raw)) return raw;
+      const match = raw.match(/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/|\/v\/)([a-zA-Z0-9_-]{11})/i);
+      return validId(match?.[1]);
     };
 
     const beatSearchText = (beat) => normalizeSearch([

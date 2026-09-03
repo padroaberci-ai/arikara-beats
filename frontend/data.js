@@ -30,6 +30,8 @@ window.ARIKARA = {
       moods: ["cálido", "melódico"],
       cover: "./assets/covers/costa-del-sol.jpg",
       preview: "./assets/audio/costa-del-sol-preview.mp3",
+      youtubeId: "tKpW2l0DGiM",
+      youtubeUrl: "https://www.youtube.com/watch?v=tKpW2l0DGiM",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "sold",
       createdAt: "2026-02-03"
@@ -45,6 +47,8 @@ window.ARIKARA = {
       moods: ["nocturno", "melódico"],
       cover: "./assets/covers/luna-mora.jpg",
       preview: "./assets/audio/luna-mora-preview.mp3",
+      youtubeId: "jDTH3npXIA8",
+      youtubeUrl: "https://www.youtube.com/watch?v=jDTH3npXIA8",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-02-06"
@@ -60,6 +64,8 @@ window.ARIKARA = {
       moods: ["nostalgico", "etereo"],
       cover: "./assets/covers/feria-y-oro.jpg",
       preview: "./assets/audio/feria-y-oro-preview.mp3",
+      youtubeId: "dHowF8_9nhs",
+      youtubeUrl: "https://www.youtube.com/watch?v=dHowF8_9nhs",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-02-10"
@@ -75,6 +81,8 @@ window.ARIKARA = {
       moods: ["oscuro", "tenso"],
       cover: "./assets/covers/la-calle-mi-casa.jpg",
       preview: "./assets/audio/la-calle-mi-casa-preview.mp3",
+      youtubeId: "PejQyf0S3JY",
+      youtubeUrl: "https://www.youtube.com/watch?v=PejQyf0S3JY",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-02-11"
@@ -90,6 +98,8 @@ window.ARIKARA = {
       moods: ["sentimental", "tranquilo", "profundo"],
       cover: "./assets/covers/la-fe.jpg",
       preview: "./assets/audio/la-fe-preview.mp3",
+      youtubeId: "-7lTZCRob6g",
+      youtubeUrl: "https://www.youtube.com/watch?v=-7lTZCRob6g",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-03"
@@ -120,6 +130,8 @@ window.ARIKARA = {
       moods: ["emocional", "melódico", "nostálgico"],
       cover: "./assets/covers/crecen.jpg",
       preview: "./assets/audio/crecen-preview.mp3",
+      youtubeId: "Npir_AEZ1D0",
+      youtubeUrl: "https://www.youtube.com/watch?v=Npir_AEZ1D0",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-03"
@@ -135,6 +147,8 @@ window.ARIKARA = {
       moods: ["energético", "club", "pegadizo"],
       cover: "./assets/covers/pechera.jpg",
       preview: "./assets/audio/pechera-preview.mp3",
+      youtubeId: "04bG8aSeBdg",
+      youtubeUrl: "https://www.youtube.com/watch?v=04bG8aSeBdg",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-03"
@@ -150,6 +164,8 @@ window.ARIKARA = {
       moods: ["oscuro", "contundente", "americano"],
       cover: "./assets/covers/impala.jpg",
       preview: "./assets/audio/impala-preview.mp3",
+      youtubeId: "335EdLkZCkM",
+      youtubeUrl: "https://www.youtube.com/watch?v=335EdLkZCkM",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-03"
@@ -165,6 +181,8 @@ window.ARIKARA = {
       moods: ["callejero", "emocional", "crudo"],
       cover: "./assets/covers/fatiga.jpg",
       preview: "./assets/audio/fatiga-preview.mp3",
+      youtubeId: "cOKnbRs0wo8",
+      youtubeUrl: "https://www.youtube.com/watch?v=cOKnbRs0wo8",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-03"
@@ -180,6 +198,8 @@ window.ARIKARA = {
       moods: ["emocional", "serio", "melódico"],
       cover: "./assets/covers/pole-position.jpg",
       preview: "./assets/audio/pole-position-preview.mp3",
+      youtubeId: "Gp44PZRHh8g",
+      youtubeUrl: "https://www.youtube.com/watch?v=Gp44PZRHh8g",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-03"
@@ -195,6 +215,8 @@ window.ARIKARA = {
       moods: ["pegadizo", "latino", "emocional"],
       cover: "./assets/covers/habibi.jpg",
       preview: "./assets/audio/habibi-preview.mp3",
+      youtubeId: "fUY-RLyuo3s",
+      youtubeUrl: "https://www.youtube.com/watch?v=fUY-RLyuo3s",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-03"
@@ -210,6 +232,8 @@ window.ARIKARA = {
       moods: ["emocional", "melódico", "orgánico"],
       cover: "./assets/covers/jungla-de-plata.jpg",
       preview: "./assets/audio/jungla-de-plata-preview.mp3",
+      youtubeId: "KZHiQaA1Eb8",
+      youtubeUrl: "https://www.youtube.com/watch?v=KZHiQaA1Eb8",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-03"
@@ -225,6 +249,8 @@ window.ARIKARA = {
       moods: ["callejero", "enérgico", "melódico"],
       cover: "./assets/covers/el-bloque.jpg",
       preview: "./assets/audio/el-bloque-preview.mp3",
+      youtubeId: "o7tVVzidlyg",
+      youtubeUrl: "https://www.youtube.com/watch?v=o7tVVzidlyg",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-22"
@@ -240,6 +266,8 @@ window.ARIKARA = {
       moods: ["callejero", "oscuro", "contundente"],
       cover: "./assets/covers/sin-matricula.jpg",
       preview: "./assets/audio/sin-matricula-preview.mp3",
+      youtubeId: "cAsT1UW4HsU",
+      youtubeUrl: "https://www.youtube.com/watch?v=cAsT1UW4HsU",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-22"
@@ -272,6 +300,8 @@ window.ARIKARA = {
       moods: ["nocturno", "melódico", "contundente"],
       cover: "./assets/covers/sauvignon.jpg",
       preview: "./assets/audio/sauvignon-preview.mp3",
+      youtubeId: "p-TWzSGjXkI",
+      youtubeUrl: "https://www.youtube.com/watch?v=p-TWzSGjXkI",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-04-22"
