@@ -1642,6 +1642,7 @@
     const tagRow = qs('#tagRow');
     const previewBtn = qs('#previewBtn');
     const coverPlayBtn = qs('#beatCoverPlay');
+    const youtubeBtn = qs('#youtubeBtn');
     const licenseWrap = qs('#licenseOptions');
     const addBtn = qs('#addToCartBtn');
     if(!beatTitle || !beatMeta || !coverImg || !tagRow || !licenseWrap || !addBtn) return;
@@ -1652,6 +1653,11 @@
     coverImg.src = assetUrl(beat.cover);
     coverImg.alt = 'Cover ' + beat.title;
     if(previewBtn) previewBtn.setAttribute('aria-label', 'Reproducir ' + beat.title);
+    if(youtubeBtn && beat.youtubeUrl){
+      youtubeBtn.href = beat.youtubeUrl;
+      youtubeBtn.hidden = false;
+      youtubeBtn.setAttribute('aria-label', `Ver ${beat.title} en YouTube`);
+    }
 
     const tags = [...(beat.tags||[]), ...(beat.moods||[])];
     tagRow.innerHTML = tags.map(t => '<span class="tag">' + esc(t) + '</span>').join('');

@@ -237,6 +237,9 @@ for (const beat of beats) {
   const parts = titleParts(beat.title);
   const canonical = `${siteUrl}/beats/${beat.slug}/`;
   const description = `${beat.title}: ${beat.genre}, ${beat.bpm} BPM, ${beat.key}. Escucha preview y compra licencia Basic o Premium con pago seguro Stripe. Entrega manual por email.`;
+  const youtubeAction = beat.youtubeUrl
+    ? `<a id="youtubeBtn" class="btn btn--ghost" href="${escapeHtml(beat.youtubeUrl)}" target="_blank" rel="noopener noreferrer">Ver vídeo en YouTube</a>`
+    : '';
   const graph = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -294,7 +297,7 @@ ${header('../../')}
           </div>
         </div>
         <div class="product-media-card__actions">
-          <button id="previewBtn" class="btn btn--primary btn--preview" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"></svg>Reproducir preview</button>
+          <button id="previewBtn" class="btn btn--primary btn--preview" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"></svg>Reproducir preview</button>${youtubeAction}
         </div>
       </article>
       <aside class="card product-buy-card">
