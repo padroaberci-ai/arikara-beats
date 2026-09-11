@@ -168,7 +168,7 @@ const head = ({ title, description, canonical, image, prefix = '../../', robots 
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
-  ${robots ? `<meta name="robots" content="${escapeHtml(robots)}" />` : ''}
+${robots ? `  <meta name="robots" content="${escapeHtml(robots)}" />` : ''}
   <link rel="canonical" href="${canonical}" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="${escapeHtml(title)}" />
@@ -195,8 +195,7 @@ const licenseHint = (id) => ({
   exclusive: 'Exclusividad y retirada del beat de futuras ventas.'
 }[id] || 'Licencia para tu lanzamiento.');
 
-const trustStrip = `
-<div class="trust-strip" aria-label="Confianza">
+const trustStrip = `<div class="trust-strip" aria-label="Confianza">
   <span>Pago seguro con Stripe</span>
   <span>Entrega manual por email</span>
   <span>Licencias claras</span>
