@@ -354,7 +354,7 @@ window.ARIKARA = {
       youtubeId: "B7Vio3s3Z5Q",
       youtubeUrl: "https://www.youtube.com/watch?v=B7Vio3s3Z5Q",
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
-      status: "available",
+      status: "sold",
       createdAt: "2026-05-17T10:00:00"
     },
     {

@@ -1122,12 +1122,20 @@
     const heroCarousel = qs('#heroCoverCarousel');
     if(heroCarousel && !heroCarousel.childElementCount){
       const covers = state.beats.filter((beat) => beat.cover);
-      const rowConfigs = [
-        { top: -10, size: 156, direction: 'left', speed: 22, gapMin: 280, gapMax: 360 },
-        { top: 8, size: 360, direction: 'right', speed: 36, gapMin: 540, gapMax: 680 },
-        { top: 42, size: 204, direction: 'left', speed: 28, gapMin: 360, gapMax: 470 },
-        { top: 64, size: 280, direction: 'right', speed: 17, gapMin: 470, gapMax: 600 }
-      ];
+      const rowConfigs = window.matchMedia('(max-width: 720px)').matches
+        ? [
+          { top: -8, size: 92, direction: 'left', speed: 14, gapMin: 70, gapMax: 110 },
+          { top: 13, size: 132, direction: 'right', speed: 18, gapMin: 92, gapMax: 138 },
+          { top: 38, size: 104, direction: 'left', speed: 16, gapMin: 78, gapMax: 120 },
+          { top: 59, size: 148, direction: 'right', speed: 14, gapMin: 105, gapMax: 150 },
+          { top: 84, size: 94, direction: 'left', speed: 17, gapMin: 72, gapMax: 112 }
+        ]
+        : [
+          { top: -10, size: 156, direction: 'left', speed: 22, gapMin: 280, gapMax: 360 },
+          { top: 8, size: 360, direction: 'right', speed: 36, gapMin: 540, gapMax: 680 },
+          { top: 42, size: 204, direction: 'left', speed: 28, gapMin: 360, gapMax: 470 },
+          { top: 64, size: 280, direction: 'right', speed: 17, gapMin: 470, gapMax: 600 }
+        ];
       const shuffleCovers = () => {
         const shuffled = [...covers];
         for(let index = shuffled.length - 1; index > 0; index -= 1){
@@ -1355,7 +1363,7 @@
     const renderRow = (beat) => {
       const isSold = beat.status === 'sold';
       const isUnavailable = beat.status && beat.status !== 'available';
-      const statusLabel = isSold ? 'Vendido' : (isUnavailable ? 'No disponible' : 'Disponible');
+      const statusLabel = isSold ? 'Licencia Exclusive vendida' : (isUnavailable ? 'No disponible' : 'Disponible');
       const statusClass = isSold ? 'badge--status-sold' : (isUnavailable ? 'badge--status-unavailable' : 'badge--status-available');
       const hasPreview = Boolean(beat.preview);
       const detailHref = beatUrl(beat);
@@ -1369,6 +1377,7 @@
               <span class="wave wave--cover" aria-hidden="true"><span></span><span></span><span></span></span>
             </button>
           ` : '';
+      const soldCoverLabel = isSold ? '<span class="beat-cover__sold-label">Exclusive vendida</span>' : '';
       const mobilePlay = hasPreview && !isUnavailable ? `
         <button class="beat-row__mini-action beat-row__mini-action--play" type="button" data-mobile-play="${beatIndex}" aria-label="Reproducir ${esc(beat.title)}">
           <span class="beat-row__mini-action-icon">${COVER_PLAY_SVG}</span>
@@ -1385,6 +1394,7 @@
             <button class="beat-row__mobile-toggle" type="button" data-mobile-toggle="${beatIndex}" aria-expanded="false" aria-controls="beatMobilePanel-${beat.id}">
               <div class="beat-row__mobile-cover">
                 <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
+                ${soldCoverLabel}
               </div>
               <div class="beat-row__mobile-copy">
                 <div class="beat-row__mobile-status badge ${statusClass}">${statusLabel}</div>
@@ -1402,6 +1412,7 @@
             <div class="beat-row__mobile-card">
               <div class="beat-row__mobile-hero">
                 <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
+                ${soldCoverLabel}
               </div>
               <div class="beat-row__mobile-body">
                 <div class="badge ${statusClass}">${statusLabel}</div>
@@ -1425,6 +1436,7 @@
           <div class="beat-row__desktop">
             <div class="beat-cover">
               <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
+              ${soldCoverLabel}
               ${coverOverlay}
             </div>
             <div class="beat-info">
@@ -1747,7 +1759,7 @@
     const updateAdd = () => {
       if(beatUnavailable){
         addBtn.disabled = true;
-        addBtn.textContent = beat.status === 'sold' ? 'Beat vendido' : 'No disponible';
+        addBtn.textContent = beat.status === 'sold' ? 'Licencia Exclusive vendida' : 'No disponible';
         return;
       }
       const lic = state.licenses.find(l => l.id === selected);
