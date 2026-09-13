@@ -222,15 +222,18 @@ const licensePreview = () => licenses.map((license) => {
 }).join('');
 
 const beatCard = (beat, prefix = '../../') => {
-  const status = beat.status === 'sold' ? 'Vendido' : beat.status === 'available' ? 'Disponible' : 'No disponible';
+  const status = beat.status === 'sold' ? 'Licencia Exclusive vendida' : beat.status === 'available' ? 'Disponible' : 'No disponible';
   const statusClass = beat.status === 'sold' ? 'badge--status-sold' : beat.status === 'available' ? 'badge--status-available' : 'badge--status-unavailable';
+  const availability = beat.status === 'sold'
+    ? '<div class="seo-card__availability seo-card__availability--sold"><strong>Licencia Exclusive vendida</strong><span>Retirado de nuevas licencias</span></div>'
+    : `<span class="badge ${statusClass}">${status}</span>`;
   const price = beat.prices?.basic || 29.99;
   const href = beatHref(beat, prefix);
   return `<article class="seo-card ${beat.status !== 'available' ? 'is-unavailable' : ''}">
     <a class="seo-card__hit" href="${href}" aria-label="Abrir página de ${escapeHtml(beat.title)}"></a>
     <a class="seo-card__media" href="${href}"><img src="${relAsset(beat.cover, prefix)}" alt="Cover ${escapeHtml(beat.title)}" loading="lazy" /></a>
     <div class="seo-card__body">
-      <span class="badge ${statusClass}">${status}</span>
+      ${availability}
       <h3><a href="${href}">${escapeHtml(beat.title)}</a></h3>
       <p>${escapeHtml(beat.genre)} · ${beat.bpm} BPM · ${escapeHtml(beat.key)}</p>
       <div class="seo-card__price">Desde ${fmtEUR(price)}</div>
@@ -247,7 +250,7 @@ for (const beat of beats) {
   const parts = titleParts(beat.title);
   const canonical = `${siteUrl}/beats/${beat.slug}/`;
   const description = `${beat.title}: ${beat.genre}, ${beat.bpm} BPM, ${beat.key}. Escucha preview y compra licencia Basic o Premium con pago seguro Stripe. Entrega manual por email.`;
-  const youtubeAction = beat.youtubeUrl
+  const youtubeAction = beat.status === 'available' && beat.youtubeUrl
     ? `<a id="youtubeBtn" class="btn btn--ghost" href="${escapeHtml(beat.youtubeUrl)}" target="_blank" rel="noopener noreferrer">Ver vídeo en YouTube</a>`
     : '';
   const graph = {

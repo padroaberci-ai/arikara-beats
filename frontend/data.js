@@ -931,7 +931,7 @@ window.ARIKARA = {
       price: 249.99,
       priceLabel: "Desde 249,99 EUR / canción",
       summary: "Acompañamiento de producción para ordenar la idea, trabajar el tema por pistas y cuidar su dirección sonora.",
-      includes: ["Mezcla", "Mastering", "Trabajo por stems/pistas"],
+      includes: ["Arreglos", "Mezcla", "Mastering", "Trabajo por stems/pistas"],
       idealFor: "Artistas que buscan apoyo de producción antes de cerrar una canción.",
       highlight: true
     },

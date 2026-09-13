@@ -808,7 +808,7 @@
     else{ play(src); }
   }
 
-  const playableIndices = () => state.beats.map((b,i) => b.preview ? i : null).filter(i => i !== null);
+  const playableIndices = () => state.beats.map((b,i) => b.status === 'available' && b.preview ? i : null).filter(i => i !== null);
   const setPlayerCoverFallback = () => {
     if(!playerCoverPlay) return;
     if(playerCoverPlay.dataset.preview) return;
@@ -821,14 +821,17 @@
   syncPlayUI();
 
   const stored = loadPlayerState();
+  const storedBeat = Number.isFinite(stored?.beatIndex)
+    ? state.beats[stored.beatIndex]
+    : state.beats.find((beat) => assetUrl(beat.preview) === stored?.src);
   playerDismissed = sessionStorage.getItem(PLAYER_HIDDEN_KEY) === '1';
   const storedPrefs = getStoredPlayerPrefs();
   loopEnabled = Boolean(storedPrefs.loop);
   shuffleEnabled = Boolean(storedPrefs.shuffle);
   updateModeButtons();
-  if(stored && stored.src && sessionStorage.getItem(PLAYER_SESSION_KEY) === '1'){
+  if(stored && stored.src && storedBeat?.status === 'available' && sessionStorage.getItem(PLAYER_SESSION_KEY) === '1'){
     current = stored.src;
-    if(Number.isFinite(stored.beatIndex)) currentBeatIndex = stored.beatIndex;
+    currentBeatIndex = state.beats.indexOf(storedBeat);
     if(playerTitle && stored.title) playerTitle.textContent = stored.title;
     if(playerSubtitle){
       if(stored.subtitle){
@@ -858,7 +861,7 @@
 
   const playBeatByIndex = (idx) => {
     const beat = state.beats[idx];
-    if(!beat || !beat.preview) return;
+    if(!beat || beat.status !== 'available' || !beat.preview) return;
     sessionStorage.setItem(PLAYER_SESSION_KEY, '1');
     currentBeatIndex = idx;
     if(playerSeek) playerSeek.value = 0;
@@ -1391,7 +1394,9 @@
               <span class="wave wave--cover" aria-hidden="true"><span></span><span></span><span></span></span>
             </button>
           ` : '';
-      const soldCoverLabel = isSold ? '<span class="beat-cover__sold-label">Exclusive vendida</span>' : '';
+      const availability = isSold
+        ? '<div class="beat-availability beat-availability--sold"><strong>Licencia Exclusive vendida</strong><span>Retirado de nuevas licencias</span></div>'
+        : `<div class="badge ${statusClass}">${statusLabel}</div>`;
       const mobilePlay = hasPreview && !isUnavailable ? `
         <button class="beat-row__mini-action beat-row__mini-action--play" type="button" data-mobile-play="${beatIndex}" aria-label="Reproducir ${esc(beat.title)}">
           <span class="beat-row__mini-action-icon">${COVER_PLAY_SVG}</span>
@@ -1403,15 +1408,14 @@
         </a>
       ` : '';
       return `
-        <article class="beat-row ${isUnavailable ? 'is-unavailable' : ''}">
+        <article class="beat-row ${isUnavailable ? 'is-unavailable' : ''}${isSold ? ' is-sold' : ''}">
           <div class="beat-row__mobile-summary">
             <button class="beat-row__mobile-toggle" type="button" data-mobile-toggle="${beatIndex}" aria-expanded="false" aria-controls="beatMobilePanel-${beat.id}">
               <div class="beat-row__mobile-cover">
                 <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
-                ${soldCoverLabel}
               </div>
               <div class="beat-row__mobile-copy">
-                <div class="beat-row__mobile-status badge ${statusClass}">${statusLabel}</div>
+                <div class="beat-row__mobile-status">${availability}</div>
                 <div class="beat-row__mobile-title">${esc(beat.title)}</div>
                 <div class="beat-row__mobile-meta">${beat.bpm} BPM · ${esc(beat.key)}</div>
               </div>
@@ -1426,10 +1430,9 @@
             <div class="beat-row__mobile-card">
               <div class="beat-row__mobile-hero">
                 <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
-                ${soldCoverLabel}
               </div>
               <div class="beat-row__mobile-body">
-                <div class="badge ${statusClass}">${statusLabel}</div>
+                ${availability}
                 <div class="beat-title">${esc(beat.title)}</div>
                 <div class="beat-meta">
                   <span>${beat.bpm} BPM</span>
@@ -1450,11 +1453,10 @@
           <div class="beat-row__desktop">
             <div class="beat-cover">
               <img src="${assetUrl(beat.cover)}" alt="Cover ${esc(beat.title)}" />
-              ${soldCoverLabel}
               ${coverOverlay}
             </div>
             <div class="beat-info">
-              <div class="badge ${statusClass}">${statusLabel}</div>
+              ${availability}
               <div class="beat-title">${esc(beat.title)}</div>
               <div class="beat-meta">
                 <span>${detailMeta}</span>
@@ -1556,7 +1558,7 @@
           e.preventDefault();
           const idx = Number(btn.dataset.index);
           const beat = state.beats[idx];
-          if(!beat || !beat.preview) return;
+          if(!beat || beat.status !== 'available' || !beat.preview) return;
           if(current === assetUrl(beat.preview)){
             toggle(assetUrl(beat.preview));
             return;
@@ -1570,7 +1572,7 @@
           e.stopPropagation();
           const idx = Number(btn.dataset.mobilePlay);
           const beat = state.beats[idx];
-          if(!beat || !beat.preview) return;
+          if(!beat || beat.status !== 'available' || !beat.preview) return;
           if(current === assetUrl(beat.preview)){
             toggle(assetUrl(beat.preview));
             return;
@@ -1714,16 +1716,18 @@
     coverImg.src = assetUrl(beat.cover);
     coverImg.alt = 'Cover ' + beat.title;
     if(previewBtn) previewBtn.setAttribute('aria-label', 'Reproducir ' + beat.title);
-    if(youtubeBtn && beat.youtubeUrl){
+    if(youtubeBtn && beat.status === 'available' && beat.youtubeUrl){
       youtubeBtn.href = beat.youtubeUrl;
       youtubeBtn.hidden = false;
       youtubeBtn.setAttribute('aria-label', `Ver ${beat.title} en YouTube`);
+    }else if(youtubeBtn){
+      youtubeBtn.hidden = true;
     }
 
     const tags = [...(beat.tags||[]), ...(beat.moods||[])];
     tagRow.innerHTML = tags.map(t => '<span class="tag">' + esc(t) + '</span>').join('');
 
-    if(beat.preview){
+    if(beat.status === 'available' && beat.preview){
       if(previewBtn){
         previewButton = previewBtn;
         previewButtonTarget = assetUrl(beat.preview);

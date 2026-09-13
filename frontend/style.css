@@ -570,25 +570,31 @@ h3{ font-size: clamp(1.2rem, 2vw, 1.6rem); }
     inset 0 1px 0 rgba(255,255,255,0.05),
     0 10px 24px rgba(0,0,0,0.2);
 }
-.beat-cover__sold-label{
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 5;
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  max-width: calc(100% - 20px);
-  padding: 5px 9px;
-  border: 1px solid rgba(214,118,42,0.42);
-  border-radius: 999px;
-  background: rgba(18,14,11,0.9);
-  color: #f0ad6a;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.32);
+.beat-availability,
+.seo-card__availability{
+  display:grid;
+  gap:3px;
+  width:max-content;
+  max-width:100%;
+}
+.beat-availability--sold,
+.seo-card__availability--sold{
+  padding:7px 0 8px;
+  border-bottom:1px solid rgba(214,118,42,0.34);
+  color:var(--text);
+}
+.beat-availability--sold strong,
+.seo-card__availability--sold strong{
+  color:#e5a264;
+  font-size:var(--fs-0);
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+.beat-availability--sold span,
+.seo-card__availability--sold span{
+  color:var(--muted);
+  font-size:var(--fs-0);
 }
 .badge--status-unavailable{
   background: linear-gradient(135deg, rgba(92,68,53,0.94) 0%, rgba(60,44,35,0.96) 100%);
@@ -610,7 +616,7 @@ h3{ font-size: clamp(1.2rem, 2vw, 1.6rem); }
   min-height: 220px;
 }
 .beat-row:hover{ transform: translateY(-2px); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
-.beat-row.is-unavailable{ opacity: 0.6; }
+.beat-row.is-unavailable:not(.is-sold){ opacity: 0.6; }
 .beat-row.is-unavailable .btn,
 .beat-row.is-unavailable .play-btn,
 .beat-row.is-unavailable .cover-play{ pointer-events: none; }
@@ -2149,8 +2155,6 @@ body[data-page="catalog"] .main{ padding-top:0; }
   .universal-search__input{ display: block !important; font-size: .92rem; }
   .hero-proof--center{ display:grid; grid-template-columns:1fr; justify-content:stretch; overflow:visible; flex-wrap:nowrap; gap:8px; margin-top:12px; }
   .hero-proof--center span{ display:flex; width:100%; min-height:40px; padding:8px 12px; align-items:center; }
-  .beat-row__mobile-cover .beat-cover__sold-label{ top:4px; left:4px; min-height:0; max-width:calc(100% - 8px); padding:3px 5px; font-size:0.48rem; letter-spacing:0.02em; }
-  .beat-row__mobile-hero .beat-cover__sold-label{ top:10px; left:10px; }
   .filters--compact{ grid-template-columns: repeat(2,minmax(0,1fr)); }
   #bpmMin,#bpmMax{ display: block; }
   .quick-license__menu{ position: fixed; left: 18px; right: 18px; bottom: 94px; min-width: 0; }
