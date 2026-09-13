@@ -226,6 +226,18 @@
       el.setAttribute('aria-label', `Enviar email a ${contactEmail()}`);
     });
   };
+  const syncSocialLinks = () => {
+    const socials = state.socials || {};
+    const links = [
+      { id: 'instagram', label: 'Instagram', short: 'IG' },
+      { id: 'tiktok', label: 'TikTok', short: 'TT' }
+    ].filter((social) => socials[social.id]);
+    qsa('[data-social-links]').forEach((container) => {
+      container.innerHTML = links.map((social) => (
+        `<a class="social-link" href="${esc(socials[social.id])}" target="_blank" rel="noopener noreferrer" aria-label="Abrir ARIKARA BEATS en ${social.label}"><span class="social-link__icon" aria-hidden="true">${social.short}</span><span>${social.label}</span></a>`
+      )).join('');
+    });
+  };
   const updateBadge = () => {
     const badge = qs('#cartBadge');
     if(!badge) return;
@@ -250,6 +262,7 @@
           <a href="./type-beats/morad/">Morad type beats</a>
           <a href="./type-beats/maka/">Maka type beats</a>
           <a href="./type-beats/jc-reyes/">JC Reyes type beats</a>
+          <a href="./servicios/">Servicios de producción</a>
         </nav>
         <nav class="footer__column" aria-label="Géneros">
           <div class="footer__title">Géneros</div>
@@ -263,7 +276,7 @@
           <a class="footer-email" href="#contacto" data-direct-email data-email-subject="Contacto directo - ARIKARA BEATS"><span data-email-text>arikarabeats@gmail.com</span></a>
           <a href="./licencias.html">Licencias</a>
           <a href="./cart.html">Carrito</a>
-          <span>@arikarastudios</span>
+          <div class="footer-socials" data-social-links></div>
         </div>
       </div>`;
   };
@@ -271,6 +284,7 @@
     upgradeLegacyFooter();
     syncYear();
     syncContactEmail();
+    syncSocialLinks();
     updateBadge();
   };
   const initMobileMenu = () => {
@@ -1650,15 +1664,28 @@
         const highlight = s.highlight ? ' highlight' : '';
         const flag = s.highlight ? '<div class="license-flag">Servicio recomendado</div>' : '';
         return `
-          <article class="license-card${highlight}">
-            <div class="beat-title">${esc(s.name)}</div>
-            <div class="beat-title">${esc(s.priceLabel)}</div>
-            <div class="license-list">${s.includes.map(i => '<div>- ' + esc(i) + '</div>').join('')}</div>
-            ${flag}
+          <article class="service-card${highlight}">
+            <div class="service-card__top"><div class="beat-title">${esc(s.name)}</div>${flag}</div>
+            <p>${esc(s.summary || '')}</p>
+            <div class="license-price">${esc(s.priceLabel)}</div>
+            <a class="btn btn--ghost btn--sm" href="./servicios/${esc(s.slug)}/">Conocer servicio</a>
           </article>
         `;
       }).join('');
     }
+  };
+
+  const serviceCard = (s) => {
+    const highlight = s.highlight ? ' highlight' : '';
+    const flag = s.highlight ? '<div class="license-flag">Servicio recomendado</div>' : '';
+    return `
+      <article class="service-card${highlight}">
+        <div class="service-card__top"><div class="beat-title">${esc(s.name)}</div>${flag}</div>
+        <p>${esc(s.summary || '')}</p>
+        <div class="license-price">${esc(s.priceLabel)}</div>
+        <a class="btn btn--ghost btn--sm" href="./servicios/${esc(s.slug)}/">Conocer servicio</a>
+      </article>
+    `;
   };
 
   const initBeatPage = () => {
@@ -1840,29 +1867,8 @@
       `;
     }).join('');
 
-    servGrid.innerHTML = state.services.map(s => {
-      const highlight = s.highlight ? ' highlight' : '';
-      const flag = s.highlight ? '<div class="license-flag">Servicio recomendado</div>' : '';
-      return `
-        <article class="license-card${highlight}">
-          <div class="beat-title">${esc(s.name)}</div>
-          <div class="beat-title">${esc(s.priceLabel)}</div>
-          <div class="license-list">${s.includes.map(i => '<div>- ' + esc(i) + '</div>').join('')}</div>
-          ${flag}
-        </article>
-      `;
-    }).join('');
+    servGrid.innerHTML = state.services.map(serviceCard).join('');
 
-    const enableCardSelection = (selector) => {
-      qsa(selector).forEach(card => {
-        card.addEventListener('click', () => {
-          qsa(selector).forEach(c => c.classList.remove('active'));
-          card.classList.add('active');
-        });
-      });
-    };
-
-    enableCardSelection('#servicesGrid .license-card');
   };
 
   const renderCartItem = (item, idx) => {

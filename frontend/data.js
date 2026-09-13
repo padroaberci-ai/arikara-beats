@@ -897,25 +897,41 @@ window.ARIKARA = {
   ],
   services: [
     {
-      id: "mix-basic",
-      name: "Mix básico",
-      priceLabel: "79,99 EUR / canción",
-      includes: ["Mixing", "Mastering", "1 archivo WAV"],
+      id: "mix-mastering",
+      slug: "mezcla-mastering",
+      name: "Mix & Master",
+      price: 149.99,
+      priceLabel: "Desde 149,99 EUR / canción",
+      summary: "Una mezcla y un master para dejar tu canción preparada con un sonido cuidado y coherente.",
+      includes: ["Mezcla", "Mastering", "1 archivo WAV"],
+      idealFor: "Artistas que ya tienen el tema grabado y quieren rematar su sonido.",
       highlight: false
     },
     {
-      id: "mix-pro",
-      name: "Mix Pro",
-      priceLabel: "129,99 EUR / canción",
-      includes: ["Mixing", "Mastering", "Por stems/pistas"],
-      highlight: false
-    },
-    {
-      id: "production-plus",
-      name: "Producción Plus",
-      priceLabel: "199,99 EUR / canción",
-      includes: ["Producción musical", "Arreglos", "Dirección creativa", "Tratamiento vocal", "Mixing", "Mastering", "Por stems/pistas"],
+      id: "artist-production",
+      slug: "produccion-para-artistas",
+      name: "Artist Production",
+      price: 249.99,
+      priceLabel: "Desde 249,99 EUR / canción",
+      summary: "Acompañamiento de producción para ordenar la idea, trabajar el tema por pistas y cuidar su dirección sonora.",
+      includes: ["Mezcla", "Mastering", "Trabajo por stems/pistas"],
+      idealFor: "Artistas que buscan apoyo de producción antes de cerrar una canción.",
       highlight: true
+    },
+    {
+      id: "full-production",
+      slug: "produccion-musical-completa",
+      name: "Full Production",
+      price: 399.99,
+      priceLabel: "Desde 399,99 EUR / canción",
+      summary: "Un servicio integral para desarrollar la canción desde la producción hasta su mezcla y master final.",
+      includes: ["Producción musical", "Arreglos", "Dirección creativa", "Tratamiento vocal", "Mezcla", "Mastering", "Trabajo por stems/pistas"],
+      idealFor: "Proyectos que necesitan una producción completa y una dirección sonora unificada.",
+      highlight: false
     }
-  ]
+  ],
+  socials: {
+    instagram: "https://www.instagram.com/arikarastudios/",
+    tiktok: ""
+  }
 };

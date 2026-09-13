@@ -12,6 +12,7 @@ vm.runInContext(dataCode, sandbox);
 const data = sandbox.window.ARIKARA || { beats: [], licenses: [] };
 const beats = [...(data.beats || [])];
 const licenses = data.licenses || [];
+const services = data.services || [];
 
 const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({
   '&': '&amp;',
@@ -64,6 +65,14 @@ const contactLink = (label = 'Contacto directo', subject = 'Contacto directo - A
   `<a${className ? ` class="${className}"` : ''} href="#contacto" data-direct-email data-email-subject="${escapeHtml(subject)}">${escapeHtml(label)}</a>`
 );
 const emailDisplay = () => '<a class="footer-email" href="#contacto" data-direct-email data-email-subject="Contacto directo - ARIKARA BEATS"><span data-email-text><span>arikarabeats</span><span>@</span><span>gmail.com</span></span></a>';
+const socialLinks = () => {
+  const socials = data.socials || {};
+  const links = [
+    { id: 'instagram', label: 'Instagram', short: 'IG' },
+    { id: 'tiktok', label: 'TikTok', short: 'TT' }
+  ].filter((social) => socials[social.id]);
+  return links.map((social) => `<a class="social-link" href="${escapeHtml(socials[social.id])}" target="_blank" rel="noopener noreferrer" aria-label="Abrir ARIKARA BEATS en ${social.label}"><span class="social-link__icon" aria-hidden="true">${social.short}</span><span>${social.label}</span></a>`).join('');
+};
 const offerList = (beat, canonical) => {
   const purchasable = licenses.filter((license) => !license.disabled && license.id !== 'exclusive');
   return ({
@@ -97,6 +106,7 @@ const header = (prefix = '../../') => `
     <nav class="nav" aria-label="Primary">
       <a class="nav-link" href="${prefix}index.html">Beats</a>
       <a class="nav-link" href="${prefix}licencias.html">Licencias</a>
+      <a class="nav-link" href="${prefix}servicios/">Servicios</a>
       <a class="btn btn--ghost btn--sm" href="${prefix}cart.html">Carrito <span id="cartBadge" class="badge badge--accent hidden" style="margin-left:6px;">0</span></a>
     </nav>
   </div>
@@ -117,6 +127,7 @@ const footer = (prefix = '../../') => `
       <a href="${prefix}type-beats/morad/">Morad type beats</a>
       <a href="${prefix}type-beats/maka/">Maka type beats</a>
       <a href="${prefix}type-beats/jc-reyes/">JC Reyes type beats</a>
+      <a href="${prefix}servicios/">Servicios de producción</a>
     </nav>
     <nav class="footer__column" aria-label="Géneros">
       <div class="footer__title">Géneros</div>
@@ -130,7 +141,7 @@ const footer = (prefix = '../../') => `
       ${emailDisplay()}
       <a href="${prefix}licencias.html">Licencias</a>
       <a href="${prefix}cart.html">Carrito</a>
-      <span>@arikarastudios</span>
+      <div class="footer-socials">${socialLinks()}</div>
     </div>
   </div>
 </footer>`;
@@ -404,9 +415,77 @@ ${jsonLd({ '@context': 'https://schema.org', '@type': 'CollectionPage', name: `$
 </body></html>`);
 }
 
+const serviceCard = (service, prefix = '../') => {
+  const detailHref = `${prefix}servicios/${service.slug}/`;
+  const flag = service.highlight ? '<div class="license-flag">Servicio recomendado</div>' : '';
+  return `<article class="service-card${service.highlight ? ' highlight' : ''}">
+    <div class="service-card__top"><h2>${escapeHtml(service.name)}</h2>${flag}</div>
+    <p>${escapeHtml(service.summary)}</p>
+    <div class="license-price">${escapeHtml(service.priceLabel)}</div>
+    <a class="btn btn--ghost btn--sm" href="${detailHref}">Conocer servicio</a>
+  </article>`;
+};
+
+const servicesCanonical = `${siteUrl}/servicios/`;
+const servicesDescription = 'Servicios de producción musical, mezcla y mastering de ARIKARA BEATS para artistas que buscan cerrar su canción con una dirección sonora cuidada.';
+write(path.join(frontendDir, 'servicios', 'index.html'), `<!doctype html>
+<html lang="es">
+${head({ title: 'Servicios de producción musical, mezcla y mastering | ARIKARA BEATS', description: servicesDescription, canonical: servicesCanonical, image: absAsset('./assets/covers/motores.jpg'), prefix: '../' })}
+<body data-page="services">
+${header('../')}
+<main class="main">
+  <section class="section">
+    <div class="container services-hero">
+      <div class="eyebrow">Servicios de estudio</div>
+      <h1>Producción, mezcla y mastering para canciones con identidad</h1>
+      <p class="lead">Trabajamos contigo para desarrollar, ordenar y cerrar una canción. Cada servicio se gestiona por consulta directa para entender el punto de partida de tu proyecto.</p>
+      <div class="hero-cta"><a class="btn btn--primary" href="#contacto" data-direct-email data-email-subject="Consulta de servicios - ARIKARA BEATS">Consultar mi proyecto</a><a class="btn btn--ghost" href="../index.html#catalogo">Explorar beats</a></div>
+    </div>
+  </section>
+  <section class="section section--tight">
+    <div class="container services-grid">${services.map((service) => serviceCard(service)).join('')}</div>
+  </section>
+  <section class="section">
+    <div class="container services-process">
+      <div class="section-head"><div class="eyebrow">Trabajo bajo consulta</div><h2>Primero entendemos la canción</h2><p>Cuéntanos qué tienes, qué buscas y en qué fase está el tema. Te orientaremos sobre el servicio que mejor encaja antes de empezar.</p></div>
+      <div class="fulfillment-steps"><article><h3>1. Comparte tu idea</h3><p>Explícanos el punto de partida de la canción y lo que necesitas trabajar.</p></article><article><h3>2. Definimos el enfoque</h3><p>Revisamos el servicio más adecuado para tu proyecto y resolvemos las dudas necesarias.</p></article><article><h3>3. Trabajamos el tema</h3><p>El proceso se desarrolla de forma directa con el equipo ARIKARA.</p></article></div>
+    </div>
+  </section>
+</main>
+${footer('../')}
+${player('../')}
+${jsonLd({ '@context': 'https://schema.org', '@type': 'Service', name: 'Servicios de producción musical ARIKARA BEATS', description: servicesDescription, provider: { '@type': 'Organization', name: 'ARIKARA BEATS', url: siteUrl }, url: servicesCanonical, hasOfferCatalog: { '@type': 'OfferCatalog', name: 'Servicios de estudio', itemListElement: services.map((service) => ({ '@type': 'Offer', name: service.name, priceCurrency: 'EUR', price: service.price, url: `${siteUrl}/servicios/${service.slug}/` })) } })}
+</body></html>`);
+
+for (const service of services) {
+  const canonical = `${siteUrl}/servicios/${service.slug}/`;
+  const description = `${service.name} de ARIKARA BEATS. ${service.summary}`;
+  write(path.join(frontendDir, 'servicios', service.slug, 'index.html'), `<!doctype html>
+<html lang="es">
+${head({ title: `${service.name} | Servicios de estudio | ARIKARA BEATS`, description, canonical, image: absAsset('./assets/covers/motores.jpg') })}
+<body data-page="service-detail">
+${header('../../')}
+<main class="main">
+  <section class="section section--tight"><div class="container breadcrumb"><a href="../../index.html">Inicio</a><span>/</span><a href="../">Servicios</a><span>/</span><span>${escapeHtml(service.name)}</span></div></section>
+  <section class="section">
+    <div class="container service-detail">
+      <div class="service-detail__copy"><div class="eyebrow">Servicio de estudio</div><h1>${escapeHtml(service.name)}</h1><p class="lead">${escapeHtml(service.summary)}</p><p>${escapeHtml(service.idealFor)}</p><div class="hero-cta"><a class="btn btn--primary" href="#contacto" data-direct-email data-email-subject="Consulta ${escapeHtml(service.name)} - ARIKARA BEATS">Consultar este servicio</a><a class="btn btn--ghost" href="../">Ver todos los servicios</a></div></div>
+      <aside class="service-detail__card"><div class="eyebrow">Desde</div><div class="service-detail__price">${escapeHtml(service.priceLabel)}</div><h2>Incluye</h2><ul>${service.includes.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul><p>El alcance se concreta por consulta directa según el estado del proyecto.</p></aside>
+    </div>
+  </section>
+  <section class="section"><div class="container banner"><div>¿Buscas también una instrumental para tu proyecto?</div><a class="btn btn--ghost btn--sm" href="../../index.html#catalogo">Explorar beats</a></div></section>
+</main>
+${footer('../../')}
+${player('../../')}
+${jsonLd({ '@context': 'https://schema.org', '@graph': [{ '@type': 'Service', name: service.name, description, provider: { '@type': 'Organization', name: 'ARIKARA BEATS', url: siteUrl }, offers: { '@type': 'Offer', priceCurrency: 'EUR', price: service.price, url: canonical } }, { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: siteUrl }, { '@type': 'ListItem', position: 2, name: 'Servicios', item: servicesCanonical }, { '@type': 'ListItem', position: 3, name: service.name, item: canonical }] }] })}
+</body></html>`);
+}
+
 const sitemapUrls = [
   { loc: siteUrl + '/', priority: '1.0' },
   { loc: siteUrl + '/licencias.html', priority: '0.8' },
+  { loc: servicesCanonical, priority: '0.8' },
+  ...services.map((service) => ({ loc: `${siteUrl}/servicios/${service.slug}/`, priority: '0.7' })),
   ...beats.map((beat) => ({ loc: `${siteUrl}/beats/${beat.slug}/`, lastmod: beat.createdAt ? new Date(beat.createdAt).toISOString().slice(0, 10) : undefined, priority: '0.9' })),
   ...[...artistGroups.keys()].map((slug) => ({ loc: `${siteUrl}/type-beats/${slug}/`, priority: '0.7' })),
   ...[...genreGroups.keys()].map((slug) => ({ loc: `${siteUrl}/generos/${slug}/`, priority: '0.7' }))
@@ -422,6 +501,7 @@ Disallow: /cancel.html
 Sitemap: ${siteUrl}/sitemap.xml`);
 write(path.join(frontendDir, '_redirects'), `/beats/:slug /beats/:slug/index.html 200
 /type-beats/:slug /type-beats/:slug/index.html 200
-/generos/:slug /generos/:slug/index.html 200`);
+/generos/:slug /generos/:slug/index.html 200
+/servicios/:slug /servicios/:slug/index.html 200`);
 
 console.log(`[seo] Generated ${beats.length} beat pages, ${artistGroups.size} artist pages and ${genreGroups.size} genre pages.`);

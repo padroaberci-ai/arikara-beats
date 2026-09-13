@@ -2,6 +2,10 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://arikarabeats.com/</loc><priority>1.0</priority></url>
   <url><loc>https://arikarabeats.com/licencias.html</loc><priority>0.8</priority></url>
+  <url><loc>https://arikarabeats.com/servicios/</loc><priority>0.8</priority></url>
+  <url><loc>https://arikarabeats.com/servicios/mezcla-mastering/</loc><priority>0.7</priority></url>
+  <url><loc>https://arikarabeats.com/servicios/produccion-para-artistas/</loc><priority>0.7</priority></url>
+  <url><loc>https://arikarabeats.com/servicios/produccion-musical-completa/</loc><priority>0.7</priority></url>
   <url><loc>https://arikarabeats.com/beats/costa-del-sol/</loc><lastmod>2026-02-03</lastmod><priority>0.9</priority></url>
   <url><loc>https://arikarabeats.com/beats/luna-mora/</loc><lastmod>2026-02-06</lastmod><priority>0.9</priority></url>
   <url><loc>https://arikarabeats.com/beats/feria-y-oro/</loc><lastmod>2026-02-10</lastmod><priority>0.9</priority></url>
