@@ -866,6 +866,23 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-09-11T11:43:00"
+    },
+    {
+      id: "ab-056",
+      slug: "mi-tentacion",
+      title: "Maka Type Beat - \"Mi Tentación\"",
+      bpm: 100,
+      key: "G minor",
+      genre: "Flamenco Reggaeton",
+      tags: ["typebeat", "maka", "flamenco", "reggaeton", "instrumental"],
+      moods: ["melódico", "urbano"],
+      cover: "./assets/covers/mi-tentacion.jpg",
+      preview: "./assets/audio/mi-tentacion-preview.mp3",
+      youtubeId: "kkKnxg9qO5I",
+      youtubeUrl: "https://www.youtube.com/watch?v=kkKnxg9qO5I",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-09-11T14:02:00"
     }
   ],
   licenses: [
