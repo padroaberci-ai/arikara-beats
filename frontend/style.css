@@ -2294,12 +2294,13 @@ body.free-download-open{ overflow:hidden; }
 .beat-row.is-sold .beat-meta,
 .beat-row.is-sold .beat-tags{ color:rgba(245,241,235,.68); }
 .beat-action-spacer,
-.beat-price--placeholder{ display:block; min-height:40px; }
+.beat-price--placeholder{ display:block; min-height:39px; }
 
 @media (min-width:981px){
   .beat-row{ height:230px; min-height:230px; }
   .beat-row__desktop{
-    grid-template-columns:176px minmax(0,1fr) 234px;
+    width:100%;
+    grid-template-columns:176px minmax(0,1fr) 220px;
     gap:20px;
     height:192px;
     min-height:192px;
@@ -2328,24 +2329,35 @@ body.free-download-open{ overflow:hidden; }
   .beat-meta{ min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
   .beat-tags{ min-height:28px; max-height:56px; overflow:hidden; }
   .beat-actions{
-    width:100%;
-    min-width:0;
-    align-self:stretch;
-    justify-self:stretch;
-    display:grid;
-    grid-template-rows:1fr auto;
-  }
-  .beat-price{ align-self:start; text-align:right; }
-  .beat-buttons{
-    width:164px;
-    min-width:164px;
-    grid-template-rows:repeat(3,40px);
-    justify-items:stretch;
+    grid-column:3;
+    width:220px;
+    min-width:220px;
+    align-self:center;
     justify-self:end;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    justify-content:center;
+    gap:12px;
+  }
+  .beat-price{
+    display:flex;
+    min-height:30px;
+    align-items:center;
+    justify-content:flex-end;
+    font-size:clamp(1.05rem,1.6vw,1.3rem);
+    text-align:right;
+  }
+  .beat-buttons{
+    width:160px;
+    min-width:160px;
+    grid-template-rows:repeat(3,39px);
+    gap:8px;
+    justify-items:stretch;
   }
   .beat-buttons > :is(a,details,button,span){ width:100%; align-self:stretch; }
   .beat-buttons .quick-license > summary{ width:100%; }
-  .beat-buttons .btn--quiet{ min-height:40px; }
+  .beat-buttons .btn--quiet{ min-height:39px; }
 }
 
 @media (max-width:980px){
