@@ -61,7 +61,8 @@ assert.match(listingHtml, /data-free-download/);
 assert.doesNotMatch(soldHtml, /data-free-download/);
 const soldCard = soldListingHtml.match(/<article class="seo-card[^>]*is-sold[^>]*>[\s\S]*?<\/article>/)?.[0] || '';
 assert.ok(soldCard, 'La página SEO debe conservar una card vendida.');
-assert.match(soldCard, /SOLD/);
+assert.match(soldCard, />Vendido</);
+assert.doesNotMatch(soldCard, /SOLD/);
 assert.match(soldCard, /badge--status-sold/);
 assert.match(soldCard, /Ver beat/);
 assert.match(soldCard, /Ver similares/);
@@ -70,9 +71,9 @@ assert.doesNotMatch(soldCard, /Desde /);
 assert.doesNotMatch(soldCard, /Licenciar|Descargar gratis/);
 assert.match(appSource, /similarBeatsHref/);
 assert.match(appSource, /params\.set\('exclude', beat\.slug\)/);
-assert.match(styleSource, /\.beat-row\{ height:220px; min-height:220px; \}/);
-assert.match(styleSource, /\.beat-cover\{\s+width:164px;\s+height:164px;\s+aspect-ratio:1 \/ 1;\s+align-self:center;/);
-assert.match(styleSource, /\.beat-availability--sold,\s+\.seo-card__availability--sold\{\s+display:grid;\s+width:fit-content;/);
+assert.match(styleSource, /\.beat-row\{ height:230px; min-height:230px; \}/);
+assert.match(styleSource, /\.beat-cover\{\s+width:164px;\s+height:164px;\s+aspect-ratio:1 \/ 1;\s+align-self:center;\s+justify-self:center;/);
+assert.match(styleSource, /\.beat-availability--sold,\s+\.seo-card__availability--sold\{\s+display:flex;\s+width:fit-content;/);
 const analyticsPayloads = Array.from(appSource.matchAll(/trackEvent\('(free_download_[^']+)',\s*\{([^}]*)\}\)/g));
 assert.deepEqual(analyticsPayloads.map((match) => match[1]), [
   'free_download_open',

@@ -226,7 +226,7 @@ const beatCard = (beat, prefix = '../../') => {
   const status = beat.status === 'sold' ? 'Licencia Exclusive vendida' : beat.status === 'available' ? 'Disponible' : 'No disponible';
   const statusClass = beat.status === 'sold' ? 'badge--status-sold' : beat.status === 'available' ? 'badge--status-available' : 'badge--status-unavailable';
   const availability = isSold
-    ? '<div class="seo-card__availability seo-card__availability--sold"><span class="badge badge--status-sold">SOLD · Vendido</span><span class="seo-card__availability-note">Licencia Exclusive vendida · Retirado de nuevas licencias</span></div>'
+    ? '<div class="seo-card__availability seo-card__availability--sold"><span class="badge badge--status-sold">Vendido</span><span class="seo-card__availability-note">Licencia Exclusive vendida</span></div>'
     : `<span class="badge ${statusClass}">${status}</span>`;
   const price = beat.prices?.basic || 29.99;
   const href = beatHref(beat, prefix);

@@ -1608,7 +1608,7 @@
             </button>
           ` : '';
       const availability = isSold
-        ? '<div class="beat-availability beat-availability--sold"><span class="badge badge--status-sold">SOLD · Vendido</span><span class="beat-availability__note">Licencia Exclusive vendida · Retirado de nuevas licencias</span></div>'
+        ? '<div class="beat-availability beat-availability--sold"><span class="badge badge--status-sold">Vendido</span><span class="beat-availability__note">Licencia Exclusive vendida</span></div>'
         : `<div class="badge ${statusClass}">${statusLabel}</div>`;
       const mobilePlay = hasPreview && !isUnavailable ? `
         <button class="beat-row__mini-action beat-row__mini-action--play" type="button" data-mobile-play="${beatIndex}" aria-label="Reproducir ${esc(beat.title)}">
