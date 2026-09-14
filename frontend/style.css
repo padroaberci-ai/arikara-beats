@@ -2278,16 +2278,25 @@ body.free-download-open{ overflow:hidden; }
 
 /* Catalog card rhythm: every state reserves the same content and action slots. */
 .beat-row.is-sold{
-  background:linear-gradient(145deg,rgba(28,27,25,.94),rgba(14,14,14,.98));
-  border-color:rgba(255,255,255,.1);
-  opacity:.68;
+  background:linear-gradient(145deg,rgba(25,25,24,.92),rgba(10,10,10,.98));
+  border-color:rgba(255,255,255,.075);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025), inset 0 0 0 1px rgba(0,0,0,.22);
+  opacity:.74;
 }
 .beat-row.is-sold:hover,
-.beat-row.is-sold:focus-within{ opacity:.86; }
+.beat-row.is-sold:focus-within{ opacity:.88; }
 .beat-row.is-sold .beat-cover img,
 .beat-row.is-sold .beat-row__mobile-cover img,
 .beat-row.is-sold .beat-row__mobile-hero img{
-  filter:grayscale(.42) saturate(.42) brightness(.74);
+  filter:grayscale(1) saturate(0) contrast(.86) brightness(.62);
+}
+.beat-row.is-sold :is(.beat-cover,.beat-row__mobile-cover,.beat-row__mobile-hero)::after{
+  content:"";
+  position:absolute;
+  z-index:1;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(circle at 50% 42%,rgba(0,0,0,0) 18%,rgba(0,0,0,.18) 52%,rgba(0,0,0,.76) 100%);
 }
 .beat-row.is-sold .beat-info,
 .beat-row.is-sold .beat-row__mobile-copy{ border-color:rgba(255,255,255,.08); }
@@ -2376,13 +2385,23 @@ body.free-download-open{ overflow:hidden; }
 .seo-card__action-spacer{ width:100%; min-height:40px; }
 .seo-card__price--placeholder{ min-height:2.35em; }
 .seo-card.is-sold{
-  background:linear-gradient(145deg,rgba(28,27,25,.94),rgba(14,14,14,.98));
-  border-color:rgba(255,255,255,.1);
-  opacity:.68;
+  background:linear-gradient(145deg,rgba(25,25,24,.92),rgba(10,10,10,.98));
+  border-color:rgba(255,255,255,.075);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025), inset 0 0 0 1px rgba(0,0,0,.22);
+  opacity:.74;
 }
 .seo-card.is-sold:hover,
-.seo-card.is-sold:focus-within{ opacity:.86; }
-.seo-card.is-sold .seo-card__media img{ filter:grayscale(.42) saturate(.42) brightness(.74); }
+.seo-card.is-sold:focus-within{ opacity:.88; }
+.seo-card.is-sold .seo-card__media{ position:relative; }
+.seo-card.is-sold .seo-card__media img{ filter:grayscale(1) saturate(0) contrast(.86) brightness(.62); }
+.seo-card.is-sold .seo-card__media::after{
+  content:"";
+  position:absolute;
+  z-index:1;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(circle at 50% 42%,rgba(0,0,0,0) 18%,rgba(0,0,0,.18) 52%,rgba(0,0,0,.76) 100%);
+}
 .seo-card.is-sold .seo-card__body p{ color:rgba(245,241,235,.68); }
 
 /* Status remains a compact product cue, never a full-width divider. */
