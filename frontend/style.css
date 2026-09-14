@@ -2299,7 +2299,7 @@ body.free-download-open{ overflow:hidden; }
 @media (min-width:981px){
   .beat-row{ height:230px; min-height:230px; }
   .beat-row__desktop{
-    grid-template-columns:176px minmax(0,1fr) auto;
+    grid-template-columns:176px minmax(0,1fr) 234px;
     gap:20px;
     height:192px;
     min-height:192px;
@@ -2328,10 +2328,10 @@ body.free-download-open{ overflow:hidden; }
   .beat-meta{ min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
   .beat-tags{ min-height:28px; max-height:56px; overflow:hidden; }
   .beat-actions{
-    width:234px;
-    min-width:234px;
+    width:100%;
+    min-width:0;
     align-self:stretch;
-    justify-self:end;
+    justify-self:stretch;
     display:grid;
     grid-template-rows:1fr auto;
   }
