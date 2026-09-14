@@ -222,26 +222,30 @@ const licensePreview = () => licenses.map((license) => {
 }).join('');
 
 const beatCard = (beat, prefix = '../../') => {
+  const isSold = beat.status === 'sold';
   const status = beat.status === 'sold' ? 'Licencia Exclusive vendida' : beat.status === 'available' ? 'Disponible' : 'No disponible';
   const statusClass = beat.status === 'sold' ? 'badge--status-sold' : beat.status === 'available' ? 'badge--status-available' : 'badge--status-unavailable';
-  const availability = beat.status === 'sold'
-    ? '<div class="seo-card__availability seo-card__availability--sold"><strong>Licencia Exclusive vendida</strong><span>Retirado de nuevas licencias</span></div>'
+  const availability = isSold
+    ? '<div class="seo-card__availability seo-card__availability--sold"><span class="badge badge--status-sold">SOLD · Vendido</span><span class="seo-card__availability-note">Licencia Exclusive vendida · Retirado de nuevas licencias</span></div>'
     : `<span class="badge ${statusClass}">${status}</span>`;
   const price = beat.prices?.basic || 29.99;
   const href = beatHref(beat, prefix);
+  const similarHref = `${prefix}?q=${encodeURIComponent(titleParts(beat.title).artist)}&exclude=${encodeURIComponent(beat.slug)}`;
   const freeDownload = beat.status === 'available' && beat.freeDownload !== false && (beat.freeDownloadUrl || beat.preview)
     ? `<button class="btn btn--quiet btn--sm" type="button" data-free-download data-beat-id="${escapeHtml(beat.id)}" data-free-source="seo-listing">Descargar gratis</button>`
     : '';
-  return `<article class="seo-card ${beat.status !== 'available' ? 'is-unavailable' : ''}">
+  const actions = isSold
+    ? `<a class="btn btn--ghost btn--sm" href="${href}">Ver beat</a><a class="btn btn--ghost btn--sm" href="${similarHref}">Ver similares</a>`
+    : `<a class="btn btn--primary btn--sm" href="${href}">Ver beat</a>${freeDownload ? freeDownload : '<span class="seo-card__action-spacer" aria-hidden="true"></span>'}`;
+  return `<article class="seo-card ${beat.status !== 'available' ? 'is-unavailable' : ''}${isSold ? ' is-sold' : ''}">
     <a class="seo-card__hit" href="${href}" aria-label="Abrir página de ${escapeHtml(beat.title)}"></a>
     <a class="seo-card__media" href="${href}"><img src="${relAsset(beat.cover, prefix)}" alt="Cover ${escapeHtml(beat.title)}" loading="lazy" /></a>
     <div class="seo-card__body">
       ${availability}
       <h3><a href="${href}">${escapeHtml(beat.title)}</a></h3>
       <p>${escapeHtml(beat.genre)} · ${beat.bpm} BPM · ${escapeHtml(beat.key)}</p>
-      <div class="seo-card__price">Desde ${fmtEUR(price)}</div>
-      <a class="btn btn--primary btn--sm" href="${href}">Ver beat</a>${freeDownload ? `
-      ${freeDownload}` : ''}
+      ${isSold ? '<div class="seo-card__price seo-card__price--placeholder" aria-hidden="true"></div>' : `<div class="seo-card__price">Desde ${fmtEUR(price)}</div>`}
+      <div class="seo-card__actions">${actions}</div>
     </div>
   </article>`;
 };

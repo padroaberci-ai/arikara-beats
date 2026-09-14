@@ -52,11 +52,27 @@ assert.equal(resolveAudioFile({ preview: './assets/audio/not-an-mp3.wav' }), nul
 const productHtml = await fs.readFile(path.join(frontend, 'beats', available.slug, 'index.html'), 'utf8');
 const soldHtml = await fs.readFile(path.join(frontend, 'beats', sold.slug, 'index.html'), 'utf8');
 const listingHtml = await fs.readFile(path.join(frontend, 'type-beats', 'maka', 'index.html'), 'utf8');
+const soldListingHtml = await fs.readFile(path.join(frontend, 'type-beats', 'jc-reyes', 'index.html'), 'utf8');
 const appSource = await fs.readFile(path.join(frontend, 'app.js'), 'utf8');
+const styleSource = await fs.readFile(path.join(frontend, 'style.css'), 'utf8');
 const routeSource = await fs.readFile(path.join(root, 'server', 'routes', 'free-downloads.js'), 'utf8');
 assert.match(productHtml, /id="freeDownloadBtn"/);
 assert.match(listingHtml, /data-free-download/);
 assert.doesNotMatch(soldHtml, /data-free-download/);
+const soldCard = soldListingHtml.match(/<article class="seo-card[^>]*is-sold[^>]*>[\s\S]*?<\/article>/)?.[0] || '';
+assert.ok(soldCard, 'La página SEO debe conservar una card vendida.');
+assert.match(soldCard, /SOLD/);
+assert.match(soldCard, /badge--status-sold/);
+assert.match(soldCard, /Ver beat/);
+assert.match(soldCard, /Ver similares/);
+assert.match(soldCard, /\?q=JC%20Reyes&exclude=grilletes/);
+assert.doesNotMatch(soldCard, /Desde /);
+assert.doesNotMatch(soldCard, /Licenciar|Descargar gratis/);
+assert.match(appSource, /similarBeatsHref/);
+assert.match(appSource, /params\.set\('exclude', beat\.slug\)/);
+assert.match(styleSource, /\.beat-row\{ height:220px; min-height:220px; \}/);
+assert.match(styleSource, /\.beat-cover\{\s+width:164px;\s+height:164px;\s+aspect-ratio:1 \/ 1;\s+align-self:center;/);
+assert.match(styleSource, /\.beat-availability--sold,\s+\.seo-card__availability--sold\{\s+display:grid;\s+width:fit-content;/);
 const analyticsPayloads = Array.from(appSource.matchAll(/trackEvent\('(free_download_[^']+)',\s*\{([^}]*)\}\)/g));
 assert.deepEqual(analyticsPayloads.map((match) => match[1]), [
   'free_download_open',

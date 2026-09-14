@@ -1554,6 +1554,15 @@
       return true;
     };
     const matchesGenre = (beat, genre) => !genre || String(beat.genre || '').toLowerCase() === String(genre).toLowerCase();
+    const artistFromBeat = (beat) => String(beat.title || '')
+      .split(/type beat/i)[0]
+      .replace(/[–-]+$/g, '')
+      .trim();
+    const similarBeatsHref = (beat) => {
+      const params = new URLSearchParams({ q: artistFromBeat(beat) || String(beat.title || '') });
+      params.set('exclude', beat.slug);
+      return `${pagePath('')}?${params.toString()}`;
+    };
     const applyMarketingSlots = (beats) => {
       const next = [...beats];
       const placeBeat = (slug, targetIndex) => {
@@ -1587,6 +1596,7 @@
       const statusClass = isSold ? 'badge--status-sold' : (isUnavailable ? 'badge--status-unavailable' : 'badge--status-available');
       const hasPreview = Boolean(beat.preview);
       const detailHref = beatUrl(beat);
+      const similarHref = similarBeatsHref(beat);
       const beatIndex = state.beats.findIndex(b => b.id === beat.id);
       const detailMeta = `${beat.bpm} BPM · ${esc(beat.key)}${beat.genre ? ` · ${esc(beat.genre)}` : ''}`;
       const tags = [...(beat.tags||[]), ...(beat.moods||[])].slice(0,5)
@@ -1598,7 +1608,7 @@
             </button>
           ` : '';
       const availability = isSold
-        ? '<div class="beat-availability beat-availability--sold"><strong>Licencia Exclusive vendida</strong><span>Retirado de nuevas licencias</span></div>'
+        ? '<div class="beat-availability beat-availability--sold"><span class="badge badge--status-sold">SOLD · Vendido</span><span class="beat-availability__note">Licencia Exclusive vendida · Retirado de nuevas licencias</span></div>'
         : `<div class="badge ${statusClass}">${statusLabel}</div>`;
       const mobilePlay = hasPreview && !isUnavailable ? `
         <button class="beat-row__mini-action beat-row__mini-action--play" type="button" data-mobile-play="${beatIndex}" aria-label="Reproducir ${esc(beat.title)}">
@@ -1611,6 +1621,12 @@
         </a>
       ` : '';
       const freeDownload = allowsFreeDownload(beat) ? `<button class="btn btn--quiet btn--sm" type="button" data-free-download data-beat-id="${beat.id}" data-free-source="catalog">Descargar gratis</button>` : '';
+      const mobileFooter = isSold
+        ? `<div class="beat-row__mobile-footer beat-row__mobile-footer--sold"><div class="beat-row__mobile-buttons"><a class="btn btn--ghost btn--sm" href="${detailHref}">Ver beat</a><a class="btn btn--ghost btn--sm" href="${similarHref}">Ver similares</a></div></div>`
+        : `<div class="beat-row__mobile-footer"><div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div><div class="beat-row__mobile-buttons"><a class="btn btn--primary btn--sm" href="${detailHref}">Ver beat</a><button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Basic · ${fmtEUR(beat.prices.basic)}</button></div></div>`;
+      const desktopActions = isSold
+        ? `<a class="btn btn--ghost btn--sm" href="${detailHref}">Ver beat</a><a class="btn btn--ghost btn--sm" href="${similarHref}">Ver similares</a><span class="beat-action-spacer" aria-hidden="true"></span>`
+        : `<a class="btn btn--ghost btn--sm" href="${detailHref}">Ver beat</a>${!isUnavailable ? `<details class="quick-license"><summary class="btn btn--primary btn--sm">Licenciar</summary><div class="quick-license__menu"><button type="button" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}">Basic · ${fmtEUR(beat.prices.basic)}</button><button type="button" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="premium" data-price="${beat.prices.premium}">Premium · ${fmtEUR(beat.prices.premium)}</button><a href="#contacto" data-direct-email data-email-subject="Consulta Exclusive - ${esc(beat.title)}">Exclusive · consultar</a></div></details>` : `<a class="btn btn--ghost btn--sm" href="${similarHref}">Ver similares</a>`}${freeDownload || '<span class="beat-action-spacer" aria-hidden="true"></span>'}`;
       return `
         <article class="beat-row ${isUnavailable ? 'is-unavailable' : ''}${isSold ? ' is-sold' : ''}">
           <div class="beat-row__mobile-summary">
@@ -1644,13 +1660,7 @@
                   <span>${esc(beat.genre)}</span>
                 </div>
                 <div class="beat-tags">${tags}</div>
-                <div class="beat-row__mobile-footer">
-                  <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
-                  <div class="beat-row__mobile-buttons">
-                    <a class="btn btn--primary btn--sm" href="${detailHref}">Ver beat</a>
-                    <button class="btn btn--ghost btn--sm" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}" ${isUnavailable ? 'disabled' : ''}>Basic · ${fmtEUR(beat.prices.basic)}</button>
-                  </div>
-                </div>
+                ${mobileFooter}
               </div>
             </div>
           </div>
@@ -1668,11 +1678,9 @@
               <div class="beat-tags">${tags}</div>
             </div>
             <div class="beat-actions">
-              <div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>
+              ${isSold ? '<div class="beat-price beat-price--placeholder" aria-hidden="true"></div>' : `<div class="beat-price">Desde ${fmtEUR(beat.prices.basic)}</div>`}
               <div class="beat-buttons">
-                <a class="btn btn--ghost btn--sm" href="${detailHref}">Ver beat</a>
-                ${!isUnavailable ? `<details class="quick-license"><summary class="btn btn--primary btn--sm">Licenciar</summary><div class="quick-license__menu"><button type="button" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}">Basic · ${fmtEUR(beat.prices.basic)}</button><button type="button" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="premium" data-price="${beat.prices.premium}">Premium · ${fmtEUR(beat.prices.premium)}</button><a href="#contacto" data-direct-email data-email-subject="Consulta Exclusive - ${esc(beat.title)}">Exclusive · consultar</a></div></details>` : `<a class="btn btn--ghost btn--sm" href="${detailHref}">Ver similares</a>`}
-                ${freeDownload}
+                ${desktopActions}
               </div>
             </div>
           </div>
@@ -1689,12 +1697,13 @@
       const sort = sortEl ? sortEl.value : 'latest';
 
       const parsed = parseSearch(q);
+      const excludedSlug = new URLSearchParams(window.location.search).get('exclude');
       const filtered = state.beats
         .map((beat) => ({ beat, score: scoreBeat(beat, parsed) }))
-        .filter((entry) => entry.score > 0 && matchesBpm(entry.beat, min, max) && matchesGenre(entry.beat, genre));
+        .filter((entry) => entry.beat.slug !== excludedSlug && entry.score > 0 && matchesBpm(entry.beat, min, max) && matchesGenre(entry.beat, genre));
 
       const sorted = parsed.normalized
-        ? filtered.sort((a, b) => b.score - a.score || new Date(b.beat.createdAt || 0) - new Date(a.beat.createdAt || 0)).map((entry) => entry.beat)
+        ? filtered.sort((a, b) => (a.beat.status === 'available' ? 0 : 1) - (b.beat.status === 'available' ? 0 : 1) || b.score - a.score || new Date(b.beat.createdAt || 0) - new Date(a.beat.createdAt || 0)).map((entry) => entry.beat)
         : sortBeats(filtered.map((entry) => entry.beat), sort);
       list.innerHTML = sorted.map(renderRow).join('');
       empty.classList.toggle('hidden', sorted.length !== 0);
@@ -1704,7 +1713,7 @@
       if(searchClear) searchClear.hidden = !parsed.normalized;
       if(universalResults){
         const artistHits = sorted
-          .map((beat) => String(beat.title || '').split(/type beat/i)[0].replace(/[–-]+$/g, '').trim())
+          .map(artistFromBeat)
           .filter((artist) => artist && (normalizeSearch(artist).includes(parsed.normalized) || parsed.terms.some((term) => normalizeSearch(artist).includes(term))));
         const artists = [...new Set(artistHits)].slice(0, 4);
         const genreHits = genres.filter((candidate) => normalizeSearch(candidate).includes(parsed.normalized) || parsed.terms.some((term) => normalizeSearch(candidate).includes(term))).slice(0, 4);
