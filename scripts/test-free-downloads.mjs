@@ -3,7 +3,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { isDownloadable, normalizeEmail, resolveAudioFile } from '../server/routes/free-downloads.js';
+import {
+  CONSENT_VERSION,
+  isDownloadable,
+  normalizeEmail,
+  resolveAudioFile,
+  validateFreeDownloadPayload
+} from '../server/routes/free-downloads.js';
 import { sendInternalFreeDownloadNotification } from '../server/services/email.service.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -22,6 +28,19 @@ assert.equal(normalizeEmail('  ARTIST@Example.COM '), 'artist@example.com');
 assert.equal(isDownloadable(available), true);
 assert.equal(isDownloadable(sold), false);
 assert.equal(isDownloadable({ ...available, freeDownload: false }), false);
+assert.equal(validateFreeDownloadPayload({}).code, 'INVALID_EMAIL');
+assert.equal(validateFreeDownloadPayload({ email: 'invalid' }).code, 'INVALID_EMAIL');
+assert.equal(validateFreeDownloadPayload({ email: 'artist@example.test', beatId: available.id }).code, 'INVALID_CONSENT');
+assert.deepEqual(
+  validateFreeDownloadPayload({
+    email: ' ARTIST@Example.test ',
+    beatId: available.id,
+    downloadConsent: true,
+    consentVersion: CONSENT_VERSION,
+    source: 'product'
+  }),
+  { email: 'artist@example.test', beatId: available.id, source: 'product' }
+);
 
 const previewFile = resolveAudioFile(available);
 assert.ok(previewFile?.endsWith('.mp3'), 'La descarga debe resolver un MP3 con tag.');
@@ -47,6 +66,8 @@ assert.deepEqual(analyticsPayloads.map((match) => match[1]), [
 ]);
 analyticsPayloads.forEach((match) => assert.doesNotMatch(match[2], /email/i));
 assert.doesNotMatch(routeSource, /free-download-storage|writeFile|server\/data/);
+assert.doesNotMatch(routeSource, /marketingConsent/);
+assert.doesNotMatch(appSource, /marketingConsent/);
 
 const previousFetch = globalThis.fetch;
 const previousResendKey = process.env.RESEND_API_KEY;
@@ -68,7 +89,6 @@ try {
     beatId: 'ab-999',
     beatTitleSnapshot: 'Prueba <con tag>',
     email: 'artist@example.test',
-    marketingConsent: false,
     downloadConsentVersion: 'free-download-v1',
     source: 'product',
     createdAt: '2026-09-14T12:00:00.000Z'
@@ -78,12 +98,13 @@ try {
   assert.match(mailPayload.subject, /DESCARGA GRATIS/);
   assert.match(mailPayload.text, /ab-999/);
   assert.match(mailPayload.text, /artist@example\.test/);
-  assert.match(mailPayload.text, /Consentimiento comercial: No/);
   assert.match(mailPayload.text, /Versión del consentimiento: free-download-v1/);
   assert.match(mailPayload.text, /Origen: product/);
   assert.match(mailPayload.text, /2026-09-14T12:00:00.000Z/);
   assert.match(mailPayload.html, /Prueba &lt;con tag&gt;/);
   assert.doesNotMatch(mailPayload.html, /Prueba <con tag>/);
+  assert.doesNotMatch(mailPayload.text, /newsletter|comercial|ofertas/i);
+  assert.doesNotMatch(mailPayload.html, /newsletter|comercial|ofertas/i);
 } finally {
   globalThis.fetch = previousFetch;
   if (previousResendKey === undefined) delete process.env.RESEND_API_KEY;

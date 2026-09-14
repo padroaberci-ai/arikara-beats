@@ -178,14 +178,12 @@ export async function sendInternalFreeDownloadNotification(download) {
   const to = FREE_DOWNLOAD_NOTIFICATION_EMAIL;
 
   const subject = `[DESCARGA GRATIS] ${download.beatId} · ${download.beatTitleSnapshot}`;
-  const marketing = download.marketingConsent ? 'Sí, ha aceptado novedades y ofertas.' : 'No, solo descarga.';
   const text = [
     'Nueva descarga gratuita registrada',
     '',
     ...(download.id ? [`Registro: ${download.id}`] : []),
     `Beat: ${download.beatTitleSnapshot} (${download.beatId})`,
     `Email: ${download.email}`,
-    `Consentimiento comercial: ${marketing}`,
     `Versión del consentimiento: ${download.downloadConsentVersion}`,
     `Origen: ${download.source}`,
     `Fecha UTC: ${download.createdAt}`
@@ -195,7 +193,6 @@ export async function sendInternalFreeDownloadNotification(download) {
     <p>${download.id ? `<strong>Registro:</strong> ${escapeHtml(download.id)}<br />` : ''}
     <strong>Beat:</strong> ${escapeHtml(download.beatTitleSnapshot)} (${escapeHtml(download.beatId)})<br />
     <strong>Email:</strong> ${escapeHtml(download.email)}<br />
-    <strong>Consentimiento comercial:</strong> ${escapeHtml(marketing)}<br />
     <strong>Versión del consentimiento:</strong> ${escapeHtml(download.downloadConsentVersion)}<br />
     <strong>Origen:</strong> ${escapeHtml(download.source)}<br />
     <strong>Fecha UTC:</strong> ${escapeHtml(download.createdAt)}</p>

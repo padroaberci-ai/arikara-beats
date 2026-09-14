@@ -25,6 +25,18 @@ const isDownloadable = (beat) => Boolean(
   beat && beat.status === 'available' && beat.freeDownload !== false && (beat.freeDownloadUrl || beat.preview)
 );
 
+const validateFreeDownloadPayload = (body = {}) => {
+  const email = normalizeEmail(body.email);
+  if (String(body.website || '').trim()) return { status: 400, code: 'INVALID_REQUEST' };
+  if (!isEmail(email)) return { status: 400, code: 'INVALID_EMAIL' };
+  if (body.downloadConsent !== true || body.consentVersion !== CONSENT_VERSION) {
+    return { status: 400, code: 'INVALID_CONSENT' };
+  }
+  const beatId = String(body.beatId || '').trim();
+  if (!/^ab-\d{3}$/i.test(beatId)) return { status: 400, code: 'INVALID_BEAT' };
+  return { email, beatId, source: safeSource(body.source) };
+};
+
 const rateLimit = (key, limit) => {
   const now = Date.now();
   const previous = (rateBucket.get(key) || []).filter((timestamp) => now - timestamp < RATE_WINDOW_MS);
@@ -70,22 +82,10 @@ const noStore = (res) => res.set({ 'Cache-Control': 'no-store, private', 'X-Cont
 router.post('/', async (req, res) => {
   noStore(res);
   const body = req.body || {};
-  const email = normalizeEmail(body.email);
+  const validation = validateFreeDownloadPayload(body);
+  if (validation.code) return res.status(validation.status).json({ code: validation.code });
+  const { email, beatId, source } = validation;
   const remoteIp = String(req.ip || req.socket?.remoteAddress || 'unknown');
-
-  if (String(body.website || '').trim()) {
-    return res.status(400).json({ code: 'INVALID_REQUEST' });
-  }
-  if (!isEmail(email)) {
-    return res.status(400).json({ code: 'INVALID_EMAIL' });
-  }
-  if (body.downloadConsent !== true || body.consentVersion !== CONSENT_VERSION || typeof body.marketingConsent !== 'boolean') {
-    return res.status(400).json({ code: 'INVALID_CONSENT' });
-  }
-  const beatId = String(body.beatId || '').trim();
-  if (!/^ab-\d{3}$/i.test(beatId)) {
-    return res.status(400).json({ code: 'INVALID_BEAT' });
-  }
 
   try {
     const beat = await getBeatByReference(beatId);
@@ -109,9 +109,8 @@ router.post('/', async (req, res) => {
       beatId: beat.id,
       beatSlug: beat.slug,
       beatTitleSnapshot: beat.title,
-      marketingConsent: body.marketingConsent,
       downloadConsentVersion: CONSENT_VERSION,
-      source: safeSource(body.source),
+      source,
       createdAt: new Date().toISOString()
     };
     const sent = await sendInternalFreeDownloadNotification(download);
@@ -146,5 +145,5 @@ router.get('/file/:beatId', async (req, res) => {
   }
 });
 
-export { CONSENT_VERSION, isDownloadable, normalizeEmail, resolveAudioFile };
+export { CONSENT_VERSION, isDownloadable, normalizeEmail, resolveAudioFile, validateFreeDownloadPayload };
 export default router;

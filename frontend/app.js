@@ -1222,7 +1222,6 @@
               <input id="freeDownloadEmail" data-free-email class="input" type="email" name="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="freeDownloadEmailError" />
               <p id="freeDownloadEmailError" class="free-download-modal__error" data-free-error role="alert"></p>
               <label class="free-download-modal__check"><input type="checkbox" name="downloadConsent" required /> <span>He leído y acepto las condiciones de la descarga y el <a href="${pagePath('privacidad.html')}">aviso de privacidad</a>.</span></label>
-              <label class="free-download-modal__check"><input type="checkbox" name="marketingConsent" /> <span>Quiero recibir nuevos beats, lanzamientos y ofertas de ARIKARA BEATS.</span></label>
               <input class="free-download-modal__honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
               <button class="btn btn--ghost free-download-modal__submit" type="submit">Descargar MP3 con tag</button>
             </form>
@@ -1253,7 +1252,6 @@
       const form = event.currentTarget;
       const emailInput = qs('[data-free-email]', form);
       const downloadConsent = qs('[name="downloadConsent"]', form);
-      const marketingConsent = qs('[name="marketingConsent"]', form);
       const submit = qs('[type="submit"]', form);
       const email = String(emailInput?.value || '').trim();
       if(!email || !emailInput?.checkValidity()) {
@@ -1270,8 +1268,7 @@
       submit.disabled = true;
       submit.textContent = 'Preparando descarga...';
       const source = form.dataset.source || 'site';
-      const marketing = Boolean(marketingConsent?.checked);
-      trackEvent('free_download_submit', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source, marketingConsent: marketing });
+      trackEvent('free_download_submit', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source });
       try {
         const response = await fetchWithTimeout(apiUrl('/api/free-downloads'), {
           method: 'POST',
@@ -1280,7 +1277,6 @@
             email,
             beatId: freeDownloadBeat.id,
             downloadConsent: true,
-            marketingConsent: marketing,
             consentVersion: FREE_DOWNLOAD_CONSENT_VERSION,
             source,
             website: String(qs('[name="website"]', form)?.value || '')
@@ -1290,11 +1286,11 @@
         if(!response.ok || !payload?.downloadUrl) throw new Error(payload?.code || 'REQUEST_FAILED');
         startFreeDownload(payload.downloadUrl);
         setFreeDownloadState('success');
-        trackEvent('free_download_success', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source, marketingConsent: marketing });
+        trackEvent('free_download_success', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source });
       }catch(error){
         const code = String(error?.name === 'AbortError' ? 'NETWORK_ERROR' : error?.message || 'REQUEST_FAILED');
         freeDownloadError(messageForFreeDownloadError(code));
-        trackEvent('free_download_error', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source, marketingConsent: marketing, errorCode: code });
+        trackEvent('free_download_error', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source, errorCode: code });
       }finally{
         submit.disabled = false;
         submit.textContent = 'Descargar MP3 con tag';
