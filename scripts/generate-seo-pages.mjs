@@ -229,6 +229,9 @@ const beatCard = (beat, prefix = '../../') => {
     : `<span class="badge ${statusClass}">${status}</span>`;
   const price = beat.prices?.basic || 29.99;
   const href = beatHref(beat, prefix);
+  const freeDownload = beat.status === 'available' && beat.freeDownload !== false && (beat.freeDownloadUrl || beat.preview)
+    ? `<button class="btn btn--quiet btn--sm" type="button" data-free-download data-beat-id="${escapeHtml(beat.id)}" data-free-source="seo-listing">Descargar gratis</button>`
+    : '';
   return `<article class="seo-card ${beat.status !== 'available' ? 'is-unavailable' : ''}">
     <a class="seo-card__hit" href="${href}" aria-label="Abrir página de ${escapeHtml(beat.title)}"></a>
     <a class="seo-card__media" href="${href}"><img src="${relAsset(beat.cover, prefix)}" alt="Cover ${escapeHtml(beat.title)}" loading="lazy" /></a>
@@ -237,7 +240,8 @@ const beatCard = (beat, prefix = '../../') => {
       <h3><a href="${href}">${escapeHtml(beat.title)}</a></h3>
       <p>${escapeHtml(beat.genre)} · ${beat.bpm} BPM · ${escapeHtml(beat.key)}</p>
       <div class="seo-card__price">Desde ${fmtEUR(price)}</div>
-      <a class="btn btn--primary btn--sm" href="${href}">Ver beat</a>
+      <a class="btn btn--primary btn--sm" href="${href}">Ver beat</a>${freeDownload ? `
+      ${freeDownload}` : ''}
     </div>
   </article>`;
 };
@@ -310,7 +314,7 @@ ${header('../../')}
           </div>
         </div>
         <div class="product-media-card__actions">
-          <button id="previewBtn" class="btn btn--primary btn--preview" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"></svg>Reproducir preview</button>${youtubeAction}
+          <button id="previewBtn" class="btn btn--primary btn--preview" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"></svg>Reproducir preview</button>${youtubeAction}<button id="freeDownloadBtn" class="btn btn--quiet" type="button" hidden>Descargar gratis</button>
         </div>
       </article>
       <aside class="card product-buy-card">

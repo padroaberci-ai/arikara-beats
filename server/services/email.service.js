@@ -1,6 +1,7 @@
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const RESEND_API_URL = 'https://api.resend.com/emails';
 const RESEND_TIMEOUT_MS = 8000;
+const FREE_DOWNLOAD_NOTIFICATION_EMAIL = 'arikarabeats@gmail.com';
 
 const formatEUR = (amount, currency = 'EUR') => {
   try {
@@ -42,6 +43,14 @@ function getResendConfig() {
 
   return { apiKey, from };
 }
+
+const escapeHtml = (value) =>
+  String(value || '-')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
 async function sendMail({ to, subject, text, html }) {
   const config = getResendConfig();
@@ -160,6 +169,36 @@ export async function sendInternalSaleNotification(order) {
     <p><strong>Total:</strong> ${formatEUR(order.total, order.currency)}</p>
     <p><strong>Checkout session:</strong> ${order.stripe?.checkoutSessionId || '-'}<br />
     <strong>Payment intent:</strong> ${order.stripe?.paymentIntentId || '-'}</p>
+  `;
+
+  return sendMail({ to, subject, text, html });
+}
+
+export async function sendInternalFreeDownloadNotification(download) {
+  const to = FREE_DOWNLOAD_NOTIFICATION_EMAIL;
+
+  const subject = `[DESCARGA GRATIS] ${download.beatId} · ${download.beatTitleSnapshot}`;
+  const marketing = download.marketingConsent ? 'Sí, ha aceptado novedades y ofertas.' : 'No, solo descarga.';
+  const text = [
+    'Nueva descarga gratuita registrada',
+    '',
+    ...(download.id ? [`Registro: ${download.id}`] : []),
+    `Beat: ${download.beatTitleSnapshot} (${download.beatId})`,
+    `Email: ${download.email}`,
+    `Consentimiento comercial: ${marketing}`,
+    `Versión del consentimiento: ${download.downloadConsentVersion}`,
+    `Origen: ${download.source}`,
+    `Fecha UTC: ${download.createdAt}`
+  ].join('\n');
+  const html = `
+    <h2>Nueva descarga gratuita en ARIKARA BEATS</h2>
+    <p>${download.id ? `<strong>Registro:</strong> ${escapeHtml(download.id)}<br />` : ''}
+    <strong>Beat:</strong> ${escapeHtml(download.beatTitleSnapshot)} (${escapeHtml(download.beatId)})<br />
+    <strong>Email:</strong> ${escapeHtml(download.email)}<br />
+    <strong>Consentimiento comercial:</strong> ${escapeHtml(marketing)}<br />
+    <strong>Versión del consentimiento:</strong> ${escapeHtml(download.downloadConsentVersion)}<br />
+    <strong>Origen:</strong> ${escapeHtml(download.source)}<br />
+    <strong>Fecha UTC:</strong> ${escapeHtml(download.createdAt)}</p>
   `;
 
   return sendMail({ to, subject, text, html });

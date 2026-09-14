@@ -38,6 +38,9 @@
   };
   const beatUrl = (beatOrSlug) => pagePath(`beats/${encodeURIComponent(typeof beatOrSlug === 'string' ? beatOrSlug : beatOrSlug?.slug || '')}/`);
   const placeholderUrl = () => assetUrl('./assets/placeholder.svg');
+  const allowsFreeDownload = (beat) => Boolean(
+    beat && beat.status === 'available' && beat.freeDownload !== false && (beat.freeDownloadUrl || beat.preview)
+  );
   const isCompactViewport = () => window.matchMedia('(max-width: 980px)').matches;
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   const fetchWithTimeout = (resource, options = {}, timeoutMs = 12000) => {
@@ -485,6 +488,9 @@
                 ${CART_ICON}
                 <span>Añadir Basic al carrito</span>
               </button>
+              <button class="player-sheet__cta player-sheet__cta--ghost player-sheet__cta--download" id="playerSheetDownload" type="button">
+                <span>Descargar gratis</span>
+              </button>
             </div>
           </div>
         </div>
@@ -519,6 +525,7 @@
   const playerSheetCart = qs('#playerSheetCart');
   const playerSheetLicenses = qs('#playerSheetLicenses');
   const playerSheetCartCta = qs('#playerSheetCartCta');
+  const playerSheetDownload = qs('#playerSheetDownload');
 
   const formatTime = (t) => {
     if(!Number.isFinite(t)) return '0:00';
@@ -589,6 +596,11 @@
     }
     if(playerSheetCartCta){
       playerSheetCartCta.innerHTML = `${CART_ICON}<span>${isAvailable ? 'Añadir Basic al carrito' : 'Beat no disponible'}</span>`;
+    }
+    if(playerSheetDownload){
+      const enabled = isAvailable && allowsFreeDownload(beat);
+      playerSheetDownload.disabled = !enabled;
+      playerSheetDownload.classList.toggle('is-disabled', !enabled);
     }
   };
   const setPlayerSheetOpen = (open) => {
@@ -1014,6 +1026,12 @@
   if(playerSheetCartCta){
     playerSheetCartCta.addEventListener('click', () => addCurrentBeatToCart());
   }
+  if(playerSheetDownload){
+    playerSheetDownload.addEventListener('click', () => {
+      const beat = currentBeat();
+      if(beat) openFreeDownload(beat, 'player-sheet', playerSheetDownload);
+    });
+  }
   if(playerVolume) {
     applyVolume(isCompactViewport() ? 1 : (playerVolume.value || getStoredVolume()));
     ['input', 'change'].forEach((eventName) => {
@@ -1119,6 +1137,195 @@
   }[id] || 'Licencia para tu lanzamiento.');
 
   const licenseShortIncludes = (license, limit = 4) => (license?.includes || []).slice(0, limit);
+
+  const FREE_DOWNLOAD_CONSENT_VERSION = 'free-download-v1';
+  let freeDownloadModal = null;
+  let freeDownloadOpener = null;
+  let freeDownloadBeat = null;
+
+  const getFocusable = (scope) => qsa('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', scope)
+    .filter((element) => !element.hidden && element.offsetParent !== null);
+  const freeDownloadError = (message = '') => {
+    const error = qs('[data-free-error]', freeDownloadModal);
+    if(error) error.textContent = message;
+  };
+  const setFreeDownloadState = (stateName) => {
+    if(!freeDownloadModal) return;
+    freeDownloadModal.dataset.state = stateName;
+    const form = qs('[data-free-form]', freeDownloadModal);
+    const success = qs('[data-free-success]', freeDownloadModal);
+    if(form) form.hidden = stateName === 'success';
+    if(success) success.hidden = stateName !== 'success';
+  };
+  const closeFreeDownload = () => {
+    if(!freeDownloadModal || freeDownloadModal.hidden) return;
+    freeDownloadModal.hidden = true;
+    document.body.classList.remove('free-download-open');
+    const opener = freeDownloadOpener;
+    freeDownloadOpener = null;
+    window.setTimeout(() => opener?.focus?.(), 0);
+  };
+  const startFreeDownload = (url) => {
+    const frame = document.createElement('iframe');
+    frame.className = 'free-download-frame';
+    frame.title = 'Descarga MP3 con tag';
+    frame.src = apiUrl(url);
+    document.body.appendChild(frame);
+    window.setTimeout(() => frame.remove(), 60_000);
+  };
+  const messageForFreeDownloadError = (code) => ({
+    INVALID_EMAIL: 'Introduce un email válido para continuar.',
+    INVALID_CONSENT: 'Acepta las condiciones de descarga y privacidad para continuar.',
+    BEAT_NOT_FOUND: 'Este beat ya no está disponible para descargar.',
+    BEAT_UNAVAILABLE: 'La descarga gratuita no está disponible para este beat.',
+    DOWNLOAD_UNAVAILABLE: 'No hemos podido preparar el MP3 ahora mismo. Inténtalo más tarde.',
+    RATE_LIMITED: 'Has realizado varios intentos. Espera unos minutos antes de volver a probar.',
+    NOTIFICATION_UNAVAILABLE: 'No hemos podido confirmar la descarga ahora. Inténtalo de nuevo en unos minutos.',
+    SERVICE_UNAVAILABLE: 'La descarga gratuita está temporalmente no disponible.',
+    STORAGE_UNAVAILABLE: 'No hemos podido registrar la descarga. Inténtalo de nuevo más tarde.'
+  }[code] || 'No hemos podido completar la descarga. Revisa tu conexión e inténtalo de nuevo.');
+  const openFreeDownload = (beat, source = 'site', opener = document.activeElement) => {
+    if(!allowsFreeDownload(beat)) return;
+    if(!freeDownloadModal) return;
+    const changedBeat = freeDownloadBeat?.id !== beat.id;
+    freeDownloadBeat = beat;
+    freeDownloadOpener = opener;
+    const title = qs('[data-free-title]', freeDownloadModal);
+    const cover = qs('[data-free-cover]', freeDownloadModal);
+    const form = qs('[data-free-form]', freeDownloadModal);
+    if(title) title.textContent = `Descarga “${beat.title}” gratis`;
+    if(cover){
+      cover.src = assetUrl(beat.cover, './assets/placeholder.svg');
+      cover.alt = `Cover ${beat.title}`;
+    }
+    if(changedBeat && form) form.reset();
+    if(form) form.dataset.source = source;
+    freeDownloadError('');
+    setFreeDownloadState('form');
+    freeDownloadModal.hidden = false;
+    document.body.classList.add('free-download-open');
+    trackEvent('free_download_open', { beatId: beat.id, slug: beat.slug, source });
+    window.setTimeout(() => qs('[data-free-email]', freeDownloadModal)?.focus(), 0);
+  };
+  const initFreeDownloadModal = () => {
+    if(freeDownloadModal) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="free-download-modal" id="freeDownloadModal" hidden>
+        <div class="free-download-modal__backdrop" data-free-close aria-hidden="true"></div>
+        <section class="free-download-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="freeDownloadTitle" aria-describedby="freeDownloadDescription">
+          <button class="free-download-modal__close" type="button" data-free-close aria-label="Cerrar descarga gratuita">×</button>
+          <div class="free-download-modal__beat"><img data-free-cover src="${placeholderUrl()}" alt="" /><div><span class="eyebrow">MP3 con tag</span><h2 id="freeDownloadTitle" data-free-title>Descarga gratis</h2></div></div>
+          <div data-free-form>
+            <p id="freeDownloadDescription" class="free-download-modal__lead">Recibe el MP3 con tag para escribir, grabar una demo o probar tu tema.</p>
+            <form novalidate>
+              <label class="free-download-modal__label" for="freeDownloadEmail">Tu email</label>
+              <input id="freeDownloadEmail" data-free-email class="input" type="email" name="email" autocomplete="email" inputmode="email" maxlength="254" required aria-describedby="freeDownloadEmailError" />
+              <p id="freeDownloadEmailError" class="free-download-modal__error" data-free-error role="alert"></p>
+              <label class="free-download-modal__check"><input type="checkbox" name="downloadConsent" required /> <span>He leído y acepto las condiciones de la descarga y el <a href="${pagePath('privacidad.html')}">aviso de privacidad</a>.</span></label>
+              <label class="free-download-modal__check"><input type="checkbox" name="marketingConsent" /> <span>Quiero recibir nuevos beats, lanzamientos y ofertas de ARIKARA BEATS.</span></label>
+              <input class="free-download-modal__honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
+              <button class="btn btn--ghost free-download-modal__submit" type="submit">Descargar MP3 con tag</button>
+            </form>
+            <p class="free-download-modal__terms">La descarga entrega un MP3 con tag para escribir, grabar una demo o probar una canción. No concede una licencia comercial ni transfiere la propiedad del beat. Para publicar, distribuir o monetizar necesitarás una licencia.</p>
+            <a class="free-download-modal__licenses" data-free-licenses href="#">Ver licencias para publicar</a>
+          </div>
+          <div data-free-success hidden>
+            <p class="free-download-modal__success" role="status">MP3 con tag descargado</p>
+            <p class="free-download-modal__lead">Para publicar, distribuir o monetizar tu canción necesitarás una licencia.</p>
+            <a class="btn btn--primary" data-free-licenses href="#">Ver licencias para publicar</a>
+          </div>
+        </section>
+      </div>`);
+    freeDownloadModal = qs('#freeDownloadModal');
+    freeDownloadModal.addEventListener('click', (event) => {
+      if(event.target.closest('[data-free-close]')) closeFreeDownload();
+    });
+    qsa('[data-free-licenses]', freeDownloadModal).forEach((link) => link.addEventListener('click', (event) => {
+      if(!freeDownloadBeat) return;
+      event.preventDefault();
+      closeFreeDownload();
+      preservePlaybackSession();
+      navigateToPage(beatUrl(freeDownloadBeat));
+    }));
+    qs('form', freeDownloadModal)?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if(!freeDownloadBeat || !allowsFreeDownload(freeDownloadBeat)) return;
+      const form = event.currentTarget;
+      const emailInput = qs('[data-free-email]', form);
+      const downloadConsent = qs('[name="downloadConsent"]', form);
+      const marketingConsent = qs('[name="marketingConsent"]', form);
+      const submit = qs('[type="submit"]', form);
+      const email = String(emailInput?.value || '').trim();
+      if(!email || !emailInput?.checkValidity()) {
+        freeDownloadError('Introduce un email válido para continuar.');
+        emailInput?.focus();
+        return;
+      }
+      if(!downloadConsent?.checked) {
+        freeDownloadError('Acepta las condiciones de descarga y privacidad para continuar.');
+        downloadConsent?.focus();
+        return;
+      }
+      freeDownloadError('');
+      submit.disabled = true;
+      submit.textContent = 'Preparando descarga...';
+      const source = form.dataset.source || 'site';
+      const marketing = Boolean(marketingConsent?.checked);
+      trackEvent('free_download_submit', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source, marketingConsent: marketing });
+      try {
+        const response = await fetchWithTimeout(apiUrl('/api/free-downloads'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            beatId: freeDownloadBeat.id,
+            downloadConsent: true,
+            marketingConsent: marketing,
+            consentVersion: FREE_DOWNLOAD_CONSENT_VERSION,
+            source,
+            website: String(qs('[name="website"]', form)?.value || '')
+          })
+        }, 15_000);
+        const payload = await response.json().catch(() => ({}));
+        if(!response.ok || !payload?.downloadUrl) throw new Error(payload?.code || 'REQUEST_FAILED');
+        startFreeDownload(payload.downloadUrl);
+        setFreeDownloadState('success');
+        trackEvent('free_download_success', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source, marketingConsent: marketing });
+      }catch(error){
+        const code = String(error?.name === 'AbortError' ? 'NETWORK_ERROR' : error?.message || 'REQUEST_FAILED');
+        freeDownloadError(messageForFreeDownloadError(code));
+        trackEvent('free_download_error', { beatId: freeDownloadBeat.id, slug: freeDownloadBeat.slug, source, marketingConsent: marketing, errorCode: code });
+      }finally{
+        submit.disabled = false;
+        submit.textContent = 'Descargar MP3 con tag';
+      }
+    });
+    document.addEventListener('keydown', (event) => {
+      if(!freeDownloadModal || freeDownloadModal.hidden) return;
+      if(event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        closeFreeDownload();
+        return;
+      }
+      if(event.key !== 'Tab') return;
+      const focusable = getFocusable(freeDownloadModal);
+      if(!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if(event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if(!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }, true);
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-free-download]');
+      if(!trigger) return;
+      const beat = state.beats.find((entry) => entry.id === trigger.dataset.beatId || entry.slug === trigger.dataset.beatSlug);
+      if(!beat || !allowsFreeDownload(beat)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      openFreeDownload(beat, trigger.dataset.freeSource || document.body.dataset.page || 'site', trigger);
+    });
+  };
 
   // Page routing
   const registerCleanup = (fn) => {
@@ -1407,6 +1614,7 @@
           <span class="beat-row__mini-action-icon">${CART_ICON}</span>
         </a>
       ` : '';
+      const freeDownload = allowsFreeDownload(beat) ? `<button class="btn btn--quiet btn--sm" type="button" data-free-download data-beat-id="${beat.id}" data-free-source="catalog">Descargar gratis</button>` : '';
       return `
         <article class="beat-row ${isUnavailable ? 'is-unavailable' : ''}${isSold ? ' is-sold' : ''}">
           <div class="beat-row__mobile-summary">
@@ -1468,6 +1676,7 @@
               <div class="beat-buttons">
                 <a class="btn btn--ghost btn--sm" href="${detailHref}">Ver beat</a>
                 ${!isUnavailable ? `<details class="quick-license"><summary class="btn btn--primary btn--sm">Licenciar</summary><div class="quick-license__menu"><button type="button" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="basic" data-price="${beat.prices.basic}">Basic · ${fmtEUR(beat.prices.basic)}</button><button type="button" data-add data-beat-id="${beat.id}" data-slug="${beat.slug}" data-title="${esc(beat.title)}" data-license="premium" data-price="${beat.prices.premium}">Premium · ${fmtEUR(beat.prices.premium)}</button><a href="#contacto" data-direct-email data-email-subject="Consulta Exclusive - ${esc(beat.title)}">Exclusive · consultar</a></div></details>` : `<a class="btn btn--ghost btn--sm" href="${detailHref}">Ver similares</a>`}
+                ${freeDownload}
               </div>
             </div>
           </div>
@@ -1708,6 +1917,7 @@
     const youtubeBtn = qs('#youtubeBtn');
     const licenseWrap = qs('#licenseOptions');
     const addBtn = qs('#addToCartBtn');
+    const freeDownloadBtn = qs('#freeDownloadBtn');
     if(!beatTitle || !beatMeta || !coverImg || !tagRow || !licenseWrap || !addBtn) return;
 
     trackEvent('view_beat', { beatId: beat.id, slug: beat.slug, artista: (beat.tags || [])[0], genero: beat.genre, source: 'product' });
@@ -1722,6 +1932,19 @@
       youtubeBtn.setAttribute('aria-label', `Ver ${beat.title} en YouTube`);
     }else if(youtubeBtn){
       youtubeBtn.hidden = true;
+    }
+    if(freeDownloadBtn){
+      const canDownload = allowsFreeDownload(beat);
+      freeDownloadBtn.hidden = !canDownload;
+      if(canDownload){
+        freeDownloadBtn.dataset.freeDownload = '';
+        freeDownloadBtn.dataset.beatId = beat.id;
+        freeDownloadBtn.dataset.freeSource = 'product';
+      }else{
+        delete freeDownloadBtn.dataset.freeDownload;
+        delete freeDownloadBtn.dataset.beatId;
+        delete freeDownloadBtn.dataset.freeSource;
+      }
     }
 
     const tags = [...(beat.tags||[]), ...(beat.moods||[])];
@@ -2237,5 +2460,6 @@
     navigateToPage(window.location.href, { replaceHistory: true });
   });
 
+  initFreeDownloadModal();
   initPage();
 })();

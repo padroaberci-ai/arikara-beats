@@ -195,6 +195,20 @@ El backend valida catálogo, licencias, precios y disponibilidad leyendo la fuen
 
 Así no se confía nunca en el precio enviado por el navegador.
 
+## Descargas gratuitas con tag
+
+El MP3 usado por el preview es también la fuente por defecto de la descarga gratuita: solo se permite para beats con `status: "available"`, preview MP3 y sin `freeDownload: false`. No se duplican rutas en el catálogo. Para desactivar un beat concreto añade `freeDownload: false`; si en el futuro hiciera falta un MP3 con tag distinto, usa el campo opcional `freeDownloadUrl` con una ruta relativa dentro de `./assets/audio/`.
+
+La API nunca acepta una ruta del navegador. Resuelve el beat desde `frontend/data.js`, valida su disponibilidad y sirve exclusivamente un MP3 bajo `frontend/assets/audio/` mediante una URL temporal firmada.
+
+Las descargas gratuitas no escriben datos en `server/data` ni en ningún JSON. El aviso interno a `arikarabeats@gmail.com`, enviado mediante el transporte Resend ya existente, es el registro del lead. La autorización temporal solo se devuelve tras confirmar ese envío. No se envía ningún correo al usuario: el navegador descarga directamente el MP3 con tag.
+
+`FREE_DOWNLOADS_TOKEN_SECRET` es opcional pero recomendable en Render: define un secreto aleatorio largo para que los enlaces temporales de descarga sigan siendo válidos tras un reinicio del servicio. No se configura en Netlify ni se expone al frontend.
+
+La descarga gratuita no requiere disco persistente. Los pedidos siguen usando `server/data/orders.json`: si el disco del servicio Render no es persistente, se perderán al reiniciar los pedidos locales, sus datos de cliente, items, estados de pago/entrega, referencias Stripe y marcas de notificación. Este repositorio no contiene una configuración de Render ni evidencia de un Persistent Disk, por lo que esa persistencia no está confirmada. Si se habilita uno, debe montarse en la ruta absoluta que usa el proceso desplegado para `server/data`, no en la ruta local de macOS documentada arriba.
+
+El límite antiabuso se mantiene solo en memoria y conserva hashes efímeros de IP/email durante un máximo de 15 minutos; no se persiste IP ni user agent. Define en el aviso de privacidad validado el plazo de conservación de los eventos y del consentimiento antes de activar la función.
+
 ## Notas importantes
 
 - `exclusive` sigue fuera del checkout y se gestiona por contacto.

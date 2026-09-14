@@ -7,11 +7,13 @@ import dotenv from 'dotenv';
 
 import checkoutRoute from './routes/checkout.js';
 import ordersRoute from './routes/orders.js';
+import freeDownloadsRoute from './routes/free-downloads.js';
 import stripeWebhook from './webhooks/stripe.js';
 
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const defaultAllowedOrigins = [
   'https://arikarabeats.com',
   'https://www.arikarabeats.com',
@@ -53,6 +55,7 @@ app.use(express.json({ limit: '1mb' }));
 /* API */
 app.use('/api/checkout', checkoutRoute);
 app.use('/api/orders', ordersRoute);
+app.use('/api/free-downloads', freeDownloadsRoute);
 
 /* Healthcheck */
 app.get('/', (_req, res) => {
