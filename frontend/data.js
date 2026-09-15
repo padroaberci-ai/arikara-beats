@@ -883,6 +883,23 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-09-11T14:02:00"
+    },
+    {
+      id: "ab-057",
+      slug: "mon-amour",
+      title: "Soolking Type Beat - \"Mon Amour\"",
+      bpm: 126,
+      key: "A# minor",
+      genre: "Afro Trap",
+      tags: ["typebeat", "soolking", "afrotrap", "instrumental"],
+      moods: ["melódico", "nocturno", "intenso"],
+      cover: "./assets/covers/mon-amour.jpg",
+      preview: "./assets/audio/mon-amour-preview.mp3",
+      youtubeId: "CeLzM0cfL40",
+      youtubeUrl: "https://www.youtube.com/watch?v=CeLzM0cfL40",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-09-15T16:17:00"
     }
   ],
   licenses: [
