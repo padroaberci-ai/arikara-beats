@@ -2171,7 +2171,7 @@ body[data-page="catalog"] .main{ padding-top:0; }
   .universal-search__box{ min-height: 60px; border-radius: 18px; padding-left: 14px; gap: 8px; }
   .universal-search__input{ display: block !important; font-size: .92rem; }
   .hero-proof--center{ display:grid; grid-template-columns:1fr; justify-content:stretch; overflow:visible; flex-wrap:nowrap; gap:8px; margin-top:12px; }
-  .hero-proof--center span{ display:flex; width:100%; min-height:40px; padding:8px 12px; align-items:center; }
+  .hero-proof--center span{ display:flex; width:100%; min-height:40px; padding:8px 12px; align-items:center; justify-content:center; text-align:center; }
   .filters--compact{ grid-template-columns: repeat(2,minmax(0,1fr)); }
   #bpmMin,#bpmMax{ display: block; }
   .quick-license__menu{ position: fixed; left: 18px; right: 18px; bottom: 94px; min-width: 0; }
