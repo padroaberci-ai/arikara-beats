@@ -195,9 +195,9 @@ ${robots ? `  <meta name="robots" content="${escapeHtml(robots)}" />` : ''}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:wght@400;500;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="${prefix}style.css" />
-  <script src="${prefix}data.js" defer></script>
-  <script src="${prefix}app.js" defer></script>
+  <link rel="stylesheet" href="${prefix}style.css?v=20260916-webview1" />
+  <script src="${prefix}data.js?v=20260916-webview1" defer></script>
+  <script src="${prefix}app.js?v=20260916-webview1" defer></script>
 </head>`;
 
 const licenseHint = (id) => ({
