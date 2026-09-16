@@ -2445,3 +2445,115 @@ body.free-download-open{ overflow:hidden; }
   .beat-row__mobile-status .beat-availability__note{ display:none; }
   .beat-row__mobile-body .beat-availability__note{ white-space:normal; }
 }
+
+/* Responsive catalog: one compact listening row, with the full purchase path on expand. */
+@media (max-width:980px){
+  .beat-row{
+    padding:12px;
+    border-radius:24px;
+  }
+  .beat-row:not(.is-expanded){
+    height:auto;
+    min-height:0;
+  }
+  .beat-row__mobile-summary{
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;
+    gap:10px;
+  }
+  .beat-row__mobile-toggle{
+    min-height:64px;
+    grid-template-columns:64px minmax(0,1fr) 18px;
+    gap:10px;
+  }
+  .beat-row__mobile-cover{
+    width:64px;
+    height:64px;
+    border-radius:16px;
+  }
+  .beat-row__mobile-copy{ gap:3px; }
+  .beat-row__mobile-status{ padding:0; }
+  .beat-row__mobile-status .badge,
+  .beat-row__mobile-status .beat-availability--sold{
+    padding:3px 8px;
+    font-size:.68rem;
+    line-height:1.2;
+  }
+  .beat-row__mobile-title{
+    font-size:.98rem;
+    line-height:1.2;
+  }
+  .beat-row__mobile-meta{
+    font-size:.76rem;
+    line-height:1.25;
+  }
+  .beat-row__mobile-chevron{
+    width:18px;
+    height:18px;
+  }
+  .beat-row__mobile-actions{
+    flex-direction:row;
+    align-items:center;
+    gap:8px;
+  }
+  .beat-row__mini-action{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+  }
+  .beat-row__mobile-panel{ margin-top:12px; }
+  .beat-row__mobile-card{ gap:12px; }
+  .beat-row__mobile-hero{
+    height:auto;
+    aspect-ratio:4 / 3;
+    border-radius:18px;
+  }
+  .beat-row__mobile-body,
+  .beat-row__mobile-footer{ gap:10px; }
+  .beat-row__mobile-download .btn{ width:100%; justify-content:center; }
+}
+
+@media (min-width:721px) and (max-width:980px){
+  .beat-row{ padding:14px; }
+  .beat-row__mobile-toggle{
+    min-height:72px;
+    grid-template-columns:72px minmax(0,1fr) 20px;
+    gap:12px;
+  }
+  .beat-row__mobile-cover{
+    width:72px;
+    height:72px;
+    border-radius:18px;
+  }
+  .beat-row__mobile-actions{ gap:10px; }
+  .beat-row__mini-action{
+    width:48px;
+    height:48px;
+    border-radius:16px;
+  }
+  .beat-row__mobile-title{ font-size:1.05rem; }
+  .beat-row__mobile-meta{ font-size:.82rem; }
+}
+
+@media (max-width:480px){
+  .beat-row{ padding:10px; }
+  .beat-row__mobile-summary{ gap:8px; }
+  .beat-row__mobile-toggle{
+    min-height:54px;
+    grid-template-columns:54px minmax(0,1fr) 18px;
+    gap:8px;
+  }
+  .beat-row__mobile-cover{
+    width:54px;
+    height:54px;
+    border-radius:14px;
+  }
+  .beat-row__mobile-title{ font-size:.92rem; }
+  .beat-row__mobile-meta{ font-size:.7rem; }
+  .beat-row__mini-action{
+    width:38px;
+    height:38px;
+    border-radius:12px;
+  }
+  .beat-row__mobile-actions{ gap:6px; }
+}
