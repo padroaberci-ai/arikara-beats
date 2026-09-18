@@ -2,6 +2,7 @@ window.ARIKARA = {
   genres: [
     "Afro Trap",
     "Afro Trap Dembow",
+    "Bossa Nova Lofi",
     "Dembow Reggaeton",
     "Flamenco Drill",
     "Flamenco Drill Afrotrap",
@@ -900,6 +901,23 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-09-15T16:17:00"
+    },
+    {
+      id: "ab-058",
+      slug: "no-era-pa-tanto",
+      title: "Rels B Type Beat - \"No Era Pa Tanto\"",
+      bpm: 138,
+      key: "E minor",
+      genre: "Bossa Nova Lofi",
+      tags: ["typebeat", "relsb", "bossanova", "lofi", "instrumental"],
+      moods: ["melódico", "nocturno", "relajado"],
+      cover: "./assets/covers/no-era-pa-tanto.jpg",
+      preview: "./assets/audio/no-era-pa-tanto-preview.mp3",
+      youtubeId: "DzRHWmKeyQI",
+      youtubeUrl: "https://www.youtube.com/watch?v=DzRHWmKeyQI",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-09-18T20:09:00"
     }
   ],
   licenses: [
