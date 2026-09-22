@@ -918,6 +918,23 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-09-18T20:09:00"
+    },
+    {
+      id: "ab-059",
+      slug: "de-luto",
+      title: "JC Reyes Type Beat - \"De Luto\"",
+      bpm: 100,
+      key: "A minor",
+      genre: "Reggaeton",
+      tags: ["typebeat", "jcreyes", "reggaeton", "instrumental"],
+      moods: ["oscuro", "melódico", "callejero"],
+      cover: "./assets/covers/de-luto.jpg",
+      preview: "./assets/audio/de-luto-preview.mp3",
+      youtubeId: "QS58q0I-UBE",
+      youtubeUrl: "https://www.youtube.com/watch?v=QS58q0I-UBE",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-09-22T17:55:00"
     }
   ],
   licenses: [
