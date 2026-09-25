@@ -2,6 +2,7 @@ window.ARIKARA = {
   genres: [
     "Afro Trap",
     "Afro Trap Dembow",
+    "Alternative R&B",
     "Bossa Nova Lofi",
     "Dembow Reggaeton",
     "Flamenco Drill",
@@ -935,6 +936,23 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-09-22T17:55:00"
+    },
+    {
+      id: "ab-060",
+      slug: "black-ice",
+      title: "Don Toliver Type Beat - \"Black Ice\"",
+      bpm: 132,
+      key: "C minor",
+      genre: "Alternative R&B",
+      tags: ["typebeat", "dontoliver", "alternative r&b", "instrumental"],
+      moods: ["oscuro", "melódico", "nocturno"],
+      cover: "./assets/covers/black-ice.jpg",
+      preview: "./assets/audio/black-ice-preview.mp3",
+      youtubeId: "gTzAEDvzw7E",
+      youtubeUrl: "https://www.youtube.com/watch?v=gTzAEDvzw7E",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-09-25T21:21:00"
     }
   ],
   licenses: [
