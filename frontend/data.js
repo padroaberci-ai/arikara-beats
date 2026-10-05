@@ -953,6 +953,23 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-09-25T21:21:00"
+    },
+    {
+      id: "ab-061",
+      slug: "sin-recibo",
+      title: "Morad Type Beat - \"Sin Recibo\"",
+      bpm: 118,
+      key: "A minor",
+      genre: "Melodic Trap",
+      tags: ["typebeat", "morad", "melodic trap", "instrumental"],
+      moods: ["melódico", "oscuro", "callejero"],
+      cover: "./assets/covers/sin-recibo.jpg",
+      preview: "./assets/audio/sin-recibo-preview.mp3",
+      youtubeId: "yRIz4reeDHM",
+      youtubeUrl: "https://www.youtube.com/watch?v=yRIz4reeDHM",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-10-05T10:13:00"
     }
   ],
   licenses: [
