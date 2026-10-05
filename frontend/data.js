@@ -4,6 +4,7 @@ window.ARIKARA = {
     "Afro Trap Dembow",
     "Alternative R&B",
     "Bossa Nova Lofi",
+    "Boom Bap Rap",
     "Dembow Reggaeton",
     "Flamenco Drill",
     "Flamenco Drill Afrotrap",
@@ -970,6 +971,23 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-10-05T10:13:00"
+    },
+    {
+      id: "ab-062",
+      slug: "montblanc",
+      title: "Hoke Type Beat - \"Montblanc\"",
+      bpm: 89,
+      key: "G# minor",
+      genre: "Boom Bap Rap",
+      tags: ["typebeat", "hoke", "boom bap", "rap", "instrumental"],
+      moods: ["oscuro", "melódico", "nocturno"],
+      cover: "./assets/covers/montblanc.jpg",
+      preview: "./assets/audio/montblanc-preview.mp3",
+      youtubeId: "bih_UfMtXG8",
+      youtubeUrl: "https://www.youtube.com/watch?v=bih_UfMtXG8",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-10-05T10:14:00"
     }
   ],
   licenses: [
