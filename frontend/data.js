@@ -988,6 +988,23 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-10-05T10:14:00"
+    },
+    {
+      id: "ab-063",
+      slug: "facetime",
+      title: "Clarent x Omar Courtz Type Beat - \"Facetime\"",
+      bpm: 100,
+      key: "D minor",
+      genre: "Reggaeton",
+      tags: ["typebeat", "clarent", "omarcourtz", "reggaeton", "instrumental"],
+      moods: ["melódico", "urbano"],
+      cover: "./assets/covers/facetime.jpg",
+      preview: "./assets/audio/facetime-preview.mp3",
+      youtubeId: "N-crq8He3F0",
+      youtubeUrl: "https://www.youtube.com/watch?v=N-crq8He3F0",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-10-20T19:44:00"
     }
   ],
   licenses: [
