@@ -8,11 +8,16 @@
     "test": "node scripts/validate-frontend.mjs && node scripts/test-free-downloads.mjs",
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "dev:watch": "node --watch server/index.js"
+    "dev:watch": "node --watch server/index.js",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "stripe": "^14.25.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.110.0"
   }
 }
