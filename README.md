@@ -197,9 +197,11 @@ Así no se confía nunca en el precio enviado por el navegador.
 
 ## Descargas gratuitas con tag
 
-El MP3 usado por el preview es también la fuente por defecto de la descarga gratuita: solo se permite para beats con `status: "available"`, preview MP3 y sin `freeDownload: false`. No se duplican rutas en el catálogo. Para desactivar un beat concreto añade `freeDownload: false`; si en el futuro hiciera falta un MP3 con tag distinto, usa el campo opcional `freeDownloadUrl` con una ruta relativa dentro de `./assets/audio/`.
+La descarga gratuita utiliza exclusivamente un clip MP3 con tag de un máximo de 30 segundos. El preview del reproductor se conserva completo y nunca se entrega desde este flujo. Solo se permite para beats con `status: "available"`, `freeDownloadUrl` apuntando a un MP3 dedicado dentro de `./assets/audio/` y sin `freeDownload: false`. Para desactivar un beat concreto añade `freeDownload: false`.
 
-La API nunca acepta una ruta del navegador. Resuelve el beat desde `frontend/data.js`, valida su disponibilidad y sirve exclusivamente un MP3 bajo `frontend/assets/audio/` mediante una URL temporal firmada.
+Al añadir o actualizar un beat, define `freeDownloadUrl` como `./assets/audio/<slug>-free-download.mp3` y ejecuta `npm run free-download:clips`. El script crea el clip desde el inicio del preview sin recodificarlo, conservando el tag de audio original y sin superar 30 segundos. Un beat sin su clip dedicado queda bloqueado para descarga gratuita por seguridad.
+
+La API nunca acepta una ruta del navegador. Resuelve el beat desde `frontend/data.js`, valida su disponibilidad y sirve exclusivamente el clip MP3 dedicado bajo `frontend/assets/audio/` mediante una URL temporal firmada.
 
 Las descargas gratuitas no escriben datos en `server/data` ni en ningún JSON. El aviso interno a `arikarabeats@gmail.com`, enviado mediante el transporte Resend ya existente, es el registro del lead. La autorización temporal solo se devuelve tras confirmar ese envío. No se envía ningún correo al usuario: el navegador descarga directamente el MP3 con tag.
 

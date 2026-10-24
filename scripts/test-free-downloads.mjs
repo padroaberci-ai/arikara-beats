@@ -20,14 +20,17 @@ vm.createContext(sandbox);
 vm.runInContext(source, sandbox);
 const beats = sandbox.window.ARIKARA.beats;
 const available = beats.find((beat) => beat.status === 'available' && beat.preview);
+const downloadable = beats.filter((beat) => beat.status === 'available' && beat.freeDownload !== false);
 const sold = beats.find((beat) => beat.status === 'sold');
 
 assert.ok(available, 'Debe existir al menos un beat disponible con preview para la prueba.');
 assert.ok(sold, 'Debe existir al menos un beat vendido para la prueba.');
+assert.ok(downloadable.length, 'Debe existir al menos un beat descargable para la prueba.');
 assert.equal(normalizeEmail('  ARTIST@Example.COM '), 'artist@example.com');
 assert.equal(isDownloadable(available), true);
 assert.equal(isDownloadable(sold), false);
 assert.equal(isDownloadable({ ...available, freeDownload: false }), false);
+assert.equal(isDownloadable({ ...available, freeDownloadUrl: '' }), false);
 assert.equal(validateFreeDownloadPayload({}).code, 'INVALID_EMAIL');
 assert.equal(validateFreeDownloadPayload({ email: 'invalid' }).code, 'INVALID_EMAIL');
 assert.equal(validateFreeDownloadPayload({ email: 'artist@example.test', beatId: available.id }).code, 'INVALID_CONSENT');
@@ -42,9 +45,13 @@ assert.deepEqual(
   { email: 'artist@example.test', beatId: available.id, source: 'product' }
 );
 
-const previewFile = resolveAudioFile(available);
-assert.ok(previewFile?.endsWith('.mp3'), 'La descarga debe resolver un MP3 con tag.');
-await fs.access(previewFile);
+const freeDownloadFile = resolveAudioFile(available);
+assert.ok(freeDownloadFile?.endsWith('-free-download.mp3'), 'La descarga debe resolver el clip MP3 dedicado.');
+assert.notEqual(freeDownloadFile, resolveAudioFile({ ...available, freeDownloadUrl: available.preview }));
+for (const beat of downloadable) {
+  assert.match(beat.freeDownloadUrl || '', /^\.\/assets\/audio\/.+-free-download\.mp3$/, `${beat.id} debe usar un clip dedicado.`);
+  await fs.access(resolveAudioFile(beat));
+}
 assert.equal(resolveAudioFile({ preview: '../../server/data/orders.json' }), null);
 assert.equal(resolveAudioFile({ preview: './assets/audio/../../server/data/orders.json' }), null);
 assert.equal(resolveAudioFile({ preview: './assets/audio/not-an-mp3.wav' }), null);
@@ -86,6 +93,7 @@ assert.deepEqual(analyticsPayloads.map((match) => match[1]), [
 ]);
 analyticsPayloads.forEach((match) => assert.doesNotMatch(match[2], /email/i));
 assert.doesNotMatch(routeSource, /free-download-storage|writeFile|server\/data/);
+assert.doesNotMatch(routeSource, /freeDownloadUrl \|\| beat\?\.preview/);
 assert.doesNotMatch(routeSource, /marketingConsent/);
 assert.doesNotMatch(appSource, /marketingConsent/);
 

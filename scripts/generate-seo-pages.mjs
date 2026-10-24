@@ -231,7 +231,7 @@ const beatCard = (beat, prefix = '../../') => {
   const price = beat.prices?.basic || 29.99;
   const href = beatHref(beat, prefix);
   const similarHref = `${prefix}?q=${encodeURIComponent(titleParts(beat.title).artist)}&exclude=${encodeURIComponent(beat.slug)}`;
-  const freeDownload = beat.status === 'available' && beat.freeDownload !== false && (beat.freeDownloadUrl || beat.preview)
+  const freeDownload = beat.status === 'available' && beat.freeDownload !== false && beat.freeDownloadUrl
     ? `<button class="btn btn--quiet btn--sm" type="button" data-free-download data-beat-id="${escapeHtml(beat.id)}" data-free-source="seo-listing">Descargar gratis</button>`
     : '';
   const actions = isSold

@@ -22,7 +22,7 @@ const isEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/u.test(value) && value
 const safeSource = (value) => ['catalog', 'product', 'player-sheet', 'seo-listing', 'site'].includes(value) ? value : 'site';
 const tokenSecret = () => String(process.env.FREE_DOWNLOADS_TOKEN_SECRET || generatedTokenSecret).trim();
 const isDownloadable = (beat) => Boolean(
-  beat && beat.status === 'available' && beat.freeDownload !== false && (beat.freeDownloadUrl || beat.preview)
+  beat && beat.status === 'available' && beat.freeDownload !== false && beat.freeDownloadUrl
 );
 
 const validateFreeDownloadPayload = (body = {}) => {
@@ -70,7 +70,7 @@ const readToken = (token) => {
 };
 
 const resolveAudioFile = (beat) => {
-  const rawPath = String(beat?.freeDownloadUrl || beat?.preview || '');
+  const rawPath = String(beat?.freeDownloadUrl || '');
   if (!rawPath.startsWith('./assets/audio/') || !rawPath.endsWith('.mp3')) return null;
   const file = path.resolve(AUDIO_ROOT, rawPath.replace('./assets/audio/', ''));
   return file.startsWith(`${AUDIO_ROOT}${path.sep}`) ? file : null;

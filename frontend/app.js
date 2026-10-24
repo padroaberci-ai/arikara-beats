@@ -39,7 +39,7 @@
   const beatUrl = (beatOrSlug) => pagePath(`beats/${encodeURIComponent(typeof beatOrSlug === 'string' ? beatOrSlug : beatOrSlug?.slug || '')}/`);
   const placeholderUrl = () => assetUrl('./assets/placeholder.svg');
   const allowsFreeDownload = (beat) => Boolean(
-    beat && beat.status === 'available' && beat.freeDownload !== false && (beat.freeDownloadUrl || beat.preview)
+    beat && beat.status === 'available' && beat.freeDownload !== false && beat.freeDownloadUrl
   );
   const isCompactViewport = () => window.matchMedia('(max-width: 980px)').matches;
   const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -1225,11 +1225,11 @@
               <input class="free-download-modal__honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
               <button class="btn btn--ghost free-download-modal__submit" type="submit">Descargar MP3 con tag</button>
             </form>
-            <p class="free-download-modal__terms">La descarga entrega un MP3 con tag para escribir, grabar una demo o probar una canción. No concede una licencia comercial ni transfiere la propiedad del beat. Para publicar, distribuir o monetizar necesitarás una licencia.</p>
+            <p class="free-download-modal__terms">La descarga entrega un extracto MP3 con tag de hasta 30 segundos para escribir, grabar una demo o probar una canción. No concede una licencia comercial ni transfiere la propiedad del beat. Para publicar, distribuir o monetizar necesitarás una licencia.</p>
             <a class="free-download-modal__licenses" data-free-licenses href="#">Ver licencias para publicar</a>
           </div>
           <div data-free-success hidden>
-            <p class="free-download-modal__success" role="status">MP3 con tag descargado</p>
+            <p class="free-download-modal__success" role="status">Extracto MP3 con tag descargado</p>
             <p class="free-download-modal__lead">Para publicar, distribuir o monetizar tu canción necesitarás una licencia.</p>
             <a class="btn btn--primary" data-free-licenses href="#">Ver licencias para publicar</a>
           </div>
