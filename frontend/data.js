@@ -1060,6 +1060,24 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-10-20T19:44:00"
+    },
+    {
+      id: "ab-064",
+      slug: "boricua",
+      title: "Yan Block Type Beat - \"Boricua\"",
+      bpm: 91,
+      key: "G minor",
+      genre: "Reggaeton",
+      tags: ["typebeat", "yanblock", "reggaeton", "latin", "instrumental"],
+      moods: ["melódico", "urbano"],
+      cover: "./assets/covers/boricua.jpg",
+      preview: "./assets/audio/boricua-preview.mp3",
+      freeDownloadUrl: "./assets/audio/boricua-free-download.mp3",
+      youtubeId: "3LnrGum4OaU",
+      youtubeUrl: "https://www.youtube.com/watch?v=3LnrGum4OaU",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-10-27T17:49:00"
     }
   ],
   licenses: [
