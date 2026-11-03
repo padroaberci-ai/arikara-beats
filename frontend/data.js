@@ -1096,6 +1096,24 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-11-03T15:58:00"
+    },
+    {
+      id: "ab-066",
+      slug: "si-estoy-contigo",
+      title: "Clarent Type Beat - \"Si Estoy Contigo\"",
+      bpm: 91,
+      key: "A# minor",
+      genre: "Reggaeton",
+      tags: ["typebeat", "clarent", "reggaeton", "latin", "instrumental"],
+      moods: ["melódico", "urbano"],
+      cover: "./assets/covers/si-estoy-contigo.jpg",
+      preview: "./assets/audio/si-estoy-contigo-preview.mp3",
+      freeDownloadUrl: "./assets/audio/si-estoy-contigo-free-download.mp3",
+      youtubeId: "YW4A5OcjRe4",
+      youtubeUrl: "https://www.youtube.com/watch?v=YW4A5OcjRe4",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-11-03T21:35:00"
     }
   ],
   licenses: [
