@@ -1078,6 +1078,24 @@ window.ARIKARA = {
       prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
       status: "available",
       createdAt: "2026-10-27T17:49:00"
+    },
+    {
+      id: "ab-065",
+      slug: "dentro-de-ti",
+      title: "Feid Type Beat - \"Dentro de ti\"",
+      bpm: 94,
+      key: "D minor",
+      genre: "Reggaeton",
+      tags: ["typebeat", "feid", "ferxxo", "reggaeton", "instrumental"],
+      moods: ["melódico", "urbano"],
+      cover: "./assets/covers/dentro-de-ti.jpg",
+      preview: "./assets/audio/dentro-de-ti-preview.mp3",
+      freeDownloadUrl: "./assets/audio/dentro-de-ti-free-download.mp3",
+      youtubeId: "Du2PHdcJy5Q",
+      youtubeUrl: "https://www.youtube.com/watch?v=Du2PHdcJy5Q",
+      prices: { basic: 29.99, premium: 79.99, exclusive: 299.99 },
+      status: "available",
+      createdAt: "2026-11-03T15:58:00"
     }
   ],
   licenses: [
